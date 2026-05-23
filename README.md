@@ -2,7 +2,7 @@
 
 **Simple cooking for busy students.**
 
-Student meal prep prototype — Stage 1 shell + Stage 2 working dashboard features.
+Student meal prep hackathon prototype — Stages 1–4 complete.
 
 ## Tech stack
 
@@ -26,8 +26,8 @@ Open [http://localhost:3000](http://localhost:3000). Use **Continue as demo user
 |-------|-------------|
 | `/login` | Fake login / welcome |
 | `/dashboard` | Overview and feature placeholders |
-| `/chat` | AI meal planner placeholder |
-| `/shopping-list` | Sample shopping checklist |
+| `/chat` | Mock AI meal planner |
+| `/shopping-list` | Full shopping list + add bought to inventory |
 
 ## Project structure
 
@@ -58,6 +58,13 @@ lib/
 - **Chat persistence** in localStorage with Clear chat
 - **Add suggested items to shopping list** from AI responses
 
-## Not yet (later stages)
+## Stage 4 shopping list + mobile
 
-Real AI API, full shopping list editing, barcode hardware.
+- **Full `/shopping-list`** — add, edit, delete, check bought, clear bought/all
+- **Add bought items to inventory** — queued duplicate confirmation (same logic as barcode)
+- **Expanded categories** — Protein through Other (matches inventory)
+- **Responsive polish** — mobile drawer, 44px touch targets, no horizontal scroll
+
+## Not yet
+
+Real backend, real barcode hardware, real AI API.

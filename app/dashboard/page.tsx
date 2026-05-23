@@ -30,8 +30,8 @@ function DashboardContent() {
     <AppShell profile={profile}>
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-8">
+      <div className="mx-auto w-full max-w-5xl">
+        <header className="mb-6 sm:mb-8">
           <h1 className="text-2xl font-bold text-[#3D3429] md:text-3xl">
             Welcome back, {profile.name}
           </h1>

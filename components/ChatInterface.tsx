@@ -118,7 +118,7 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
     <>
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      <div className="rounded-2xl border border-[#E8DDD0] bg-white/80 shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-[#E8DDD0] bg-white/80 shadow-sm">
         <div className="flex items-center justify-between border-b border-[#E8DDD0] px-4 py-3">
           <p className="text-sm text-[#8A7B6D]">
             Uses your profile, inventory & saved meals

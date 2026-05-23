@@ -66,7 +66,9 @@ export interface MealCard {
   saved?: boolean;
 }
 
-export type ShoppingCategory = "Protein" | "Carbs" | "Produce" | "Dairy" | "Other";
+export type ShoppingCategory = InventoryCategory;
+
+export const SHOPPING_CATEGORIES: ShoppingCategory[] = [...INVENTORY_CATEGORIES];
 
 export interface ShoppingListItem {
   id: string;

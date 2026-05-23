@@ -80,7 +80,7 @@ export function MealSwipeDeck({
         Card {swipeIndex + 1} of {swipeDeck.length}
       </p>
       <div
-        className={`rounded-2xl border border-[#E8DDD0] bg-gradient-to-br from-[#FFF8F0] to-[#F9EDE3] p-6 shadow-md transition-all duration-300 ${
+        className={`mx-auto w-full max-w-sm rounded-2xl border border-[#E8DDD0] bg-gradient-to-br from-[#FFF8F0] to-[#F9EDE3] p-5 shadow-md transition-all duration-300 sm:max-w-md ${
           animating === "save"
             ? "translate-x-4 opacity-0"
             : animating === "skip"

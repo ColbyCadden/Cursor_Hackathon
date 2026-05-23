@@ -11,7 +11,7 @@ function ChatContent() {
 
   return (
     <AppShell profile={state.profile}>
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto w-full max-w-3xl">
         <header className="mb-8">
           <h1 className="text-2xl font-bold text-[#3D3429] md:text-3xl">
             AI Meal Planner

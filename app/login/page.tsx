@@ -22,7 +22,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#FAF6F0] via-[#FFF8F0] to-[#F4E8DC] px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-gradient-to-br from-[#FAF6F0] via-[#FFF8F0] to-[#F4E8DC] px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F4A896]/40 text-3xl shadow-sm">
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="mt-6 w-full rounded-xl bg-[#E8927C] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#D97F68]"
+            className="mt-6 w-full min-h-[48px] rounded-xl bg-[#E8927C] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#D97F68]"
           >
             Sign in
           </button>
@@ -89,14 +89,14 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => handleLogin()}
-            className="mt-3 w-full rounded-xl border border-[#E8DDD0] bg-[#FAF6F0] px-4 py-3 text-sm font-medium text-[#6B5E52] transition hover:bg-[#F4E8DC]/60"
+            className="mt-3 w-full min-h-[48px] rounded-xl border border-[#E8DDD0] bg-[#FAF6F0] px-4 py-3 text-sm font-medium text-[#6B5E52] transition hover:bg-[#F4E8DC]/60"
           >
             Continue as demo user
           </button>
         </form>
 
         <p className="mt-6 text-center text-xs text-[#8A7B6D]">
-          Stage 1 prototype — no real authentication yet.
+          Demo login — your data saves locally on this device.
         </p>
       </div>
     </div>

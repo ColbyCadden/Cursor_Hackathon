@@ -1,6 +1,7 @@
 import { createInitialAppState } from "./demoData";
 import { SWIPE_DECK_MEALS } from "./mealDeckData";
-import type { AppState, LegacyAppState, UserProfile } from "./types";
+import { migrateShoppingCategory } from "./shoppingCategories";
+import type { AppState, LegacyAppState, ShoppingListItem, UserProfile } from "./types";
 
 const STORAGE_KEY = "prepdeck-app-state";
 
@@ -17,6 +18,16 @@ function migrateProfile(profile: Partial<UserProfile>): UserProfile {
   };
 }
 
+function migrateShoppingList(items: ShoppingListItem[]): ShoppingListItem[] {
+  return items.map((item) => ({
+    ...item,
+    category: migrateShoppingCategory(item.category),
+    bought: item.bought ?? false,
+    addedToInventory: item.addedToInventory ?? false,
+    required: item.required ?? true,
+  }));
+}
+
 function migrateParsedState(parsed: LegacyAppState): AppState {
   const initial = createInitialAppState();
 
@@ -27,6 +38,10 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
   const swipeDeck =
     parsed.swipeDeck?.length ? parsed.swipeDeck : SWIPE_DECK_MEALS.map((m) => ({ ...m }));
 
+  const shoppingList = parsed.shoppingList?.length
+    ? migrateShoppingList(parsed.shoppingList)
+    : initial.shoppingList;
+
   return {
     isLoggedIn: parsed.isLoggedIn ?? false,
     profile: migrateProfile(parsed.profile ?? {}),
@@ -34,9 +49,7 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
     mealLibrary,
     swipeDeck,
     swipeIndex: parsed.swipeIndex ?? 0,
-    shoppingList: parsed.shoppingList?.length
-      ? parsed.shoppingList
-      : initial.shoppingList,
+    shoppingList,
     chatMessages: (parsed.chatMessages ?? []).map((msg) => ({
       ...msg,
       suggestedItems: msg.suggestedItems ?? undefined,
