@@ -51,6 +51,13 @@ lib/
 - **Meal swipe deck** — 12 meal ideas, Save/Skip, library persistence
 - **Meal library** — view and remove saved ideas
 
+## Stage 3 AI chat
+
+- **Mock AI meal planner** at `/chat` — uses profile, inventory, and meal library
+- **`generateAIResponse()`** in `lib/mockAI.ts` — swap for a real API later
+- **Chat persistence** in localStorage with Clear chat
+- **Add suggested items to shopping list** from AI responses
+
 ## Not yet (later stages)
 
-AI chat, full shopping list logic, real barcode hardware API.
+Real AI API, full shopping list editing, barcode hardware.

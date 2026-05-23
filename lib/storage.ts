@@ -37,7 +37,12 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
     shoppingList: parsed.shoppingList?.length
       ? parsed.shoppingList
       : initial.shoppingList,
-    chatMessages: parsed.chatMessages ?? [],
+    chatMessages: (parsed.chatMessages ?? []).map((msg) => ({
+      ...msg,
+      suggestedItems: msg.suggestedItems ?? undefined,
+      mealPrepSteps: msg.mealPrepSteps ?? undefined,
+      suggestedItemsAdded: msg.suggestedItemsAdded ?? false,
+    })),
   };
 }
 

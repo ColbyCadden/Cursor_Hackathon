@@ -81,11 +81,24 @@ export interface ShoppingListItem {
 
 export type ChatRole = "user" | "assistant";
 
+export interface SuggestedShoppingItem {
+  name: string;
+  amount: string;
+  unit: string;
+  category: ShoppingCategory;
+  required: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
+  /** ISO timestamp */
   createdAt: string;
+  suggestedItems?: SuggestedShoppingItem[];
+  mealPrepSteps?: string[];
+  /** True after user adds suggested items from this message */
+  suggestedItemsAdded?: boolean;
 }
 
 export interface AppState {
