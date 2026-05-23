@@ -1,25 +1,50 @@
 export type CookingSkill = "Beginner" | "Intermediate" | "Advanced";
 
-export type SimplicityPreference =
-  | "Simple meals with fewer ingredients"
-  | "Balanced variety"
-  | "More complex recipes";
-
 export interface UserProfile {
   name: string;
   studentType: string;
   appliances: string[];
   avoidedFoods: string[];
   eatingGoals: string[];
-  cookingSkill: CookingSkill;
+  cookingSkill: string;
   availableTime: string;
-  simplicityPreference: SimplicityPreference;
+  simplicityPreference: string;
+  profileComplete: boolean;
 }
 
-export type InventoryCategory = "Protein" | "Carbs" | "Produce" | "Dairy" | "Other";
+export type InventoryCategory =
+  | "Protein"
+  | "Carbs"
+  | "Produce"
+  | "Fruit"
+  | "Dairy"
+  | "Snacks"
+  | "Sauces/Spices"
+  | "Frozen"
+  | "Other";
+
+export const INVENTORY_CATEGORIES: InventoryCategory[] = [
+  "Protein",
+  "Carbs",
+  "Produce",
+  "Fruit",
+  "Dairy",
+  "Snacks",
+  "Sauces/Spices",
+  "Frozen",
+  "Other",
+];
 
 export interface InventoryItem {
   id: string;
+  name: string;
+  amount: string;
+  unit: string;
+  category: InventoryCategory;
+  percentLeft: number;
+}
+
+export interface ScannedInventoryItem {
   name: string;
   amount: string;
   unit: string;
@@ -38,7 +63,7 @@ export interface MealCard {
   mainIngredients: string[];
   requiredAppliance: string;
   nutritionEstimate: string;
-  saved: boolean;
+  saved?: boolean;
 }
 
 export type ShoppingCategory = "Protein" | "Carbs" | "Produce" | "Dairy" | "Other";
@@ -67,7 +92,14 @@ export interface AppState {
   isLoggedIn: boolean;
   profile: UserProfile;
   inventory: InventoryItem[];
-  meals: MealCard[];
+  mealLibrary: MealCard[];
+  swipeDeck: MealCard[];
+  swipeIndex: number;
   shoppingList: ShoppingListItem[];
   chatMessages: ChatMessage[];
+}
+
+/** @deprecated Stage 1 field — migrated to mealLibrary */
+export interface LegacyAppState extends AppState {
+  meals?: MealCard[];
 }

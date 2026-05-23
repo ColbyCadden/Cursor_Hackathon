@@ -1,24 +1,35 @@
 "use client";
 
+import { useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCard } from "@/components/OverviewCard";
 import { SectionCard } from "@/components/SectionCard";
-import { InventoryPreview } from "@/components/InventoryPreview";
-import { MealPreviewCard } from "@/components/MealPreviewCard";
+import { ProfileQuiz } from "@/components/ProfileQuiz";
+import { InventoryManager } from "@/components/InventoryManager";
+import { BarcodeScannerPanel } from "@/components/BarcodeScannerPanel";
+import { MealSwipeDeck } from "@/components/MealSwipeDeck";
+import { MealLibrary } from "@/components/MealLibrary";
+import { Toast } from "@/components/Toast";
 import { useAppState } from "@/lib/useAppState";
+import type { UserProfile } from "@/lib/types";
 
 function DashboardContent() {
-  const { state } = useAppState();
+  const { state, updateState } = useAppState();
+  const [toast, setToast] = useState<string | null>(null);
 
   if (!state) return null;
 
-  const { profile, inventory, meals, shoppingList } = state;
-  const savedMeals = meals.filter((m) => m.saved);
+  const { profile, inventory, mealLibrary, shoppingList, swipeDeck, swipeIndex } =
+    state;
   const requiredShopping = shoppingList.filter((s) => s.required && !s.bought);
+
+  const showToast = (message: string) => setToast(message);
 
   return (
     <AppShell profile={profile}>
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+
       <div className="mx-auto max-w-5xl">
         <header className="mb-8">
           <h1 className="text-2xl font-bold text-[#3D3429] md:text-3xl">
@@ -33,8 +44,10 @@ function DashboardContent() {
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <OverviewCard
             title="Profile status"
-            value="Setup pending"
-            subtitle="Quiz coming in Stage 2"
+            value={profile.profileComplete ? "Complete" : "Incomplete"}
+            subtitle={
+              profile.profileComplete ? "Ready for meal ideas" : "Take the quiz"
+            }
             accent="honey"
           />
           <OverviewCard
@@ -45,7 +58,7 @@ function DashboardContent() {
           />
           <OverviewCard
             title="Saved meal ideas"
-            value={savedMeals.length}
+            value={mealLibrary.length}
             subtitle="In your library"
             accent="salmon"
           />
@@ -61,77 +74,81 @@ function DashboardContent() {
           <SectionCard
             title="Profile Setup"
             description="Tell PrepDeck how you cook so meal ideas fit your life."
-            badge="Stage 2"
+            badge={profile.profileComplete ? "Complete" : "Quiz"}
           >
-            <p className="text-sm leading-relaxed text-[#6B5E52]">
-              The profile quiz will ask about your{" "}
-              <strong>appliances</strong>, <strong>allergies / foods to avoid</strong>,{" "}
-              <strong>eating goals</strong>, <strong>cooking skill & time</strong>, and{" "}
-              <strong>simplicity preference</strong>.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {profile.eatingGoals.map((goal) => (
-                <span
-                  key={goal}
-                  className="rounded-full bg-[#F4E8DC] px-3 py-1 text-xs text-[#6B5E52]"
-                >
-                  {goal}
-                </span>
-              ))}
-            </div>
+            <ProfileQuiz
+              profile={profile}
+              onSave={(updated: UserProfile) =>
+                updateState((prev) => ({ ...prev, profile: updated }))
+              }
+            />
           </SectionCard>
 
-          <SectionCard
-            title="Inventory"
-            description="What's in your fridge, pantry, and freezer right now."
-            badge={`${inventory.length} items`}
-          >
-            <InventoryPreview items={inventory} />
-            <p className="mt-4 text-xs text-[#8A7B6D]">
-              Full editing and barcode updates coming in later stages.
-            </p>
-          </SectionCard>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SectionCard
+              title="Inventory"
+              description="What's in your fridge, pantry, and freezer right now."
+              badge={`${inventory.length} items`}
+            >
+              <InventoryManager
+                inventory={inventory}
+                onChange={(next) =>
+                  updateState((prev) => ({ ...prev, inventory: next }))
+                }
+              />
+            </SectionCard>
 
-          <SectionCard
-            title="Barcode Scanner"
-            description="Quickly add groceries by scanning barcodes."
-            badge="Coming soon"
-          >
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#E8DDD0] bg-[#FAF6F0] px-6 py-10 text-center">
-              <span className="text-4xl" aria-hidden>
-                📷
-              </span>
-              <p className="mt-3 text-sm font-medium text-[#6B5E52]">
-                Real barcode scanning will be connected later
-              </p>
-              <p className="mt-1 text-xs text-[#8A7B6D]">
-                Structure is ready for a scanner API in Stage 2+
-              </p>
-            </div>
-          </SectionCard>
+            <SectionCard
+              title="Barcode Scanner"
+              description="Quickly add groceries by scanning barcodes."
+              badge="Test mode"
+            >
+              <BarcodeScannerPanel
+                inventory={inventory}
+                onInventoryChange={(next) =>
+                  updateState((prev) => ({ ...prev, inventory: next }))
+                }
+                onToast={showToast}
+              />
+            </SectionCard>
+          </div>
 
-          <SectionCard
-            title="Meal Swipe Cards"
-            description="Swipe through simple meal ideas matched to your setup."
-            badge="Preview"
-          >
-            {meals[0] && <MealPreviewCard meal={meals[0]} />}
-            <p className="mt-4 text-xs text-[#8A7B6D]">
-              Swipe gestures and full card deck coming in Stage 2.
-            </p>
-          </SectionCard>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SectionCard
+              title="Meal Swipe Cards"
+              description="Save meal ideas you like — skip the rest."
+              badge={`${swipeIndex}/${swipeDeck.length}`}
+            >
+              <MealSwipeDeck
+                swipeDeck={swipeDeck}
+                swipeIndex={swipeIndex}
+                mealLibrary={mealLibrary}
+                onSwipeIndexChange={(index) =>
+                  updateState((prev) => ({ ...prev, swipeIndex: index }))
+                }
+                onLibraryChange={(library) =>
+                  updateState((prev) => ({ ...prev, mealLibrary: library }))
+                }
+                onToast={showToast}
+              />
+            </SectionCard>
 
-          <SectionCard
-            title="Meal Library"
-            description="Meals you've saved for later."
-            badge={`${savedMeals.length} saved`}
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              {savedMeals.map((meal) => (
-                <MealPreviewCard key={meal.id} meal={meal} compact />
-              ))}
-            </div>
-          </SectionCard>
+            <SectionCard
+              title="Meal Library"
+              description="Saved preferences for your future AI meal planner."
+              badge={`${mealLibrary.length} saved`}
+            >
+              <MealLibrary
+                meals={mealLibrary}
+                onRemove={(id) =>
+                  updateState((prev) => ({
+                    ...prev,
+                    mealLibrary: prev.mealLibrary.filter((m) => m.id !== id),
+                  }))
+                }
+              />
+            </SectionCard>
+          </div>
         </div>
       </div>
     </AppShell>

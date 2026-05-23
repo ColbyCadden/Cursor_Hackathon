@@ -1,10 +1,44 @@
 import { createInitialAppState } from "./demoData";
-import type { AppState } from "./types";
+import { SWIPE_DECK_MEALS } from "./mealDeckData";
+import type { AppState, LegacyAppState, UserProfile } from "./types";
 
 const STORAGE_KEY = "prepdeck-app-state";
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
+}
+
+function migrateProfile(profile: Partial<UserProfile>): UserProfile {
+  const base = createInitialAppState().profile;
+  return {
+    ...base,
+    ...profile,
+    profileComplete: profile.profileComplete ?? false,
+  };
+}
+
+function migrateParsedState(parsed: LegacyAppState): AppState {
+  const initial = createInitialAppState();
+
+  const mealLibrary =
+    parsed.mealLibrary ??
+    (parsed.meals?.filter((m) => m.saved !== false) ?? initial.mealLibrary);
+
+  const swipeDeck =
+    parsed.swipeDeck?.length ? parsed.swipeDeck : SWIPE_DECK_MEALS.map((m) => ({ ...m }));
+
+  return {
+    isLoggedIn: parsed.isLoggedIn ?? false,
+    profile: migrateProfile(parsed.profile ?? {}),
+    inventory: parsed.inventory?.length ? parsed.inventory : initial.inventory,
+    mealLibrary,
+    swipeDeck,
+    swipeIndex: parsed.swipeIndex ?? 0,
+    shoppingList: parsed.shoppingList?.length
+      ? parsed.shoppingList
+      : initial.shoppingList,
+    chatMessages: parsed.chatMessages ?? [],
+  };
 }
 
 export function getAppState(): AppState {
@@ -19,12 +53,9 @@ export function getAppState(): AppState {
       saveAppState(initial);
       return initial;
     }
-    const parsed = JSON.parse(raw) as AppState;
-    return {
-      ...createInitialAppState(),
-      ...parsed,
-      profile: { ...createInitialAppState().profile, ...parsed.profile },
-    };
+    const parsed = JSON.parse(raw) as LegacyAppState;
+    const state = migrateParsedState(parsed);
+    return state;
   } catch {
     const initial = createInitialAppState();
     saveAppState(initial);

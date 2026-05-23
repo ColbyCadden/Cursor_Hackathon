@@ -1,14 +1,16 @@
+import { SWIPE_DECK_MEALS } from "./mealDeckData";
 import type { AppState } from "./types";
 
 export const DEMO_PROFILE: AppState["profile"] = {
   name: "Demo Student",
   studentType: "University student",
-  appliances: ["microwave", "stove", "oven", "air fryer"],
-  avoidedFoods: ["none"],
-  eatingGoals: ["high protein", "budget-friendly", "quick meals"],
+  appliances: ["Microwave", "Stove", "Oven", "Air fryer"],
+  avoidedFoods: ["None"],
+  eatingGoals: ["High protein", "Budget-friendly", "Quick meals"],
   cookingSkill: "Beginner",
   availableTime: "30–45 minutes",
-  simplicityPreference: "Simple meals with fewer ingredients",
+  simplicityPreference: "Simple: 5–7 ingredients",
+  profileComplete: false,
 };
 
 export const DEMO_INVENTORY: AppState["inventory"] = [
@@ -41,33 +43,31 @@ export const DEMO_INVENTORY: AppState["inventory"] = [
     name: "Frozen vegetables",
     amount: "1",
     unit: "bag",
-    category: "Produce",
+    category: "Frozen",
     percentLeft: 80,
   },
 ];
 
-export const DEMO_MEALS: AppState["meals"] = [
+export const DEMO_MEAL_LIBRARY: AppState["mealLibrary"] = [
   {
-    id: "meal-1",
+    id: "deck-1",
     name: "Chicken rice bowl",
-    tags: ["high protein", "meal prep", "budget"],
+    tags: ["high protein", "cheap", "meal prep friendly"],
     estimatedTime: "25 min",
     difficulty: "Easy",
     mainIngredients: ["chicken breast", "rice", "frozen vegetables"],
     requiredAppliance: "stove",
     nutritionEstimate: "~450 kcal",
-    saved: true,
   },
   {
-    id: "meal-2",
+    id: "deck-4",
     name: "Egg breakfast wrap",
-    tags: ["quick", "breakfast", "simple"],
+    tags: ["quick", "cheap", "beginner friendly"],
     estimatedTime: "12 min",
     difficulty: "Easy",
-    mainIngredients: ["eggs", "tortillas", "frozen vegetables"],
+    mainIngredients: ["eggs", "tortillas", "cheese"],
     requiredAppliance: "stove",
     nutritionEstimate: "~320 kcal",
-    saved: true,
   },
 ];
 
@@ -119,7 +119,9 @@ export function createInitialAppState(): AppState {
     isLoggedIn: false,
     profile: DEMO_PROFILE,
     inventory: DEMO_INVENTORY,
-    meals: DEMO_MEALS,
+    mealLibrary: DEMO_MEAL_LIBRARY,
+    swipeDeck: SWIPE_DECK_MEALS.map((m) => ({ ...m })),
+    swipeIndex: 0,
     shoppingList: DEMO_SHOPPING_LIST,
     chatMessages: [],
   };

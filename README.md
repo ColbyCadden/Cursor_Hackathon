@@ -2,7 +2,7 @@
 
 **Simple cooking for busy students.**
 
-Stage 1 prototype — meal prep and inventory app shell with fake login, sidebar navigation, sample data, and localStorage.
+Student meal prep prototype — Stage 1 shell + Stage 2 working dashboard features.
 
 ## Tech stack
 
@@ -43,8 +43,14 @@ lib/
   types.ts, demoData.ts, storage.ts
 ```
 
-## Stage 1 scope
+## Stage 2 dashboard
 
-Built: app shell, routing, design system, fake auth, localStorage, sample data, placeholders.
+- **Profile quiz** — 5-step setup with edit/summary mode, saved to localStorage
+- **Inventory** — add, edit, delete, search, percent-left bars
+- **Barcode-ready flow** — `evaluateBarcodeScan()` + test scan buttons; plug real scanner into `handleScan()` in `BarcodeScannerPanel`
+- **Meal swipe deck** — 12 meal ideas, Save/Skip, library persistence
+- **Meal library** — view and remove saved ideas
 
-Not yet: profile quiz, real inventory editing, barcode scanner, swipe UI, AI chat, full shopping logic.
+## Not yet (later stages)
+
+AI chat, full shopping list logic, real barcode hardware API.
