@@ -7,6 +7,7 @@ import { PrepDeckBrand } from "./PrepDeckLogo";
 import type { UserProfile } from "@/lib/types";
 
 const navItems = [
+  { href: "/dashboard", label: "Home", icon: "🏠" },
   { href: "/discover", label: "Discover", icon: "🔥" },
   { href: "/mealdex", label: "Mealdex", icon: "📚" },
   { href: "/shopping-list", label: "Shopping", icon: "🛒" },
@@ -14,7 +15,6 @@ const navItems = [
   { href: "/create", label: "Create card", icon: "➕" },
   { href: "/chat", label: "AI Chat", icon: "💬" },
   { href: "/profile", label: "Profile", icon: "👤" },
-  { href: "/dashboard", label: "Home", icon: "🏠" },
 ];
 
 interface SidebarProps {

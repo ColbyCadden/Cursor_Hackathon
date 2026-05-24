@@ -30,8 +30,8 @@ const TIME_BUDGET_MINUTES: Record<string, number> = {
 };
 
 const SKILL_MAX_DIFFICULTY: Record<string, number> = {
-  beginner: 2,
-  intermediate: 3,
+  beginner: 3,
+  intermediate: 4,
   confident: 5,
 };
 
@@ -56,55 +56,50 @@ export function enrichMeal(meal: Meal, seed?: Meal): Meal {
   };
 }
 
-function hasRequiredEquipment(meal: Meal, userEquipment: string[]): boolean {
-  const required = meal.requiredEquipment ?? [];
-  if (!required.length) return true;
-  const owned = new Set(userEquipment);
-  return required.every((item) => owned.has(item));
-}
-
 function matchesDiet(meal: Meal, eatingHabits?: string): boolean {
   if (eatingHabits !== "no_meat") return true;
   return !meal.containsMeat;
 }
 
-function matchesIngredientPreference(meal: Meal, preference?: string): boolean {
-  const pref = normalizeIngredientPreference(preference);
-  const count = meal.ingredients.length;
-  if (pref === "minimal") return count <= INGREDIENT_COUNT_THRESHOLD;
-  return count > INGREDIENT_COUNT_THRESHOLD;
-}
-
-/** Hard filters — meals that fail are never shown in Discover. */
+/** Hard filters — only strict diet rules remove cards from Discover. */
 export function mealMatchesProfile(meal: Meal, profile: UserProfile): boolean {
-  const equipment = profile.cooking_equipment ?? [];
   const enriched = enrichMeal(meal);
-
-  if (!hasRequiredEquipment(enriched, equipment)) return false;
-  if (!matchesDiet(enriched, profile.eating_habits)) return false;
-  if (!matchesIngredientPreference(enriched, profile.ingredient_preference)) {
-    return false;
-  }
-
-  return true;
+  return matchesDiet(enriched, profile.eating_habits);
 }
 
-/** Soft score — higher means better fit for time and skill preferences. */
+/** Soft score — higher means better fit; used for ordering, not hiding meals. */
 export function scoreMealForProfile(meal: Meal, profile: UserProfile): number {
   const enriched = enrichMeal(meal);
   let score = 100;
+
+  const equipment = profile.cooking_equipment ?? [];
+  const required = enriched.requiredEquipment ?? [];
+  for (const item of required) {
+    if (!equipment.includes(item)) {
+      score -= 12;
+    }
+  }
+
+  const pref = normalizeIngredientPreference(profile.ingredient_preference);
+  const count = enriched.ingredients.length;
+  if (pref === "minimal" && count > INGREDIENT_COUNT_THRESHOLD + 1) {
+    score -= 10;
+  }
+  if (pref === "lots" && count < INGREDIENT_COUNT_THRESHOLD) {
+    score -= 8;
+  }
 
   const preferredMinutes =
     TIME_BUDGET_MINUTES[profile.cooking_time_per_week ?? "3_6h"] ?? 45;
   const minutes = enriched.estimatedMinutes ?? enriched.difficulty * 12 + 10;
   if (minutes > preferredMinutes) {
-    score -= Math.min(40, (minutes - preferredMinutes) * 0.8);
+    score -= Math.min(25, (minutes - preferredMinutes) * 0.5);
   }
 
   const maxDifficulty =
-    SKILL_MAX_DIFFICULTY[profile.cooking_skill_level ?? "beginner"] ?? 2;
+    SKILL_MAX_DIFFICULTY[profile.cooking_skill_level ?? "beginner"] ?? 3;
   if (enriched.difficulty > maxDifficulty) {
-    score -= (enriched.difficulty - maxDifficulty) * 12;
+    score -= (enriched.difficulty - maxDifficulty) * 8;
   }
 
   return score;
