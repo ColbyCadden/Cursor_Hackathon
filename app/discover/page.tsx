@@ -19,7 +19,10 @@ function DiscoverContent() {
   return (
     <AppShell profile={state.profile}>
       <div className="mx-auto w-full max-w-lg pb-24">
-        <header className="mb-2 px-1 pt-2 text-center">
+        <header className="relative mb-2 px-1 pt-2 text-center">
+          <p className="absolute right-0 top-0 max-w-[9.5rem] text-right text-[10px] leading-snug text-[var(--text-muted)]">
+            Available meals align with your cooking preferences
+          </p>
           <p className="text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
             PrepDeck
           </p>
