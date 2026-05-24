@@ -61,45 +61,52 @@ function matchesDiet(meal: Meal, eatingHabits?: string): boolean {
   return !meal.containsMeat;
 }
 
-/** Hard filters — only strict diet rules remove cards from Discover. */
+function hasRequiredEquipment(meal: Meal, equipment: string[]): boolean {
+  const required = meal.requiredEquipment ?? [];
+  if (required.length === 0) return true;
+  return required.every((item) => equipment.includes(item));
+}
+
+/** Hard filters — diet and equipment remove cards from Discover entirely. */
 export function mealMatchesProfile(meal: Meal, profile: UserProfile): boolean {
   const enriched = enrichMeal(meal);
-  return matchesDiet(enriched, profile.eating_habits);
+  if (!matchesDiet(enriched, profile.eating_habits)) return false;
+
+  const equipment = profile.cooking_equipment ?? [];
+  return hasRequiredEquipment(enriched, equipment);
 }
 
 /** Soft score — higher means better fit; used for ordering, not hiding meals. */
 export function scoreMealForProfile(meal: Meal, profile: UserProfile): number {
   const enriched = enrichMeal(meal);
-  let score = 100;
-
-  const equipment = profile.cooking_equipment ?? [];
-  const required = enriched.requiredEquipment ?? [];
-  for (const item of required) {
-    if (!equipment.includes(item)) {
-      score -= 12;
-    }
-  }
+  let score = 50;
 
   const pref = normalizeIngredientPreference(profile.ingredient_preference);
   const count = enriched.ingredients.length;
-  if (pref === "minimal" && count > INGREDIENT_COUNT_THRESHOLD + 1) {
-    score -= 10;
-  }
-  if (pref === "lots" && count < INGREDIENT_COUNT_THRESHOLD) {
-    score -= 8;
+  if (pref === "minimal") {
+    if (count <= INGREDIENT_COUNT_THRESHOLD) score += 4;
+    else if (count > INGREDIENT_COUNT_THRESHOLD + 1) score -= 3;
+  } else if (count >= INGREDIENT_COUNT_THRESHOLD) {
+    score += 4;
+  } else if (count < INGREDIENT_COUNT_THRESHOLD) {
+    score -= 3;
   }
 
   const preferredMinutes =
     TIME_BUDGET_MINUTES[profile.cooking_time_per_week ?? "3_6h"] ?? 45;
   const minutes = enriched.estimatedMinutes ?? enriched.difficulty * 12 + 10;
-  if (minutes > preferredMinutes) {
-    score -= Math.min(25, (minutes - preferredMinutes) * 0.5);
+  if (minutes <= preferredMinutes) {
+    score += 3;
+  } else {
+    score -= Math.min(6, (minutes - preferredMinutes) * 0.12);
   }
 
   const maxDifficulty =
     SKILL_MAX_DIFFICULTY[profile.cooking_skill_level ?? "beginner"] ?? 3;
-  if (enriched.difficulty > maxDifficulty) {
-    score -= (enriched.difficulty - maxDifficulty) * 8;
+  if (enriched.difficulty <= maxDifficulty) {
+    score += 3;
+  } else {
+    score -= (enriched.difficulty - maxDifficulty) * 2;
   }
 
   return score;

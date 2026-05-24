@@ -65,7 +65,7 @@ function MealdexContent() {
         >
           {filteredOut && (
             <p className="mb-4 text-sm text-[var(--text-muted)]">
-              Nothing matches your diet preferences right now. Update your{" "}
+              Nothing matches your diet or equipment right now. Update your{" "}
               <Link href="/profile" className="font-semibold text-[var(--green-dark)] underline">
                 profile
               </Link>
