@@ -1,10 +1,16 @@
 import { createInitialAppState } from "./demoData";
-import { SWIPE_DECK_MEALS } from "./mealDeckData";
-import { migrateShoppingCategory } from "./shoppingCategories";
+import { SEED_MEALS } from "./meal/seedMeals";
 import { authenticateUser } from "./auth";
 import { clearPendingSignup } from "./signupSession";
 import { registeredUserToProfile } from "./signupProfile";
-import type { AppState, LegacyAppState, ShoppingListItem, UserProfile } from "./types";
+import { migrateShoppingCategory } from "./shoppingCategories";
+import type {
+  AppState,
+  LegacyAppState,
+  Meal,
+  ShoppingListItem,
+  UserProfile,
+} from "./types";
 
 const STORAGE_KEY = "prepdeck-app-state";
 
@@ -31,15 +37,52 @@ function migrateShoppingList(items: ShoppingListItem[]): ShoppingListItem[] {
   }));
 }
 
+function hasMealShape(m: unknown): m is Meal {
+  return (
+    typeof m === "object" &&
+    m !== null &&
+    "imageUri" in m &&
+    "ingredients" in m &&
+    typeof (m as Meal).imageUri === "string"
+  );
+}
+
+function migrateMeals(parsed: LegacyAppState): Meal[] {
+  const rawMeals = parsed.meals as unknown[] | undefined;
+  if (rawMeals?.length && hasMealShape(rawMeals[0])) {
+    return rawMeals as Meal[];
+  }
+
+  const customFromCatalog = (rawMeals ?? []).filter(hasMealShape) as Meal[];
+  const seedIds = new Set(SEED_MEALS.map((m) => m.id));
+  const customs = customFromCatalog.filter((m) => !seedIds.has(m.id));
+
+  return [...customs, ...SEED_MEALS];
+}
+
+function migrateSwipedIds(parsed: LegacyAppState): string[] {
+  if (parsed.swipedMealIds?.length) {
+    return parsed.swipedMealIds;
+  }
+
+  const swiped: string[] = [];
+  if (parsed.swipeDeck && typeof parsed.swipeIndex === "number") {
+    for (let i = 0; i < parsed.swipeIndex && i < parsed.swipeDeck.length; i++) {
+      swiped.push(parsed.swipeDeck[i].id);
+    }
+  }
+  return swiped;
+}
+
+function migrateSavedIds(parsed: LegacyAppState): string[] {
+  if (parsed.savedMealIds?.length) {
+    return parsed.savedMealIds;
+  }
+  return parsed.mealLibrary?.map((m) => m.id) ?? [];
+}
+
 function migrateParsedState(parsed: LegacyAppState): AppState {
   const initial = createInitialAppState();
-
-  const mealLibrary =
-    parsed.mealLibrary ??
-    (parsed.meals?.filter((m) => m.saved !== false) ?? initial.mealLibrary);
-
-  const swipeDeck =
-    parsed.swipeDeck?.length ? parsed.swipeDeck : SWIPE_DECK_MEALS.map((m) => ({ ...m }));
 
   const shoppingList = parsed.shoppingList?.length
     ? migrateShoppingList(parsed.shoppingList)
@@ -49,9 +92,9 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
     isLoggedIn: parsed.isLoggedIn ?? false,
     profile: migrateProfile(parsed.profile ?? {}),
     inventory: parsed.inventory?.length ? parsed.inventory : initial.inventory,
-    mealLibrary,
-    swipeDeck,
-    swipeIndex: parsed.swipeIndex ?? 0,
+    meals: migrateMeals(parsed),
+    swipedMealIds: migrateSwipedIds(parsed),
+    savedMealIds: migrateSavedIds(parsed),
     shoppingList,
     chatMessages: (parsed.chatMessages ?? []).map((msg) => ({
       ...msg,
@@ -75,8 +118,7 @@ export function getAppState(): AppState {
       return initial;
     }
     const parsed = JSON.parse(raw) as LegacyAppState;
-    const state = migrateParsedState(parsed);
-    return state;
+    return migrateParsedState(parsed);
   } catch {
     const initial = createInitialAppState();
     saveAppState(initial);
@@ -98,8 +140,12 @@ export function resetDemoData(): AppState {
 }
 
 export function loginDemoUser(): AppState {
-  const state = getAppState();
-  state.isLoggedIn = true;
+  const initial = createInitialAppState();
+  const state: AppState = {
+    ...initial,
+    isLoggedIn: true,
+    profile: initial.profile,
+  };
   saveAppState(state);
   return state;
 }
@@ -124,17 +170,16 @@ export function loginWithCredentials(
   return { ok: true, state };
 }
 
-export function logoutUser(): AppState {
-  const state = getAppState();
-  state.isLoggedIn = false;
-  saveAppState(state);
-  return state;
-}
-
-/** Wipes all saved accounts and app data — useful for testing signup from scratch. */
 export function resetAllAppData(): void {
   if (!isBrowser()) return;
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem("prepdeck-registered-users");
   clearPendingSignup();
+}
+
+export function logoutUser(): AppState {
+  const state = getAppState();
+  state.isLoggedIn = false;
+  saveAppState(state);
+  return state;
 }

@@ -23,7 +23,7 @@ export default function SignupAccountPage() {
   useEffect(() => {
     const state = getAppState();
     if (state.isLoggedIn && profileHasSignupData(state.profile)) {
-      router.replace("/dashboard");
+      router.replace("/discover");
     }
   }, [router]);
 

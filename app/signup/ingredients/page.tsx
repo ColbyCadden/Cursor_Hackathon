@@ -32,7 +32,7 @@ export default function SignupIngredientsPage() {
     const finalPending = { ...getPendingSignup(), ingredient_preference: selected };
     try {
       completeSignup(finalPending);
-      router.push("/dashboard");
+      router.replace("/discover");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Could not create account.");
     }

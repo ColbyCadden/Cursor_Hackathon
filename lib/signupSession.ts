@@ -90,5 +90,5 @@ export function onboardingResumePath(pending: PendingSignup): string {
   if (!pending.ingredient_preference) {
     return "/signup/ingredients";
   }
-  return "/dashboard";
+  return "/discover";
 }

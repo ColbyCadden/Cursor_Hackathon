@@ -4,13 +4,12 @@ export interface UserProfile {
   name: string;
   email?: string;
   studentType: string;
-  /** Calum signup fields — source of truth for personalization */
+  /** Signup onboarding fields */
   cooking_equipment?: string[];
   eating_habits?: string;
   cooking_time_per_week?: string;
   cooking_skill_level?: string;
   ingredient_preference?: string;
-  /** Legacy fields kept for meal/chat features */
   appliances: string[];
   avoidedFoods: string[];
   eatingGoals: string[];
@@ -60,8 +59,31 @@ export interface ScannedInventoryItem {
   percentLeft: number;
 }
 
+export type RatingLevel = 1 | 2 | 3 | 4 | 5;
+
+/** Pokémon-style meal card (Mealdex) */
+export interface Meal {
+  id: string;
+  name: string;
+  imageUri: string;
+  difficulty: RatingLevel;
+  price: RatingLevel;
+  highProtein: boolean;
+  highVegetables: boolean;
+  ingredients: string[];
+  isCustom?: boolean;
+}
+
+export interface MergedMealIngredient {
+  name: string;
+  count: number;
+  mealNames: string[];
+}
+
+/** @deprecated Legacy swipe card — migrated to Meal on load */
 export type MealDifficulty = "Easy" | "Medium" | "Hard";
 
+/** @deprecated */
 export interface MealCard {
   id: string;
   name: string;
@@ -115,14 +137,20 @@ export interface AppState {
   isLoggedIn: boolean;
   profile: UserProfile;
   inventory: InventoryItem[];
-  mealLibrary: MealCard[];
-  swipeDeck: MealCard[];
-  swipeIndex: number;
+  /** Full catalog: seed meals + user-created cards */
+  meals: Meal[];
+  /** Each meal id can only be swiped once (left or right) */
+  swipedMealIds: string[];
+  /** Right-swiped meals (Mealdex collection) */
+  savedMealIds: string[];
   shoppingList: ShoppingListItem[];
   chatMessages: ChatMessage[];
 }
 
-/** @deprecated Stage 1 field — migrated to mealLibrary */
-export interface LegacyAppState extends AppState {
-  meals?: MealCard[];
+/** @deprecated — migrated on load */
+export interface LegacyAppState extends Omit<Partial<AppState>, "meals"> {
+  mealLibrary?: MealCard[];
+  swipeDeck?: MealCard[];
+  swipeIndex?: number;
+  meals?: Meal[] | MealCard[];
 }

@@ -1,16 +1,22 @@
-import { SWIPE_DECK_MEALS } from "./mealDeckData";
+import { SEED_MEALS } from "./meal/seedMeals";
 import type { AppState } from "./types";
 
 export const DEMO_PROFILE: AppState["profile"] = {
   name: "Demo Student",
+  email: "demo@university.edu",
   studentType: "University student",
+  cooking_equipment: ["microwave", "stovetop", "oven", "air_fryer"],
+  eating_habits: "minimal_meat",
+  cooking_time_per_week: "3_6h",
+  cooking_skill_level: "beginner",
+  ingredient_preference: "balanced",
   appliances: ["Microwave", "Stove", "Oven", "Air fryer"],
   avoidedFoods: ["None"],
   eatingGoals: ["High protein", "Budget-friendly", "Quick meals"],
   cookingSkill: "Beginner",
   availableTime: "30–45 minutes",
   simplicityPreference: "Simple: 5–7 ingredients",
-  profileComplete: false,
+  profileComplete: true,
 };
 
 export const DEMO_INVENTORY: AppState["inventory"] = [
@@ -48,81 +54,15 @@ export const DEMO_INVENTORY: AppState["inventory"] = [
   },
 ];
 
-export const DEMO_MEAL_LIBRARY: AppState["mealLibrary"] = [
-  {
-    id: "deck-1",
-    name: "Chicken rice bowl",
-    tags: ["high protein", "cheap", "meal prep friendly"],
-    estimatedTime: "25 min",
-    difficulty: "Easy",
-    mainIngredients: ["chicken breast", "rice", "frozen vegetables"],
-    requiredAppliance: "stove",
-    nutritionEstimate: "~450 kcal",
-  },
-  {
-    id: "deck-4",
-    name: "Egg breakfast wrap",
-    tags: ["quick", "cheap", "beginner friendly"],
-    estimatedTime: "12 min",
-    difficulty: "Easy",
-    mainIngredients: ["eggs", "tortillas", "cheese"],
-    requiredAppliance: "stove",
-    nutritionEstimate: "~320 kcal",
-  },
-];
-
-export const DEMO_SHOPPING_LIST: AppState["shoppingList"] = [
-  {
-    id: "shop-1",
-    name: "Chicken breast",
-    amount: "1",
-    unit: "kg",
-    category: "Protein",
-    required: true,
-    bought: false,
-    addedToInventory: false,
-  },
-  {
-    id: "shop-2",
-    name: "Tortillas",
-    amount: "1",
-    unit: "pack",
-    category: "Carbs",
-    required: true,
-    bought: false,
-    addedToInventory: false,
-  },
-  {
-    id: "shop-3",
-    name: "Frozen vegetables",
-    amount: "1",
-    unit: "bag",
-    category: "Produce",
-    required: true,
-    bought: false,
-    addedToInventory: false,
-  },
-  {
-    id: "shop-4",
-    name: "Sauce",
-    amount: "1",
-    unit: "bottle",
-    category: "Other",
-    required: false,
-    bought: false,
-    addedToInventory: false,
-  },
-];
-
 export function createInitialAppState(): AppState {
   return {
     isLoggedIn: false,
     profile: DEMO_PROFILE,
     inventory: DEMO_INVENTORY,
-    mealLibrary: DEMO_MEAL_LIBRARY,
-    swipeDeck: SWIPE_DECK_MEALS.map((m) => ({ ...m })),
-    swipeIndex: 0,
-    shoppingList: DEMO_SHOPPING_LIST,
+    meals: SEED_MEALS.map((m) => ({ ...m })),
+    swipedMealIds: [],
+    savedMealIds: ["seed-grilled-chicken-salad", "seed-burrito-bowl"],
+    shoppingList: [],
     chatMessages: [],
   };
 }
