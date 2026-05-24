@@ -1,4 +1,5 @@
 import { createId } from "./id";
+import { DEFAULT_INVENTORY_PORTIONS } from "./inventoryPortions";
 import type { InventoryItem, ScannedInventoryItem } from "./types";
 
 export function normalizeItemName(name: string): string {
@@ -51,15 +52,12 @@ export function mergeScannedIntoExisting(
     newAmount = String(existingNum + scannedNum);
   }
 
-  const boostedPercent = Math.min(
-    100,
-    Math.max(existing.percentLeft, scanned.percentLeft) + 15
-  );
+  const scannedPortions = Math.max(0, scanned.portionsLeft ?? DEFAULT_INVENTORY_PORTIONS);
 
   return {
     ...existing,
     amount: newAmount,
-    percentLeft: boostedPercent,
+    portionsLeft: existing.portionsLeft + scannedPortions,
   };
 }
 
@@ -72,7 +70,7 @@ export function createInventoryItemFromScan(
     amount: scanned.amount,
     unit: scanned.unit,
     category: scanned.category,
-    percentLeft: scanned.percentLeft,
+    portionsLeft: scanned.portionsLeft ?? DEFAULT_INVENTORY_PORTIONS,
   };
 }
 

@@ -48,7 +48,11 @@ export interface InventoryItem {
   amount: string;
   unit: string;
   category: InventoryCategory;
-  percentLeft: number;
+  /** How many meal-sized portions remain */
+  portionsLeft: number;
+  expiryDate?: string;
+  barcode?: string;
+  source?: "manual" | "barcode";
 }
 
 export interface ScannedInventoryItem {
@@ -56,7 +60,7 @@ export interface ScannedInventoryItem {
   amount: string;
   unit: string;
   category: InventoryCategory;
-  percentLeft: number;
+  portionsLeft: number;
 }
 
 export type RatingLevel = 1 | 2 | 3 | 4 | 5;
@@ -115,6 +119,8 @@ export interface ShoppingListItem {
   required: boolean;
   bought: boolean;
   addedToInventory: boolean;
+  reason?: string;
+  sourceMealId?: string;
 }
 
 export type ChatRole = "user" | "assistant";
@@ -125,6 +131,51 @@ export interface SuggestedShoppingItem {
   unit: string;
   category: ShoppingCategory;
   required: boolean;
+  reason?: string;
+  sourceMealId?: string;
+}
+
+export type AIActionType =
+  | "add_to_shopping_list"
+  | "add_multiple_to_shopping_list"
+  | "use_substitute"
+  | "remove_optional_ingredient"
+  | "request_ai_revision"
+  | "pick_alternative_meal"
+  | "accept_meal_plan"
+  | "save_generated_recipe";
+
+export interface ChatAction {
+  label: string;
+  type: AIActionType;
+  payload: Record<string, unknown>;
+}
+
+export interface AdaptedRecipeIngredient {
+  name: string;
+  amount: string;
+  unit: string;
+  source?: "inventory" | "shopping-list" | "missing";
+}
+
+export interface AdaptedRecipe {
+  title: string;
+  basedOnMealCardId?: string;
+  servings?: number;
+  tags?: string[];
+  usesInventory?: string[];
+  missingIngredients?: string[];
+  ingredients?: AdaptedRecipeIngredient[];
+  steps?: string[];
+}
+
+export interface GeneratedMealPlan {
+  selectedMealIds?: string[];
+  recipes: AdaptedRecipe[];
+  servings?: number;
+  missingIngredients?: string[];
+  userDecisions?: string[];
+  updatedAt?: string;
 }
 
 export interface ChatMessage {
@@ -137,6 +188,12 @@ export interface ChatMessage {
   mealPrepSteps?: string[];
   /** True after user adds suggested items from this message */
   suggestedItemsAdded?: boolean;
+  actions?: ChatAction[];
+  /** Indices of actions the user already clicked */
+  actionsApplied?: number[];
+  recipes?: AdaptedRecipe[];
+  warnings?: string[];
+  needsUserChoice?: boolean;
 }
 
 export interface AppState {
@@ -151,6 +208,8 @@ export interface AppState {
   savedMealIds: string[];
   shoppingList: ShoppingListItem[];
   chatMessages: ChatMessage[];
+  /** AI-generated meal plan / adapted recipes */
+  generatedMealPlan?: GeneratedMealPlan | null;
 }
 
 /** @deprecated — migrated on load */

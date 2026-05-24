@@ -10,6 +10,7 @@ const navItems = [
   { href: "/dashboard", label: "Home", icon: "🏠" },
   { href: "/discover", label: "Discover", icon: "🔥" },
   { href: "/mealdex", label: "Mealdex", icon: "📚" },
+  { href: "/inventory", label: "Inventory", icon: "🧊" },
   { href: "/shopping-list", label: "Shopping", icon: "🛒" },
   { href: "/scanner", label: "Scanner", icon: "📷" },
   { href: "/create", label: "Create card", icon: "➕" },

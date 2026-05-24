@@ -11,6 +11,7 @@ import {
   addOrUpdateInventoryItem,
   applyCreateSeparate,
 } from "@/lib/inventoryBarcode";
+import { DEFAULT_INVENTORY_PORTIONS } from "@/lib/inventoryPortions";
 import { createId } from "@/lib/id";
 import { searchProducts, type ProductSearchResult } from "@/lib/productSearch";
 import type { InventoryCategory, ScannedInventoryItem } from "@/lib/types";
@@ -104,6 +105,7 @@ export function BarcodeScanner() {
   const [searchResults, setSearchResults] = useState<ProductSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [manualBarcode, setManualBarcode] = useState("");
+  const [scannerReady, setScannerReady] = useState(false);
 
   const syncSession = useCallback((items: SessionItem[]) => {
     sessionRef.current = items;
@@ -197,6 +199,11 @@ export function BarcodeScanner() {
   }, [runScanTick, stopScanLoop]);
 
   const startCamera = useCallback(async () => {
+    if (!scannerReady || !fileScannerRef.current) {
+      setStatus("Loading scanner engine… try again in a moment.");
+      return;
+    }
+
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraError("Camera not supported in this browser.");
       return;
@@ -241,7 +248,7 @@ export function BarcodeScanner() {
       setStatus(message);
       stopCamera();
     }
-  }, [facingMode, startScanLoop, stopCamera]);
+  }, [facingMode, scannerReady, startScanLoop, stopCamera]);
 
   const switchCamera = useCallback(() => {
     setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
@@ -249,7 +256,11 @@ export function BarcodeScanner() {
 
   useEffect(() => {
     mountedRef.current = true;
+    let cancelled = false;
+
     void import("html5-qrcode").then(({ Html5Qrcode, Html5QrcodeSupportedFormats }) => {
+      if (cancelled || !mountedRef.current) return;
+
       fileScannerRef.current = new Html5Qrcode(decodeRegionId, {
         formatsToSupport: [
           Html5QrcodeSupportedFormats.UPC_A,
@@ -265,10 +276,13 @@ export function BarcodeScanner() {
         useBarCodeDetectorIfSupported: true,
         verbose: false,
       });
+      setScannerReady(true);
     });
 
     return () => {
+      cancelled = true;
       mountedRef.current = false;
+      setScannerReady(false);
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
       if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
       stopCamera();
@@ -277,6 +291,7 @@ export function BarcodeScanner() {
       } catch {
         // Ignore.
       }
+      fileScannerRef.current = null;
     };
   }, [decodeRegionId, stopCamera]);
 
@@ -425,7 +440,7 @@ export function BarcodeScanner() {
           amount: item.amount.trim(),
           unit: item.unit.trim(),
           category: item.category,
-          percentLeft: 100,
+          portionsLeft: DEFAULT_INVENTORY_PORTIONS,
         };
 
         const result = addOrUpdateInventoryItem(nextInventory, scanned);
@@ -547,9 +562,10 @@ export function BarcodeScanner() {
                     <button
                       type="button"
                       onClick={() => void startCamera()}
-                      className="flex-1 rounded-xl bg-[var(--salmon)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--salmon-dark)]"
+                      disabled={!scannerReady}
+                      className="flex-1 rounded-xl bg-[var(--salmon)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--salmon-dark)] disabled:opacity-60"
                     >
-                      Start scanning
+                      {scannerReady ? "Start scanning" : "Loading scanner…"}
                     </button>
                   ) : (
                     <>
@@ -571,7 +587,12 @@ export function BarcodeScanner() {
                   )}
                 </div>
 
-                {cameraActive && (
+                {cameraActive && !scannerReady && (
+                  <p className="text-xs text-amber-700">
+                    Scanner engine still loading — live decode will start automatically.
+                  </p>
+                )}
+                {cameraActive && scannerReady && (
                   <p className="text-xs text-[var(--text-muted)]">
                     Scanning ~4×/sec with all three decoders. Move slowly across
                     the barcode — each item auto-adds to your session.
@@ -853,7 +874,7 @@ export function BarcodeScanner() {
                     </p>
                   )}
                   <p className="mt-1 text-xs text-[var(--text-muted)]">
-                    {item.category} · {item.percentLeft}% left
+                    {item.category} · {item.portionsLeft} portion{item.portionsLeft === 1 ? "" : "s"} left
                   </p>
                 </div>
                 <button

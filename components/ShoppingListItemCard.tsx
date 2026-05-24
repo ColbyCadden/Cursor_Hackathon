@@ -39,10 +39,18 @@ export function ShoppingListItemCard({
                 optional
               </span>
             )}
+            {item.addedToInventory && (
+              <span className="rounded-full bg-[#E8F5E9]/80 px-2 py-0.5 text-xs text-[#5C7A5C]">
+                In pantry
+              </span>
+            )}
           </div>
           <p className="mt-0.5 text-xs text-[#8A7B6D]">
             {item.amount} {item.unit}
           </p>
+          {item.reason ? (
+            <p className="mt-0.5 text-xs italic text-[#8A7B6D]">{item.reason}</p>
+          ) : null}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 pl-8 sm:pl-8">

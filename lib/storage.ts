@@ -1,4 +1,5 @@
 import { createInitialAppState } from "./demoData";
+import { DEFAULT_INVENTORY_PORTIONS, portionsFromLegacyPercent } from "./inventoryPortions";
 import { enrichMeal, normalizeIngredientPreference } from "./meal/mealPersonalization";
 import { SEED_MEALS } from "./meal/seedMeals";
 import { authenticateUser } from "./auth";
@@ -7,6 +8,7 @@ import { registeredUserToProfile } from "./signupProfile";
 import { migrateShoppingCategory } from "./shoppingCategories";
 import type {
   AppState,
+  ChatMessage,
   LegacyAppState,
   Meal,
   ShoppingListItem,
@@ -46,6 +48,8 @@ function migrateShoppingList(items: ShoppingListItem[]): ShoppingListItem[] {
     bought: item.bought ?? false,
     addedToInventory: item.addedToInventory ?? false,
     required: item.required ?? true,
+    reason: item.reason,
+    sourceMealId: item.sourceMealId,
   }));
 }
 
@@ -94,6 +98,38 @@ function migrateSavedIds(parsed: LegacyAppState): string[] {
   return parsed.mealLibrary?.map((m) => m.id) ?? [];
 }
 
+function dedupeChatMessages(messages: ChatMessage[]): ChatMessage[] {
+  const result: ChatMessage[] = [];
+
+  for (const message of messages) {
+    const messageTime = new Date(message.createdAt).getTime();
+    const duplicate = result.some(
+      (existing) =>
+        existing.role === message.role &&
+        existing.content === message.content &&
+        Math.abs(messageTime - new Date(existing.createdAt).getTime()) < 5000
+    );
+    if (!duplicate) result.push(message);
+  }
+
+  return result;
+}
+
+function migrateInventoryItem(item: InventoryItem & { percentLeft?: number }): InventoryItem {
+  let portionsLeft = item.portionsLeft;
+  if (typeof portionsLeft !== "number" && typeof item.percentLeft === "number") {
+    portionsLeft = portionsFromLegacyPercent(item.percentLeft);
+  }
+  if (typeof portionsLeft !== "number" || Number.isNaN(portionsLeft)) {
+    portionsLeft = DEFAULT_INVENTORY_PORTIONS;
+  }
+
+  return {
+    ...item,
+    portionsLeft: Math.max(0, Math.round(portionsLeft)),
+  };
+}
+
 function migrateParsedState(parsed: LegacyAppState): AppState {
   const initial = createInitialAppState();
 
@@ -104,17 +140,25 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
   return {
     isLoggedIn: parsed.isLoggedIn ?? false,
     profile: migrateProfile(parsed.profile ?? {}),
-    inventory: parsed.inventory ?? [],
+    inventory: (parsed.inventory ?? []).map((item) => migrateInventoryItem(item)),
     meals: migrateMeals(parsed),
     swipedMealIds: migrateSwipedIds(parsed),
     savedMealIds: migrateSavedIds(parsed),
     shoppingList,
-    chatMessages: (parsed.chatMessages ?? []).map((msg) => ({
-      ...msg,
-      suggestedItems: msg.suggestedItems ?? undefined,
-      mealPrepSteps: msg.mealPrepSteps ?? undefined,
-      suggestedItemsAdded: msg.suggestedItemsAdded ?? false,
-    })),
+    chatMessages: dedupeChatMessages(
+      (parsed.chatMessages ?? []).map((msg) => ({
+        ...msg,
+        suggestedItems: msg.suggestedItems ?? undefined,
+        mealPrepSteps: msg.mealPrepSteps ?? undefined,
+        suggestedItemsAdded: msg.suggestedItemsAdded ?? false,
+        actions: msg.actions ?? undefined,
+        actionsApplied: msg.actionsApplied ?? [],
+        recipes: msg.recipes ?? undefined,
+        warnings: msg.warnings ?? undefined,
+        needsUserChoice: msg.needsUserChoice ?? false,
+      }))
+    ),
+    generatedMealPlan: parsed.generatedMealPlan ?? null,
   };
 }
 

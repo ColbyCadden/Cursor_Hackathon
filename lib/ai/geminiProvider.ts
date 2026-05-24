@@ -33,20 +33,25 @@ async function generateWithGeminiModel(
     systemInstruction: `${buildSystemPrompt()}\n\nCurrent student context:\n${context}`,
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 1200,
+      maxOutputTokens: 8192,
       responseMimeType: "application/json",
     },
   });
 
   const chat = model.startChat({ history });
   const result = await chat.sendMessage(message);
-  const content = result.response.text()?.trim();
+  const response = result.response;
+  const content = response.text()?.trim();
+  const finishReason = response.candidates?.[0]?.finishReason;
 
   if (!content) {
     throw new Error("Empty Gemini response");
   }
 
-  return { ...parseAIResponse(content), source: "gemini" };
+  const parsed = parseAIResponse(content, {
+    truncated: finishReason === "MAX_TOKENS",
+  });
+  return { ...parsed, source: "gemini" };
 }
 
 export async function generateWithGemini(

@@ -1,16 +1,33 @@
 "use client";
 
+import { ChatActionButtons } from "./ChatActionButtons";
+import { ChatRecipeCards } from "./ChatRecipeCards";
 import { SuggestedShoppingItems } from "./SuggestedShoppingItems";
-import type { ChatMessage } from "@/lib/types";
+import { parseAIResponse } from "@/lib/ai/chatHelpers";
+import type { ChatAction, ChatMessage } from "@/lib/types";
+
+/** Show plain text even if an old message stored raw JSON. */
+function displayChatContent(content: string): string {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith("{") || !trimmed.includes('"message"')) {
+    return content;
+  }
+  const parsed = parseAIResponse(trimmed);
+  return parsed.text || content;
+}
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
   onAddSuggestedItems?: (messageId: string) => void;
+  onAction?: (messageId: string, action: ChatAction, index: number) => void;
+  actionsDisabled?: boolean;
 }
 
 export function ChatMessageBubble({
   message,
   onAddSuggestedItems,
+  onAction,
+  actionsDisabled,
 }: ChatMessageBubbleProps) {
   const isUser = message.role === "user";
 
@@ -28,7 +45,19 @@ export function ChatMessageBubble({
             PrepDeck AI
           </p>
         )}
-        <p className="whitespace-pre-wrap">{message.content}</p>
+        <p className="whitespace-pre-wrap">{displayChatContent(message.content)}</p>
+
+        {message.warnings && message.warnings.length > 0 && (
+          <ul className="mt-2 space-y-1 text-xs text-amber-800">
+            {message.warnings.map((warning) => (
+              <li key={warning}>⚠ {warning}</li>
+            ))}
+          </ul>
+        )}
+
+        {message.recipes && message.recipes.length > 0 && (
+          <ChatRecipeCards recipes={message.recipes} />
+        )}
 
         {message.mealPrepSteps && message.mealPrepSteps.length > 0 && (
           <div className="mt-3 rounded-lg bg-[var(--surface)] p-3">
@@ -43,10 +72,20 @@ export function ChatMessageBubble({
           </div>
         )}
 
+        {!isUser && message.actions && message.actions.length > 0 && onAction && (
+          <ChatActionButtons
+            actions={message.actions}
+            appliedIndices={message.actionsApplied}
+            onAction={(action, index) => onAction(message.id, action, index)}
+            disabled={actionsDisabled}
+          />
+        )}
+
         {!isUser &&
           message.suggestedItems &&
           message.suggestedItems.length > 0 &&
-          onAddSuggestedItems && (
+          onAddSuggestedItems &&
+          !message.actions?.length && (
             <SuggestedShoppingItems
               items={message.suggestedItems}
               added={message.suggestedItemsAdded}

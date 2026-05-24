@@ -44,16 +44,20 @@ export async function generateWithGroq(
         model: modelName,
         messages,
         temperature: 0.7,
-        max_tokens: 1200,
+        max_tokens: 4096,
         response_format: { type: "json_object" },
       });
 
       const content = completion.choices[0]?.message?.content?.trim();
+      const finishReason = completion.choices[0]?.finish_reason;
       if (!content) {
         throw new Error("Empty Groq response");
       }
 
-      return { ...parseAIResponse(content), source: "groq" };
+      return {
+        ...parseAIResponse(content, { truncated: finishReason === "length" }),
+        source: "groq",
+      };
     } catch (error) {
       lastError = error;
       console.warn(`[api/chat] Groq model ${modelName} failed:`, error);

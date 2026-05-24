@@ -60,15 +60,17 @@ function ShoppingContent() {
 
           <SectionCard
             title="Your shopping list"
-            description="Add items manually or from AI chat. Mark items as bought when you're done shopping."
+            description="Check items off when you buy them — they go straight into your kitchen inventory."
             badge={`${shoppingList.length} items`}
           >
             <ShoppingListManager
               shoppingList={shoppingList}
-              onUpdate={(nextList) =>
+              inventory={state.inventory}
+              onUpdate={(nextList, nextInventory) =>
                 updateState((prev) => ({
                   ...prev,
                   shoppingList: nextList,
+                  inventory: nextInventory,
                 }))
               }
             />

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPortionsLeft } from "@/lib/inventoryPortions";
 import type { InventoryItem } from "@/lib/types";
 
 interface InventoryItemCardProps {
@@ -13,6 +14,8 @@ export function InventoryItemCard({
   onEdit,
   onDelete,
 }: InventoryItemCardProps) {
+  const lowStock = item.portionsLeft <= 2;
+
   return (
     <div className="rounded-xl border border-[#E8DDD0] bg-[#FAF6F0] p-4">
       <div className="flex items-start justify-between gap-2">
@@ -20,20 +23,20 @@ export function InventoryItemCard({
           <h3 className="font-semibold text-[#3D3429]">{item.name}</h3>
           <p className="text-xs text-[#8B6F5C]">{item.category}</p>
         </div>
-        <span className="text-sm font-medium text-[#8B6F5C]">
-          {item.percentLeft}% left
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+            lowStock
+              ? "bg-[#F5D9A8]/60 text-[#8B6F5C]"
+              : "bg-[#E8F5E9]/80 text-[#5C7A5C]"
+          }`}
+        >
+          {formatPortionsLeft(item.portionsLeft)}
         </span>
       </div>
       <p className="mt-1 text-sm text-[#6B5E52]">
         {item.amount}
         {item.unit ? ` ${item.unit}` : ""}
       </p>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E8DDD0]">
-        <div
-          className="h-full rounded-full bg-[#E8927C] transition-all"
-          style={{ width: `${item.percentLeft}%` }}
-        />
-      </div>
       <div className="mt-3 flex gap-2">
         <button
           type="button"

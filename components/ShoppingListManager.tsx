@@ -5,15 +5,18 @@ import { ShoppingItemForm, type ShoppingItemFormData } from "./ShoppingItemForm"
 import { ShoppingListGroup } from "./ShoppingListGroup";
 import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
-import { SHOPPING_CATEGORIES, type ShoppingListItem } from "@/lib/types";
+import { toggleShoppingItemBought } from "@/lib/addBoughtToInventory";
+import { SHOPPING_CATEGORIES, type InventoryItem, type ShoppingListItem } from "@/lib/types";
 
 interface ShoppingListManagerProps {
   shoppingList: ShoppingListItem[];
-  onUpdate: (shoppingList: ShoppingListItem[]) => void;
+  inventory: InventoryItem[];
+  onUpdate: (shoppingList: ShoppingListItem[], inventory: InventoryItem[]) => void;
 }
 
 export function ShoppingListManager({
   shoppingList,
+  inventory,
   onUpdate,
 }: ShoppingListManagerProps) {
   const [showForm, setShowForm] = useState(false);
@@ -30,15 +33,16 @@ export function ShoppingListManager({
   const showToast = (msg: string) => setToast(msg);
 
   const handleToggleBought = (id: string) => {
-    onUpdate(
-      shoppingList.map((item) =>
-        item.id === id ? { ...item, bought: !item.bought } : item
-      )
-    );
+    const result = toggleShoppingItemBought(shoppingList, inventory, id);
+    onUpdate(result.shoppingList, result.inventory);
+    if (result.toast) showToast(result.toast);
   };
 
   const handleDelete = (id: string) => {
-    onUpdate(shoppingList.filter((item) => item.id !== id));
+    onUpdate(
+      shoppingList.filter((item) => item.id !== id),
+      inventory
+    );
   };
 
   const handleSaveForm = (data: ShoppingItemFormData) => {
@@ -46,18 +50,22 @@ export function ShoppingListManager({
       onUpdate(
         shoppingList.map((item) =>
           item.id === editingItem.id ? { ...item, ...data } : item
-        )
+        ),
+        inventory
       );
     } else {
-      onUpdate([
-        ...shoppingList,
-        {
-          id: createId("shop"),
-          ...data,
-          bought: false,
-          addedToInventory: false,
-        },
-      ]);
+      onUpdate(
+        [
+          ...shoppingList,
+          {
+            id: createId("shop"),
+            ...data,
+            bought: false,
+            addedToInventory: false,
+          },
+        ],
+        inventory
+      );
     }
     setShowForm(false);
     setEditingItem(null);
@@ -88,7 +96,7 @@ export function ShoppingListManager({
                     `Remove ${boughtCount} bought item(s) from the list?`
                   )
                 ) {
-                  onUpdate(shoppingList.filter((i) => !i.bought));
+                  onUpdate(shoppingList.filter((i) => !i.bought), inventory);
                   showToast("Bought items cleared.");
                 }
               }}
@@ -106,7 +114,7 @@ export function ShoppingListManager({
                     "Clear the entire shopping list? This cannot be undone."
                   )
                 ) {
-                  onUpdate([]);
+                  onUpdate([], inventory);
                   showToast("Shopping list cleared.");
                 }
               }}

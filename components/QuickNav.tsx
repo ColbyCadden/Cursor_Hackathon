@@ -3,6 +3,7 @@ import Link from "next/link";
 const links = [
   { href: "/discover", label: "Swipe meals", icon: "🔥", desc: "Discover new cards" },
   { href: "/mealdex", label: "Mealdex", icon: "📚", desc: "Your saved cards" },
+  { href: "/inventory", label: "Inventory", icon: "🧊", desc: "Fridge & pantry" },
   { href: "/shopping-list", label: "Shopping", icon: "🛒", desc: "Groceries & list" },
   { href: "/chat", label: "AI Chat", icon: "💬", desc: "Meal planner" },
   { href: "/create", label: "Create card", icon: "➕", desc: "Add your own meal" },
