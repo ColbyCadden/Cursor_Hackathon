@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAppState, resetAllAppData } from "@/lib/storage";
 import { profileHasSignupData } from "@/lib/signupProfile";
+import { PrepDeckLogo } from "@/components/PrepDeckLogo";
 
 export default function HomePage() {
   const router = useRouter();
@@ -19,6 +20,9 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-[var(--background)] px-4 py-12">
       <div className="w-full max-w-2xl text-center">
+        <div className="mb-6 flex justify-center">
+          <PrepDeckLogo size="lg" className="drop-shadow-md" />
+        </div>
         <p className="mb-4 inline-block rounded-full bg-[var(--salmon)]/30 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
           PrepDeck for students
         </p>
