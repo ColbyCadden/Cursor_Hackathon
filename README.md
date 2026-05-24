@@ -1,6 +1,21 @@
 # PrepDeck
 
 **Simple cooking for busy people.**
+PrepDeck
+
+Live demo:
+https://cursor-hackathon-eight-iota.vercel.app
+
+What it does:
+PrepDeck is an AI-powered student meal prep app that uses profile, inventory, Meal Deck cards, and shopping list data to generate simple meal plans and recipes.
+
+Environment variables:
+GEMINI_API_KEY
+GROQ_API_KEY
+
+Note:
+API keys are stored securely in Vercel, not in GitHub.
+
 
 Swipe meals into your Mealdex, track pantry inventory, plan with mock AI, and shop smarter — all in one Next.js prototype.
 
