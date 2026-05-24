@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const tabs = [
-  { href: "/discover", label: "Discover", icon: "🔥" },
   { href: "/mealdex", label: "Mealdex", icon: "📚" },
   { href: "/shopping-list", label: "Shop", icon: "🛒" },
   { href: "/chat", label: "Chat", icon: "💬" },
+  { href: "/scanner", label: "Scan", icon: "📷" },
   { href: "/dashboard", label: "Home", icon: "🏠" },
 ];
 
@@ -23,7 +23,8 @@ export function MobileTabBar() {
         {tabs.map((tab) => {
           const active =
             pathname === tab.href ||
-            (tab.href === "/discover" && pathname === "/create");
+            (tab.href === "/mealdex" &&
+              (pathname === "/discover" || pathname === "/create"));
           return (
             <Link
               key={tab.href}

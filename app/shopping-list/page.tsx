@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { MealdexIngredientList } from "@/components/MealdexIngredientList";
-import { ShoppingListManager } from "@/components/ShoppingListManager";
+import { InventoryManager } from "@/components/InventoryManager";
 import { useAppState } from "@/lib/useAppState";
 import { getSavedMeals } from "@/lib/meal/mealHelpers";
 import { buildMealdexShoppingList } from "@/lib/meal/shoppingList";
@@ -17,20 +17,20 @@ function ShoppingContent() {
 
   const savedMeals = getSavedMeals(state);
   const mealdexItems = buildMealdexShoppingList(savedMeals);
-  const { shoppingList, profile } = state;
+  const { inventory, profile } = state;
 
   return (
     <AppShell profile={profile}>
       <div className="mx-auto w-full max-w-lg md:max-w-3xl">
         <PageHeader
           title="Shopping"
-          subtitle="Mealdex ingredients plus your manual list and AI suggestions."
+          subtitle="Groceries from Mealdex plus what's in your kitchen."
         />
 
         <div className="space-y-6">
           <SectionCard
-            title="Mealdex ingredients"
-            description="Auto-generated from meals you saved on Discover."
+            title="Mealdex shopping list"
+            description="Ingredients from meals you saved — your cart for the store."
             badge={`${mealdexItems.length} items`}
           >
             {savedMeals.length === 0 ? (
@@ -40,11 +40,10 @@ function ShoppingContent() {
                 </p>
                 <p className="empty-state-title">No ingredients yet</p>
                 <p className="empty-state-text">
-                  Swipe right on Discover to save meals — ingredients appear here
-                  automatically.
+                  Swipe right in Mealdex to save meals — ingredients appear here.
                 </p>
-                <Link href="/discover" className="btn-primary mt-4 inline-flex">
-                  Open Discover
+                <Link href="/mealdex" className="btn-primary mt-4 inline-flex">
+                  Open Mealdex
                 </Link>
               </div>
             ) : (
@@ -59,17 +58,14 @@ function ShoppingContent() {
           </SectionCard>
 
           <SectionCard
-            title="Your shopping list"
-            description="Add items manually or from AI chat. Mark items as bought when you're done shopping."
-            badge={`${shoppingList.length} items`}
+            title="Kitchen inventory"
+            description="What you already have at home — the AI uses this with your shopping list."
+            badge={`${inventory.length} items`}
           >
-            <ShoppingListManager
-              shoppingList={shoppingList}
-              onUpdate={(nextList) =>
-                updateState((prev) => ({
-                  ...prev,
-                  shoppingList: nextList,
-                }))
+            <InventoryManager
+              inventory={inventory}
+              onChange={(next) =>
+                updateState((prev) => ({ ...prev, inventory: next }))
               }
             />
           </SectionCard>

@@ -32,7 +32,7 @@ export default function SignupIngredientsPage() {
     const finalPending = { ...getPendingSignup(), ingredient_preference: selected };
     try {
       completeSignup(finalPending);
-      router.replace("/discover");
+      router.replace("/mealdex");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Could not create account.");
     }

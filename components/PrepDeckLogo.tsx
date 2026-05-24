@@ -35,7 +35,7 @@ export function PrepDeckLogo({
 }
 
 export function PrepDeckBrand({
-  href = "/discover",
+  href = "/mealdex",
   size = "sm",
   showTagline = false,
   className = "",

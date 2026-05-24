@@ -23,17 +23,23 @@ export interface SavedMealSummary {
   ingredients: string[];
 }
 
+export interface MealdexShoppingSummary {
+  name: string;
+  count: number;
+}
+
 export interface ChatRequestBody {
   message: string;
   profile: UserProfile;
   inventory: InventoryItem[];
+  mealdexShopping: MealdexShoppingSummary[];
   shoppingList: ShoppingListItem[];
   savedMeals: SavedMealSummary[];
   recentMessages: ChatApiMessage[];
 }
 
 export function buildChatContext(body: ChatRequestBody): string {
-  const { profile, inventory, shoppingList, savedMeals } = body;
+  const { profile, inventory, mealdexShopping, shoppingList, savedMeals } = body;
 
   const inventoryLine = inventory.length
     ? inventory
@@ -44,14 +50,20 @@ export function buildChatContext(body: ChatRequestBody): string {
         .join("\n")
     : "- (empty)";
 
-  const shoppingLine = shoppingList.length
+  const mealdexCartLine = mealdexShopping.length
+    ? mealdexShopping
+        .map((i) => `- ${i.name}${i.count > 1 ? ` ×${i.count}` : ""}`)
+        .join("\n")
+    : "- (empty — save meals in Mealdex to populate)";
+
+  const aiShoppingLine = shoppingList.length
     ? shoppingList
         .map(
           (i) =>
             `- ${i.name}: ${i.amount}${i.unit ? ` ${i.unit}` : ""}${i.bought ? " [bought]" : ""}`
         )
         .join("\n")
-    : "- (empty)";
+    : "- (none)";
 
   const mealdexLine = savedMeals.length
     ? savedMeals
@@ -67,11 +79,14 @@ export function buildChatContext(body: ChatRequestBody): string {
     `Avoided foods: ${profile.avoidedFoods?.filter((f) => f.toLowerCase() !== "none").join(", ") || "none"}`,
     `Equipment: ${(profile.appliances?.length ? profile.appliances : profile.cooking_equipment)?.join(", ") || "basic kitchen"}`,
     "",
-    "Kitchen inventory:",
+    "Kitchen inventory (what they have at home):",
     inventoryLine,
     "",
-    "Shopping list:",
-    shoppingLine,
+    "Mealdex shopping cart (ingredients needed from saved meals):",
+    mealdexCartLine,
+    "",
+    "AI-suggested shopping items:",
+    aiShoppingLine,
     "",
     "Saved Mealdex meals:",
     mealdexLine,
@@ -142,7 +157,7 @@ export function parseAIResponse(raw: string): AIResponse {
 export function buildSystemPrompt(): string {
   return `You are PrepDeck, a friendly meal-prep assistant for busy college students.
 
-Use the student's profile, kitchen inventory, shopping list, and saved Mealdex meals to give practical, budget-conscious advice. Keep answers concise and actionable.
+Use the student's profile, kitchen inventory, Mealdex shopping cart, AI-suggested items, and saved Mealdex meals to give practical, budget-conscious advice. Cross-reference inventory with the shopping cart — suggest what they still need to buy vs what they already have. Keep answers concise and actionable.
 
 When suggesting groceries the student should buy, include them in suggestedItems with realistic amounts and units.
 When giving a prep plan or cooking order, include mealPrepSteps as a numbered-style list (strings only, no numbers required in the string).

@@ -13,7 +13,7 @@ export default function HomePage() {
   useEffect(() => {
     const state = getAppState();
     if (state.isLoggedIn && profileHasSignupData(state.profile)) {
-      router.replace("/discover");
+      router.replace("/mealdex");
     }
   }, [router]);
 

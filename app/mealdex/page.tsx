@@ -5,22 +5,34 @@ import Link from "next/link";
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
+import { SectionCard } from "@/components/SectionCard";
+import { SwipeDeck } from "@/components/mealdex/SwipeDeck";
 import { MealCard } from "@/components/mealdex/MealCard";
+import { MealCreateForm } from "@/components/MealCreateForm";
 import { useAppState } from "@/lib/useAppState";
 import {
+  addCustomMeal,
+  getDeckMeals,
   getSavedMeals,
   removeFromMealdex,
   resetMealSwipes,
+  swipeLeft,
+  swipeRight,
 } from "@/lib/meal/mealHelpers";
 import type { Meal } from "@/lib/types";
 
 function MealdexContent() {
   const { state, updateState } = useAppState();
   const [selected, setSelected] = useState<Meal | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   if (!state) return null;
 
+  const deck = getDeckMeals(state);
   const saved = getSavedMeals(state);
+  const swiped = new Set(state.swipedMealIds);
+  const unswipedCount = state.meals.filter((m) => !swiped.has(m.id)).length;
+  const filteredOut = unswipedCount > 0 && deck.length === 0;
 
   const confirmReset = () => {
     if (
@@ -34,48 +46,94 @@ function MealdexContent() {
 
   return (
     <AppShell profile={state.profile}>
-      <div className="mx-auto w-full max-w-3xl">
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div className="mx-auto w-full max-w-3xl pb-24 md:pb-8">
+        <div className="relative mb-4 flex flex-wrap items-start justify-between gap-3">
           <PageHeader
             title="Mealdex"
-            subtitle={`${saved.length} saved meal cards`}
+            subtitle="Swipe to discover · saved cards below"
+          />
+          <p className="max-w-[9.5rem] text-right text-[10px] leading-snug text-[var(--text-muted)]">
+            Available meals align with your cooking preferences
+          </p>
+        </div>
+
+        <SectionCard
+          title="Discover"
+          description={`Swipe right to save · ${deck.length} left in deck`}
+          badge="Swipe"
+        >
+          {filteredOut && (
+            <p className="mb-4 text-sm text-[var(--text-muted)]">
+              Nothing matches your diet preferences right now. Update your{" "}
+              <Link href="/profile" className="font-semibold text-[var(--green-dark)] underline">
+                profile
+              </Link>
+              .
+            </p>
+          )}
+          <SwipeDeck
+            meals={deck}
+            onSwipeLeft={(id) => updateState((prev) => swipeLeft(prev, id))}
+            onSwipeRight={(id) => updateState((prev) => swipeRight(prev, id))}
           />
           <button
             type="button"
-            onClick={confirmReset}
-            className="shrink-0 rounded-lg border border-[#E8D5C4] px-3 py-2 text-xs font-semibold text-[#7A7268]"
+            onClick={() => setShowCreate((v) => !v)}
+            className="mt-4 text-sm font-semibold text-[var(--green-dark)] underline"
           >
-            Reset swipes
+            {showCreate ? "Cancel create" : "+ Create your own card"}
           </button>
-        </div>
+          {showCreate && (
+            <div className="mt-4 border-t border-[var(--card-border)] pt-4">
+              <MealCreateForm
+                onSubmit={(values) => {
+                  updateState((prev) => addCustomMeal(prev, values));
+                  setShowCreate(false);
+                }}
+              />
+            </div>
+          )}
+        </SectionCard>
 
-        {saved.length === 0 ? (
-          <div className="empty-state py-16">
-            <p className="empty-state-icon" aria-hidden>
-              📚
-            </p>
-            <p className="empty-state-title">No cards yet</p>
-            <p className="empty-state-text">
-              Swipe right on Discover to build your collection.
-            </p>
-            <Link href="/discover" className="btn-primary mt-6 inline-flex">
-              Go to Discover
-            </Link>
+        <div className="mt-8">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-bold text-[var(--text)]">
+              Your collection ({saved.length})
+            </h2>
+            <button
+              type="button"
+              onClick={confirmReset}
+              className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)]"
+            >
+              Reset swipes
+            </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 pb-4 sm:grid-cols-3">
-            {saved.map((meal) => (
-              <button
-                key={meal.id}
-                type="button"
-                onClick={() => setSelected(meal)}
-                className="text-left"
-              >
-                <MealCard meal={meal} compact />
-              </button>
-            ))}
-          </div>
-        )}
+
+          {saved.length === 0 ? (
+            <div className="empty-state py-10">
+              <p className="empty-state-icon" aria-hidden>
+                📚
+              </p>
+              <p className="empty-state-title">No saved cards yet</p>
+              <p className="empty-state-text">
+                Swipe right on a meal above to add it here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {saved.map((meal) => (
+                <button
+                  key={meal.id}
+                  type="button"
+                  onClick={() => setSelected(meal)}
+                  className="text-left"
+                >
+                  <MealCard meal={meal} compact />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {selected && (
           <div

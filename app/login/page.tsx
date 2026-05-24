@@ -20,7 +20,7 @@ export default function LoginPage() {
   useEffect(() => {
     const state = getAppState();
     if (state.isLoggedIn && profileHasSignupData(state.profile)) {
-      router.replace("/discover");
+      router.replace("/mealdex");
     }
   }, [router]);
 
@@ -34,12 +34,12 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/discover");
+    router.push("/mealdex");
   };
 
   const handleDemo = () => {
     loginDemoUser();
-    router.push("/discover");
+    router.push("/mealdex");
   };
 
   return (

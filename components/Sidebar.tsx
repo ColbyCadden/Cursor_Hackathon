@@ -8,11 +8,9 @@ import type { UserProfile } from "@/lib/types";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: "🏠" },
-  { href: "/discover", label: "Discover", icon: "🔥" },
   { href: "/mealdex", label: "Mealdex", icon: "📚" },
   { href: "/shopping-list", label: "Shopping", icon: "🛒" },
   { href: "/scanner", label: "Scanner", icon: "📷" },
-  { href: "/create", label: "Create card", icon: "➕" },
   { href: "/chat", label: "AI Chat", icon: "💬" },
   { href: "/profile", label: "Profile", icon: "👤" },
 ];
@@ -30,7 +28,7 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
     <aside className="flex h-full flex-col border-r border-[var(--card-border)] bg-[var(--surface)]">
       <div className="border-b border-[var(--card-border)] p-5">
         <PrepDeckBrand
-          href="/discover"
+          href="/mealdex"
           onClick={onClose}
           size="md"
           showTagline
@@ -39,7 +37,10 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {navItems.map((item) => {
-          const active = pathname === item.href;
+          const active =
+            pathname === item.href ||
+            (item.href === "/mealdex" &&
+              (pathname === "/discover" || pathname === "/create"));
           return (
             <Link
               key={item.href}

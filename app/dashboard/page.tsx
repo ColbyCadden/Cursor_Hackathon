@@ -16,11 +16,10 @@ function DashboardContent() {
 
   if (!state) return null;
 
-  const { profile, shoppingList } = state;
+  const { profile, inventory } = state;
   const savedMeals = getSavedMeals(state);
   const deckLeft = getDeckMeals(state).length;
   const shopItems = buildMealdexShoppingList(savedMeals).length;
-  const aiListCount = shoppingList.length;
   const experience = buildPersonalizedExperience(profile);
 
   return (
@@ -38,13 +37,13 @@ function DashboardContent() {
           <OverviewCard
             title="To swipe"
             value={deckLeft}
-            subtitle={deckLeft ? "In Discover" : "Deck complete"}
+            subtitle={deckLeft ? "In deck" : "Deck complete"}
             accent="honey"
           />
           <OverviewCard
-            title="Shop list"
-            value={shopItems + aiListCount}
-            subtitle={`${shopItems} Mealdex · ${aiListCount} manual`}
+            title="Shopping"
+            value={shopItems}
+            subtitle={`${inventory.length} in kitchen`}
             accent="sky"
           />
         </div>

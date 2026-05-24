@@ -318,25 +318,41 @@ For a beginner, I'd do chicken rice bowls one night and egg wraps another — sa
 function respondShoppingList(state: AppState): AIResponse {
   const saved = getSavedMeals(state);
   const shopItems = buildMealdexShoppingList(saved);
+  const { inventory } = state;
 
   if (!saved.length) {
     return {
-      text: `Your **Shop** list comes from meals saved in **Mealdex**.
+      text: `Your **Shopping** cart comes from meals saved in **Mealdex**.
 
-Head to **Discover**, swipe right on meals you like, then check **Shop** — ingredients merge automatically. No manual list needed.`,
+Open **Mealdex**, swipe right on meals you like, then check **Shopping** — ingredients merge automatically.`,
     };
   }
 
-  const preview = shopItems
+  const alreadyHave = shopItems.filter((item) =>
+    inventory.some((inv) =>
+      inv.name.toLowerCase().includes(item.name.toLowerCase().slice(0, 4)),
+    ),
+  );
+  const stillNeed = shopItems.filter(
+    (item) =>
+      !inventory.some((inv) =>
+        inv.name.toLowerCase().includes(item.name.toLowerCase().slice(0, 4)),
+      ),
+  );
+
+  const preview = stillNeed
     .slice(0, 10)
     .map((i) => `• ${i.name}${i.count > 1 ? ` ×${i.count}` : ""}`)
     .join("\n");
 
-  const text = `Your **Mealdex** has ${saved.length} saved meal(s), which gives you **${shopItems.length}** shopping item(s):
+  const haveNote =
+    alreadyHave.length > 0
+      ? `\n\nYou already have ${alreadyHave.length} item(s) from this list in your kitchen inventory.`
+      : "";
 
-${preview}${shopItems.length > 10 ? "\n…and more on the Shop tab." : ""}
+  const text = `Your **Mealdex** has ${saved.length} saved meal(s) — **${shopItems.length}** ingredient(s) total, **${stillNeed.length}** still to buy:
 
-Save more meals on **Discover** to grow this list.`;
+${preview || "• (nothing left to buy — your inventory covers it!)"}${shopItems.length > 10 ? "\n…and more on the Shopping page." : ""}${haveNote}`;
 
   return { text };
 }
@@ -358,14 +374,16 @@ Total active time: about ${state.profile.availableTime}. Do containers first so 
 
 function respondGeneral(message: string, state: AppState): AIResponse {
   const intro = profileIntro(state.profile);
+  const saved = savedMealNames(state);
+  const cartCount = buildMealdexShoppingList(getSavedMeals(state)).length;
   const text = `${intro}
 
-I can help you plan meals using what's in your kitchen (${inventoryList(state.inventory)}) and your saved ideas${savedMealNames(state).length ? `: ${savedMealNames(state).join(", ")}` : ""}.
+I can help you plan meals using your kitchen inventory (${inventoryList(state.inventory)}), Mealdex shopping cart (${cartCount} items), and saved ideas${saved.length ? `: ${saved.join(", ")}` : ""}.
 
 Try asking:
 • "I need to meal prep 8 meals."
 • "What can I cook with my inventory?"
-• "Update my shopping list."
+• "What's on my shopping list?"
 
 You asked: "${message.trim()}" — I'll keep suggestions student-friendly with fewer ingredients and less cleanup.`;
 
@@ -411,6 +429,9 @@ export async function generateAIResponse(
       name: meal.name,
       ingredients: meal.ingredients,
     }));
+    const mealdexShopping = buildMealdexShoppingList(getSavedMeals(appState)).map(
+      (item) => ({ name: item.name, count: item.count }),
+    );
 
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -419,6 +440,7 @@ export async function generateAIResponse(
         message: userMessage,
         profile: appState.profile,
         inventory: appState.inventory,
+        mealdexShopping,
         shoppingList: appState.shoppingList,
         savedMeals,
         recentMessages: appState.chatMessages.slice(-8).map((msg) => ({
