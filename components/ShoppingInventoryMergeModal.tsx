@@ -31,7 +31,7 @@ export function ShoppingInventoryMergeModal({
     >
       <p>
         Add <strong>{cartItemName}</strong> to existing{" "}
-        <strong>{existingName}</strong> inventory?
+        <strong>{existingName}</strong> pantry?
       </p>
     </ConfirmModal>
   );

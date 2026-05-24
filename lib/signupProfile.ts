@@ -95,7 +95,8 @@ export function buildPersonalizedExperience(profile: UserProfile) {
 
   return {
     greeting: `Hey ${profile.name}, your PrepDeck is ready`,
-    subtitle: `Recipes and lists tuned for ${diet.toLowerCase()}, ${skill.toLowerCase()}, and about ${time.toLowerCase()} in the kitchen each week.`,
+    subtitle:
+      "Swipe meals, track your pantry, and build smarter shopping lists — PrepDeck keeps your kitchen organized in one place.",
     stats: {
       diet,
       time,

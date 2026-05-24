@@ -333,7 +333,7 @@ export function addCookingConfirmationMessage(
   const confirmation: ChatMessage = {
     id: createId("chat"),
     role: "assistant",
-    content: `Nice — I updated your inventory for ${recipeTitle}.`,
+    content: `Nice — I updated your pantry for ${recipeTitle}.`,
     createdAt: new Date().toISOString(),
   };
   return {

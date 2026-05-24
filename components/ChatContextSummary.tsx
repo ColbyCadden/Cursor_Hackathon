@@ -15,7 +15,7 @@ export function ChatContextSummary({ appState }: ChatContextSummaryProps) {
   return (
     <div className="mb-4 rounded-xl border border-[var(--card-border)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-muted)]">
       <span className="font-semibold text-[var(--text)]">AI is using: </span>
-      {appState.inventory.length} inventory item
+      {appState.inventory.length} pantry item
       {appState.inventory.length === 1 ? "" : "s"}
       {" · "}
       {savedCount} saved meal{savedCount === 1 ? "" : "s"}

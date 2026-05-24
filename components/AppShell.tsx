@@ -61,7 +61,7 @@ export function AppShell({ children, profile }: AppShellProps) {
           >
             ☰
           </button>
-          <PrepDeckBrand href="/mealdex" size="md" />
+          <PrepDeckBrand href="/mealdex" size="md" showTagline />
         </header>
 
         <main className="min-w-0 flex-1 overflow-x-hidden px-3 py-4 pb-20 sm:px-4 md:p-8 md:pb-8">

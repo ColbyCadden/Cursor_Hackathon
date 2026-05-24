@@ -24,13 +24,6 @@ export function PersonalizationSummary({ profile }: PersonalizationSummaryProps)
         {experience.stats.equipment} · {experience.stats.equipmentCount} items
         selected
       </div>
-
-      <a
-        href="#profile"
-        className="inline-flex rounded-xl border border-[#E8DDD0] bg-white px-5 py-2.5 text-sm font-medium text-[#6B5E52] transition hover:bg-[#F4E8DC]/60"
-      >
-        Edit profile settings
-      </a>
     </div>
   );
 }

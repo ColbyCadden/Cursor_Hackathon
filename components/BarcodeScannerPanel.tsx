@@ -92,7 +92,7 @@ export function BarcodeScannerPanel({
     if (!editScan) return;
     const item = createInventoryItemFromScan(editScan);
     onInventoryChange([...inventory, item]);
-    onToast(`${item.name} added to inventory.`);
+    onToast(`${item.name} added to pantry.`);
     setModal(null);
     setEditScan(null);
   };
@@ -165,7 +165,7 @@ export function BarcodeScannerPanel({
 
       <ConfirmModal
         open={modal?.type === "duplicate"}
-        title="Item already in inventory"
+        title="Item already in pantry"
         primaryLabel="Add to existing item"
         secondaryLabel="Create separate item"
         onPrimary={handleMerge}
@@ -179,7 +179,7 @@ export function BarcodeScannerPanel({
           <>
             <p>
               <strong>{modal.existing.name}</strong> already exists in your
-              inventory. Add {modal.scanned.amount} {modal.scanned.unit} to the
+              pantry. Add {modal.scanned.amount} {modal.scanned.unit} to the
               existing item?
             </p>
             <p className="mt-2 text-xs text-[var(--text-muted)]">
@@ -198,7 +198,7 @@ export function BarcodeScannerPanel({
       <ConfirmModal
         open={modal?.type === "confirm_new"}
         title="Confirm scanned item"
-        primaryLabel="Add to inventory"
+        primaryLabel="Add to pantry"
         onPrimary={confirmNewItem}
         onCancel={() => {
           setModal(null);

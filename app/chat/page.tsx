@@ -14,8 +14,8 @@ function ChatContent() {
     <AppShell profile={state.profile}>
       <div className="mx-auto w-full max-w-3xl">
         <PageHeader
-          title="AI Meal Planner"
-          subtitle="AI meal planner connected to your profile, inventory, Mealdex, and shopping list."
+          title="Chef"
+          subtitle="chef is your personalized AI meal planner and meal prep guide"
         />
 
         <ChatInterface appState={state} onUpdate={updateState} />

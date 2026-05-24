@@ -6,6 +6,7 @@ import { ChatInput } from "./ChatInput";
 import { ChatContextSummary } from "./ChatContextSummary";
 import { ConfirmCookedRecipeModal } from "./ConfirmCookedRecipeModal";
 import { PromptChips } from "./PromptChips";
+import { NavIcon } from "./NavIcon";
 import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
 import { applyAIAction } from "@/lib/appStateActions";
@@ -23,7 +24,7 @@ import type { AppState, ChatAction, ChatMessage, AdaptedRecipe } from "@/lib/typ
 import type { CookingConfirmRow, UsedIngredientConfirmation } from "@/lib/cookingStateActions";
 
 const EXAMPLE_PROMPTS = [
-  "What's in my inventory?",
+  "What's in my pantry?",
   "I need to meal prep 8 meals.",
   "Create meals from my saved cards.",
   "Update my shopping list.",
@@ -309,7 +310,7 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
       );
 
       setCookTarget(null);
-      setToast(`Inventory updated for ${recipe.displayTitle ?? recipe.title}.`);
+      setToast(`Pantry updated for ${recipe.displayTitle ?? recipe.title}.`);
     },
     [cookTarget, onUpdate]
   );
@@ -336,26 +337,29 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
           : aiSource === "groq"
             ? "Powered by Groq — Gemini was unavailable."
             : aiSource === "local"
-              ? "Instant reply from your inventory & lists (no API used)."
+              ? "Instant reply from your pantry & lists (no API used)."
               : aiSource === "quota"
                 ? "Rate limits hit — wait a minute or use demo replies."
                 : aiSource === "unconfigured"
                   ? "Demo mode — add GEMINI_API_KEY and/or GROQ_API_KEY to .env.local."
                   : aiSource === "mock"
                     ? "Demo mode — using offline replies."
-                    : "Ask about meal prep, inventory, or shopping. Tap action buttons to update your list."}
+                    : "Ask about meal prep, pantry, or shopping. Tap action buttons to update your list."}
       </p>
 
       <div className="flex min-h-[min(70dvh,600px)] flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--surface)] shadow-sm">
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
           {messages.length === 0 && !thinking && (
             <div className="empty-state py-10">
-              <p className="empty-state-icon" aria-hidden>
-                💬
-              </p>
-              <p className="empty-state-title">PrepDeck AI planner</p>
+              <div
+                className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--salmon)]/25 text-[var(--green-dark)]"
+                aria-hidden
+              >
+                <NavIcon name="chat" size={24} strokeWidth={2} />
+              </div>
+              <p className="empty-state-title">Ask Chef</p>
               <p className="empty-state-text">
-                Try &quot;What&apos;s in my inventory?&quot; or tap a prompt below.
+                Try &quot;What&apos;s in my pantry?&quot; or tap a prompt below.
               </p>
             </div>
           )}

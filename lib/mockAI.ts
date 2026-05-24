@@ -59,7 +59,7 @@ function detectIntent(message: string): Intent {
     return "meal_prep";
   }
   if (
-    /what can i cook|with my inventory|what (do i|can i) make|use what i have/.test(
+    /what can i cook|with my (inventory|pantry)|what (do i|can i) make|use what i have/.test(
       m
     )
   ) {
@@ -269,7 +269,7 @@ function buildSharedStrategyForSavedMeals(
       {
         name: "Rice",
         usedInMeals: names.filter((n) => /salmon|rice|tuna|poke|burrito/i.test(n)).slice(0, 2),
-        reason: "Shared carb base from your inventory.",
+        reason: "Shared carb base from your pantry.",
       },
     ].filter((item) => item.usedInMeals.length > 0),
     preservedVariety: [
@@ -283,13 +283,13 @@ function buildSharedStrategyForSavedMeals(
         original: "mixed greens",
         replacement: "frozen broccoli",
         mealsAffected: names.filter((n) => /tuna|poke/i.test(n)).slice(0, 1),
-        reason: "Broccoli is already in your inventory and used in other bowls.",
+        reason: "Broccoli is already in your pantry and used in other bowls.",
       },
       {
         original: "sour cream",
         replacement: "Greek yogurt",
         mealsAffected: names.filter((n) => /burrito/i.test(n)).slice(0, 1),
-        reason: "Greek yogurt is already in your inventory and adds protein.",
+        reason: "Greek yogurt is already in your pantry and adds protein.",
       },
     ],
   };
@@ -307,7 +307,7 @@ function buildBeforeAfterForSavedMeals(mealNames: string[]): BeforeAfterComparis
     after: [
       "Greek yogurt shared as sauce/base in wrap and breakfast bowl",
       "Frozen broccoli shared in rice/salmon and poke bowls",
-      "Rice from inventory shared where it fits",
+      "Rice from pantry shared where it fits",
     ],
     result: [
       "Fewer one-off ingredients",
@@ -390,7 +390,7 @@ function respondMealdexPlan(message: string, state: AppState): AIResponse {
     return {
       text: `${profileIntro(state.profile)}
 
-You haven't saved any Meal Deck cards yet. Swipe right on Discover, then ask me to build a plan from your saved cards.`,
+You haven't saved any Mealdeck cards yet. Swipe right on Discover, then ask me to build a plan from your saved cards.`,
       needsUserChoice: false,
     };
   }
@@ -409,7 +409,7 @@ You haven't saved any Meal Deck cards yet. Swipe right on Discover, then ask me 
 
   const text = `${profileIntro(state.profile)}
 
-I built a ${Math.min(recipes.length, count)}-meal plan from your Meal Deck that keeps meal variety but reuses secondary ingredients. I kept ${mealNames.slice(0, 4).join(", ")} as distinct meals — not all the same format — while sharing Greek yogurt, frozen broccoli, and rice where they fit.`;
+I built a ${Math.min(recipes.length, count)}-meal plan from your Mealdeck that keeps meal variety but reuses secondary ingredients. I kept ${mealNames.slice(0, 4).join(", ")} as distinct meals — not all the same format — while sharing Greek yogurt, frozen broccoli, and rice where they fit.`;
 
   return {
     text,
@@ -445,7 +445,7 @@ I built a ${Math.min(recipes.length, count)}-meal plan from your Meal Deck that 
         type: "request_another_simplification",
         payload: {
           instruction:
-            "Suggest a different ingredient consolidation for my Meal Deck plan that still preserves meal variety.",
+            "Suggest a different ingredient consolidation for my Mealdeck plan that still preserves meal variety.",
         },
       },
     ],
@@ -492,7 +492,7 @@ function respondMealPrep(message: string, state: AppState): AIResponse {
 
   const text = `${intro}
 
-Based on your inventory (${inventoryList(state.inventory)}) and saved meal ideas, I'd suggest:
+Based on your pantry (${inventoryList(state.inventory)}) and saved meal ideas, I'd suggest:
 
 ${planText}
 
@@ -535,7 +535,7 @@ You'll get about ${count} portions without extra spices or specialty items.`;
       {
         label: "Make this cheaper",
         type: "request_ai_revision",
-        payload: { instruction: "Make the meal plan cheaper using current inventory." },
+        payload: { instruction: "Make the meal plan cheaper using current pantry." },
       },
       {
         label: "Accept this meal plan",
@@ -570,7 +570,7 @@ function respondInventory(state: AppState): AIResponse {
     return {
       text: `${intro}
 
-You saved **${savedBowl.name}**, but you don't have chicken in your inventory. You do have **turkey slices**.
+You saved **${savedBowl.name}**, but you don't have chicken in your pantry. You do have **turkey slices**.
 
 What would you like to do?`,
       actions: [
@@ -637,7 +637,7 @@ What would you like to do?`,
 
   if (ideas.length === 0) {
     ideas.push(
-      "Your inventory is light — I'd start with rice + eggs + any frozen veg for a simple bowl."
+      "Your pantry is light — I'd start with rice + eggs + any frozen veg for a simple bowl."
     );
   }
 
@@ -667,7 +667,7 @@ You're already holding ${state.inventory.map((i) => i.name).join(", ")} — that
   return {
     text,
     mealPrepSteps: [
-      "Pick 2 base ingredients from your inventory (e.g. rice + eggs).",
+      "Pick 2 base ingredients from your pantry (e.g. rice + eggs).",
       "Cook a big batch of the base once.",
       "Rotate one protein across containers — no new items needed.",
     ],
@@ -703,7 +703,7 @@ function respondShoppingList(state: AppState): AIResponse {
 
   if (!saved.length) {
     return {
-      text: `Your **Shop** list comes from meals saved in **Mealdex**.
+      text: `Your **Shop** list comes from meals saved in **Mealdeck**.
 
 Head to **Discover**, swipe right on meals you like, then check **Shop** — ingredients merge automatically. No manual list needed.`,
     };
@@ -714,7 +714,7 @@ Head to **Discover**, swipe right on meals you like, then check **Shop** — ing
     .map((i) => `• ${i.name}${i.count > 1 ? ` ×${i.count}` : ""}`)
     .join("\n");
 
-  const text = `Your **Mealdex** has ${saved.length} saved meal(s), which gives you **${shopItems.length}** shopping item(s):
+  const text = `Your **Mealdeck** has ${saved.length} saved meal(s), which gives you **${shopItems.length}** shopping item(s):
 
 ${preview}${shopItems.length > 10 ? "\n…and more on the Shop tab." : ""}
 
@@ -746,7 +746,7 @@ I can help you plan meals using what's in your kitchen (${inventoryList(state.in
 
 Try asking:
 • "I need to meal prep 8 meals."
-• "What can I cook with my inventory?"
+• "What can I cook with my pantry?"
 • "Update my shopping list."
 
 You asked: "${message.trim()}" — I'll keep suggestions student-friendly with fewer ingredients and less cleanup.`;

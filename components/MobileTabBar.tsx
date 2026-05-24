@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { NavIcon, type NavIconName } from "./NavIcon";
 
 const tabs: { href: string; label: string; icon: NavIconName }[] = [
-  { href: "/mealdex", label: "Mealdex", icon: "mealdex" },
+  { href: "/mealdex", label: "Mealdeck", icon: "mealdex" },
   { href: "/inventory", label: "Pantry", icon: "pantry" },
   { href: "/shopping-list", label: "Shop", icon: "shop" },
-  { href: "/chat", label: "Chat", icon: "chat" },
+  { href: "/chat", label: "Chef", icon: "chat" },
   { href: "/scanner", label: "Scan", icon: "scan" },
   { href: "/dashboard", label: "Home", icon: "home" },
 ];

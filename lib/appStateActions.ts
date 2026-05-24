@@ -459,7 +459,7 @@ export function applyAIAction(state: AppState, action: ChatAction): ActionResult
     case "save_generated_recipe":
       return {
         state,
-        confirmation: "Saving generated recipes to Mealdex will come in a future update.",
+        confirmation: "Saving generated recipes to Mealdeck will come in a future update.",
       };
 
     default:

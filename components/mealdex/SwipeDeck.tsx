@@ -26,7 +26,7 @@ export function SwipeDeck({ meals, onSwipeLeft, onSwipeRight }: Props) {
         <p className="empty-state-title">All caught up!</p>
         <p className="empty-state-text">
           You&apos;ve swiped through every card. Create a custom meal or reset
-          swipes from Mealdex to browse again.
+          swipes from Mealdeck to browse again.
         </p>
       </div>
     );
@@ -113,7 +113,7 @@ function SwipeableCard({
 
       <div className="relative z-10 mt-6 flex justify-center gap-12">
         <ActionButton label="Skip" icon="✕" color="#C4B8A8" onClick={() => flyOut("left")} />
-        <ActionButton label="Mealdex" icon="♥" color="#7BAE7F" onClick={() => flyOut("right")} />
+        <ActionButton label="Mealdeck" icon="♥" color="#7BAE7F" onClick={() => flyOut("right")} />
       </div>
     </>
   );

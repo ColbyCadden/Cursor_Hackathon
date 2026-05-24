@@ -9,11 +9,11 @@ import type { UserProfile } from "@/lib/types";
 
 const navItems: { href: string; label: string; icon: NavIconName }[] = [
   { href: "/dashboard", label: "Home", icon: "home" },
-  { href: "/mealdex", label: "Mealdex", icon: "mealdex" },
-  { href: "/inventory", label: "Inventory", icon: "pantry" },
+  { href: "/mealdex", label: "Mealdeck", icon: "mealdex" },
+  { href: "/inventory", label: "Pantry", icon: "pantry" },
   { href: "/shopping-list", label: "Shopping list", icon: "shop" },
   { href: "/scanner", label: "Scanner", icon: "scan" },
-  { href: "/chat", label: "AI Chat", icon: "chat" },
+  { href: "/chat", label: "Chef", icon: "chat" },
 ];
 
 interface SidebarProps {

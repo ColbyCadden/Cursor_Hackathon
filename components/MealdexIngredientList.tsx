@@ -28,7 +28,7 @@ export function MealdexIngredientList({ items }: Props) {
   if (!items.length) {
     return (
       <p className="empty-state py-6 text-sm text-[var(--text-muted)]">
-        Save meals in Mealdex to auto-fill ingredients here.
+        Save meals in Mealdeck to auto-fill ingredients here.
       </p>
     );
   }
