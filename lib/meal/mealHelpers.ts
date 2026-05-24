@@ -1,4 +1,5 @@
 import { filterMealsForProfile } from "@/lib/meal/mealPersonalization";
+import { syncPantryState } from "@/lib/pantrySync";
 import { profileHasSignupData } from "@/lib/signupProfile";
 import type { AppState, Meal } from "@/lib/types";
 
@@ -31,26 +32,26 @@ export function swipeRight(state: AppState, id: string): AppState {
   const savedMealIds = state.savedMealIds.includes(id)
     ? state.savedMealIds
     : [...state.savedMealIds, id];
-  return {
+  return syncPantryState({
     ...state,
     swipedMealIds: [...state.swipedMealIds, id],
     savedMealIds,
-  };
+  });
 }
 
 export function removeFromMealdex(state: AppState, id: string): AppState {
-  return {
+  return syncPantryState({
     ...state,
     savedMealIds: state.savedMealIds.filter((x) => x !== id),
-  };
+  });
 }
 
 export function resetMealSwipes(state: AppState): AppState {
-  return {
+  return syncPantryState({
     ...state,
     swipedMealIds: [],
     savedMealIds: [],
-  };
+  });
 }
 
 export function addCustomMeal(

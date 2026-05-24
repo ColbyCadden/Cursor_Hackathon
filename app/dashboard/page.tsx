@@ -8,7 +8,10 @@ import { QuickNav } from "@/components/QuickNav";
 import { PageHeader } from "@/components/PageHeader";
 import { useAppState } from "@/lib/useAppState";
 import { getDeckMeals, getSavedMeals } from "@/lib/meal/mealHelpers";
-import { buildMealdexShoppingList } from "@/lib/meal/shoppingList";
+import {
+  computePantryRequirements,
+  getPantrySummary,
+} from "@/lib/pantrySync";
 import { buildPersonalizedExperience } from "@/lib/signupProfile";
 
 function DashboardContent() {
@@ -16,11 +19,11 @@ function DashboardContent() {
 
   if (!state) return null;
 
-  const { profile, shoppingList } = state;
+  const { profile, shoppingList, inventory } = state;
   const savedMeals = getSavedMeals(state);
   const deckLeft = getDeckMeals(state).length;
-  const shopItems = buildMealdexShoppingList(savedMeals).length;
-  const aiListCount = shoppingList.length;
+  const pantryReqs = computePantryRequirements(inventory, savedMeals);
+  const pantry = getPantrySummary(pantryReqs);
   const experience = buildPersonalizedExperience(profile);
 
   return (
@@ -28,7 +31,7 @@ function DashboardContent() {
       <div className="mx-auto w-full max-w-lg md:max-w-5xl">
         <PageHeader title={experience.greeting} subtitle={experience.subtitle} />
 
-        <div className="mb-8 grid grid-cols-3 gap-3 sm:gap-4">
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           <OverviewCard
             title="Mealdex"
             value={savedMeals.length}
@@ -36,15 +39,25 @@ function DashboardContent() {
             accent="salmon"
           />
           <OverviewCard
-            title="To swipe"
-            value={deckLeft}
-            subtitle={deckLeft ? "In Discover" : "Deck complete"}
+            title="Pantry"
+            value={inventory.length}
+            subtitle={
+              inventory.length
+                ? `${pantry.inStock} stocked · ${pantry.low + pantry.missing} low`
+                : "Scan groceries"
+            }
             accent="honey"
           />
           <OverviewCard
+            title="To swipe"
+            value={deckLeft}
+            subtitle={deckLeft ? "In Discover" : "Deck complete"}
+            accent="sky"
+          />
+          <OverviewCard
             title="Shop list"
-            value={shopItems + aiListCount}
-            subtitle={`${shopItems} Mealdex · ${aiListCount} manual`}
+            value={shoppingList.filter((i) => !i.bought).length}
+            subtitle={`${shoppingList.filter((i) => i.source === "mealdex").length} auto · ${shoppingList.filter((i) => i.source !== "mealdex").length} manual`}
             accent="sky"
           />
         </div>

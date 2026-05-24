@@ -49,6 +49,8 @@ export interface InventoryItem {
   unit: string;
   category: InventoryCategory;
   percentLeft: number;
+  /** Keywords derived from product name — used to match meal ingredients */
+  ingredientTags?: string[];
 }
 
 export interface ScannedInventoryItem {
@@ -57,6 +59,7 @@ export interface ScannedInventoryItem {
   unit: string;
   category: InventoryCategory;
   percentLeft: number;
+  ingredientTags?: string[];
 }
 
 export type RatingLevel = 1 | 2 | 3 | 4 | 5;
@@ -115,6 +118,15 @@ export interface ShoppingListItem {
   required: boolean;
   bought: boolean;
   addedToInventory: boolean;
+  /** Where this item came from — mealdex items are auto-synced from saved meals */
+  source?: "manual" | "mealdex" | "ai";
+}
+
+/** AI or manual deduction of pantry stock after meal prep */
+export interface InventoryUpdate {
+  name: string;
+  amountUsed: string;
+  unit: string;
 }
 
 export type ChatRole = "user" | "assistant";
@@ -135,8 +147,11 @@ export interface ChatMessage {
   createdAt: string;
   suggestedItems?: SuggestedShoppingItem[];
   mealPrepSteps?: string[];
+  inventoryUpdates?: InventoryUpdate[];
   /** True after user adds suggested items from this message */
   suggestedItemsAdded?: boolean;
+  /** True after pantry stock was deducted from this prep plan */
+  inventoryUpdatesApplied?: boolean;
 }
 
 export interface AppState {

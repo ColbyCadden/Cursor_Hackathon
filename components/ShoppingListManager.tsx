@@ -5,22 +5,35 @@ import { ShoppingItemForm, type ShoppingItemFormData } from "./ShoppingItemForm"
 import { ShoppingListGroup } from "./ShoppingListGroup";
 import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
-import { SHOPPING_CATEGORIES, type ShoppingListItem } from "@/lib/types";
+import { addAllBoughtToInventory } from "@/lib/boughtToPantry";
+import { syncPantryState } from "@/lib/pantrySync";
+import { SHOPPING_CATEGORIES, type AppState, type ShoppingListItem } from "@/lib/types";
 
 interface ShoppingListManagerProps {
   shoppingList: ShoppingListItem[];
   onUpdate: (shoppingList: ShoppingListItem[]) => void;
+  /** When provided, enables bought → pantry flow and auto-sync */
+  onPantryUpdate?: (updater: (prev: AppState) => AppState) => void;
+  appState?: AppState;
 }
 
 export function ShoppingListManager({
   shoppingList,
   onUpdate,
+  onPantryUpdate,
+  appState,
 }: ShoppingListManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const boughtCount = shoppingList.filter((i) => i.bought).length;
+  const pendingPantry = shoppingList.filter(
+    (i) => i.bought && !i.addedToInventory
+  ).length;
+  const autoCount = shoppingList.filter(
+    (i) => i.source === "mealdex" && !i.bought
+  ).length;
 
   const groups = SHOPPING_CATEGORIES.map((category) => ({
     category,
@@ -30,37 +43,63 @@ export function ShoppingListManager({
   const showToast = (msg: string) => setToast(msg);
 
   const handleToggleBought = (id: string) => {
-    onUpdate(
-      shoppingList.map((item) =>
-        item.id === id ? { ...item, bought: !item.bought } : item
-      )
+    const nextList = shoppingList.map((item) =>
+      item.id === id ? { ...item, bought: !item.bought } : item
     );
+    if (onPantryUpdate && appState) {
+      onPantryUpdate((prev) =>
+        syncPantryState({ ...prev, shoppingList: nextList })
+      );
+    } else {
+      onUpdate(nextList);
+    }
   };
 
   const handleDelete = (id: string) => {
-    onUpdate(shoppingList.filter((item) => item.id !== id));
+    const nextList = shoppingList.filter((item) => item.id !== id);
+    if (onPantryUpdate && appState) {
+      onPantryUpdate((prev) =>
+        syncPantryState({ ...prev, shoppingList: nextList })
+      );
+    } else {
+      onUpdate(nextList);
+    }
   };
 
   const handleSaveForm = (data: ShoppingItemFormData) => {
+    let nextList: ShoppingListItem[];
     if (editingItem) {
-      onUpdate(
-        shoppingList.map((item) =>
-          item.id === editingItem.id ? { ...item, ...data } : item
-        )
+      nextList = shoppingList.map((item) =>
+        item.id === editingItem.id ? { ...item, ...data } : item
       );
     } else {
-      onUpdate([
+      nextList = [
         ...shoppingList,
         {
           id: createId("shop"),
           ...data,
           bought: false,
           addedToInventory: false,
+          source: "manual" as const,
         },
-      ]);
+      ];
+    }
+
+    if (onPantryUpdate && appState) {
+      onPantryUpdate((prev) =>
+        syncPantryState({ ...prev, shoppingList: nextList })
+      );
+    } else {
+      onUpdate(nextList);
     }
     setShowForm(false);
     setEditingItem(null);
+  };
+
+  const handleAddBoughtToPantry = () => {
+    if (!onPantryUpdate || !appState || pendingPantry === 0) return;
+    onPantryUpdate((prev) => addAllBoughtToInventory(prev));
+    showToast(`Added ${pendingPantry} item(s) to your pantry.`);
   };
 
   return (
@@ -68,7 +107,7 @@ export function ShoppingListManager({
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <button
             type="button"
             onClick={() => {
@@ -79,6 +118,15 @@ export function ShoppingListManager({
           >
             + Add item
           </button>
+          {pendingPantry > 0 && onPantryUpdate && (
+            <button
+              type="button"
+              onClick={handleAddBoughtToPantry}
+              className="btn-secondary min-h-[44px]"
+            >
+              Add {pendingPantry} bought to pantry
+            </button>
+          )}
           {boughtCount > 0 && (
             <button
               type="button"
@@ -88,7 +136,14 @@ export function ShoppingListManager({
                     `Remove ${boughtCount} bought item(s) from the list?`
                   )
                 ) {
-                  onUpdate(shoppingList.filter((i) => !i.bought));
+                  const nextList = shoppingList.filter((i) => !i.bought);
+                  if (onPantryUpdate && appState) {
+                    onPantryUpdate((prev) =>
+                      syncPantryState({ ...prev, shoppingList: nextList })
+                    );
+                  } else {
+                    onUpdate(nextList);
+                  }
                   showToast("Bought items cleared.");
                 }
               }}
@@ -106,7 +161,13 @@ export function ShoppingListManager({
                     "Clear the entire shopping list? This cannot be undone."
                   )
                 ) {
-                  onUpdate([]);
+                  if (onPantryUpdate && appState) {
+                    onPantryUpdate((prev) =>
+                      syncPantryState({ ...prev, shoppingList: [] })
+                    );
+                  } else {
+                    onUpdate([]);
+                  }
                   showToast("Shopping list cleared.");
                 }
               }}
@@ -118,6 +179,7 @@ export function ShoppingListManager({
         </div>
         <p className="text-xs text-[var(--text-muted)]">
           {shoppingList.length} item(s) · {boughtCount} bought
+          {autoCount > 0 ? ` · ${autoCount} auto from Mealdex` : ""}
         </p>
       </div>
 
@@ -153,8 +215,8 @@ export function ShoppingListManager({
             </p>
             <p className="empty-state-title">Shopping list is empty</p>
             <p className="empty-state-text">
-              Add items manually or ask the AI meal planner to suggest groceries —
-              then tap &quot;Add suggested items to shopping list&quot; in chat.
+              Save meals in Discover and low-stock ingredients appear here
+              automatically. You can also add items manually or from AI chat.
             </p>
           </div>
         ) : (

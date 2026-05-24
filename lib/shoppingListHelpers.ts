@@ -34,6 +34,7 @@ export function mergeSuggestedIntoShoppingList(
         required: item.required,
         bought: false,
         addedToInventory: false,
+        source: "ai",
       });
       added += 1;
       continue;

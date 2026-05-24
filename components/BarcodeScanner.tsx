@@ -12,6 +12,8 @@ import {
   applyCreateSeparate,
 } from "@/lib/inventoryBarcode";
 import { createId } from "@/lib/id";
+import { deriveIngredientTags } from "@/lib/ingredientAliases";
+import { syncPantryState } from "@/lib/pantrySync";
 import { searchProducts, type ProductSearchResult } from "@/lib/productSearch";
 import type { InventoryCategory, ScannedInventoryItem } from "@/lib/types";
 import { INVENTORY_CATEGORIES } from "@/lib/types";
@@ -426,6 +428,7 @@ export function BarcodeScanner() {
           unit: item.unit.trim(),
           category: item.category,
           percentLeft: 100,
+          ingredientTags: deriveIngredientTags(item.name.trim(), item.category),
         };
 
         const result = addOrUpdateInventoryItem(nextInventory, scanned);
@@ -436,7 +439,7 @@ export function BarcodeScanner() {
         }
       }
 
-      return { ...prev, inventory: nextInventory };
+      return syncPantryState({ ...prev, inventory: nextInventory });
     });
 
     triggerScanFlash();
@@ -453,10 +456,12 @@ export function BarcodeScanner() {
   };
 
   const removeFromInventory = (id: string) => {
-    updateState((prev) => ({
-      ...prev,
-      inventory: prev.inventory.filter((item) => item.id !== id),
-    }));
+    updateState((prev) =>
+      syncPantryState({
+        ...prev,
+        inventory: prev.inventory.filter((item) => item.id !== id),
+      })
+    );
   };
 
   const inventory = state?.inventory ?? [];

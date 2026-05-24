@@ -1,5 +1,7 @@
 import { createInitialAppState } from "./demoData";
+import { deriveIngredientTags } from "./ingredientAliases";
 import { enrichMeal, normalizeIngredientPreference } from "./meal/mealPersonalization";
+import { syncPantryState } from "./pantrySync";
 import { SEED_MEALS } from "./meal/seedMeals";
 import { authenticateUser } from "./auth";
 import { clearPendingSignup } from "./signupSession";
@@ -7,6 +9,7 @@ import { registeredUserToProfile } from "./signupProfile";
 import { migrateShoppingCategory } from "./shoppingCategories";
 import type {
   AppState,
+  InventoryItem,
   LegacyAppState,
   Meal,
   ShoppingListItem,
@@ -46,6 +49,7 @@ function migrateShoppingList(items: ShoppingListItem[]): ShoppingListItem[] {
     bought: item.bought ?? false,
     addedToInventory: item.addedToInventory ?? false,
     required: item.required ?? true,
+    source: item.source ?? "manual",
   }));
 }
 
@@ -94,6 +98,15 @@ function migrateSavedIds(parsed: LegacyAppState): string[] {
   return parsed.mealLibrary?.map((m) => m.id) ?? [];
 }
 
+function migrateInventory(items: InventoryItem[]): InventoryItem[] {
+  return items.map((item) => ({
+    ...item,
+    ingredientTags:
+      item.ingredientTags ??
+      deriveIngredientTags(item.name, item.category),
+  }));
+}
+
 function migrateParsedState(parsed: LegacyAppState): AppState {
   const initial = createInitialAppState();
 
@@ -101,10 +114,10 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
     ? migrateShoppingList(parsed.shoppingList)
     : initial.shoppingList;
 
-  return {
+  return syncPantryState({
     isLoggedIn: parsed.isLoggedIn ?? false,
     profile: migrateProfile(parsed.profile ?? {}),
-    inventory: parsed.inventory ?? [],
+    inventory: migrateInventory(parsed.inventory ?? []),
     meals: migrateMeals(parsed),
     swipedMealIds: migrateSwipedIds(parsed),
     savedMealIds: migrateSavedIds(parsed),
@@ -113,9 +126,11 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
       ...msg,
       suggestedItems: msg.suggestedItems ?? undefined,
       mealPrepSteps: msg.mealPrepSteps ?? undefined,
+      inventoryUpdates: msg.inventoryUpdates ?? undefined,
       suggestedItemsAdded: msg.suggestedItemsAdded ?? false,
+      inventoryUpdatesApplied: msg.inventoryUpdatesApplied ?? false,
     })),
-  };
+  });
 }
 
 export function getAppState(): AppState {
