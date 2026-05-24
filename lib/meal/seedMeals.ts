@@ -3,10 +3,9 @@ import type { Meal } from "@/lib/types";
 const UNSPLASH = (id: string) =>
   `https://images.unsplash.com/${id}?w=800&q=80&auto=format`;
 
-const FOODISH = (category: string, n = 1) =>
-  `https://foodish-api.com/images/${category}/${category}${n}.jpg`;
+const LOCAL = (filename: string) => `/meals/${filename}`;
 
-/** Curated deck — Foodish when category matches the dish; verified Unsplash IDs otherwise. */
+/** Curated deck — local images in /public/meals when available; verified Unsplash IDs otherwise. */
 export const SEED_MEALS: Meal[] = [
   {
     id: "seed-grilled-chicken-salad",
@@ -33,7 +32,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-pasta-carbonara",
     name: "Pasta Carbonara",
-    imageUri: FOODISH("pasta", 1),
+    imageUri: LOCAL("pesto-penne.png"),
     difficulty: 3,
     price: 3,
     highProtein: false,
@@ -120,7 +119,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-margherita-pizza",
     name: "Margherita Pizza",
-    imageUri: FOODISH("pizza", 1),
+    imageUri: LOCAL("pepperoni-pizza.jpg"),
     difficulty: 3,
     price: 3,
     highProtein: false,
@@ -281,7 +280,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-smash-burger",
     name: "Smash Burger",
-    imageUri: FOODISH("burger", 1),
+    imageUri: UNSPLASH("photo-1639744093483-86714cd62a3b"),
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -342,7 +341,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-pepperoni-pizza",
     name: "Pepperoni Pizza",
-    imageUri: FOODISH("pizza", 2),
+    imageUri: LOCAL("pepperoni-pizza.jpg"),
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -362,7 +361,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-butter-chicken",
     name: "Butter Chicken & Rice",
-    imageUri: FOODISH("butter-chicken", 1),
+    imageUri: LOCAL("vegetable-coconut-curry.png"),
     difficulty: 3,
     price: 3,
     highProtein: true,
@@ -404,7 +403,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-chicken-biryani",
     name: "Chicken Biryani",
-    imageUri: FOODISH("biryani", 1),
+    imageUri: LOCAL("bean-burrito-bowl.png"),
     difficulty: 3,
     price: 3,
     highProtein: true,
@@ -446,7 +445,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-fried-rice",
     name: "Egg Fried Rice",
-    imageUri: FOODISH("rice", 1),
+    imageUri: LOCAL("egg-fried-rice.jpg"),
     difficulty: 2,
     price: 2,
     highProtein: true,
@@ -467,7 +466,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-samosa-snack",
     name: "Samosa Snack Plate",
-    imageUri: FOODISH("samosa", 1),
+    imageUri: LOCAL("falafel-pita-wrap.png"),
     difficulty: 2,
     price: 2,
     highProtein: false,
@@ -487,7 +486,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-masala-dosa",
     name: "Masala Dosa",
-    imageUri: FOODISH("dosa", 1),
+    imageUri: LOCAL("falafel-pita-wrap.png"),
     difficulty: 3,
     price: 2,
     highProtein: false,
@@ -507,7 +506,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-idly-breakfast",
     name: "Idly Breakfast",
-    imageUri: FOODISH("idly", 1),
+    imageUri: LOCAL("idly-breakfast.jpg"),
     difficulty: 2,
     price: 1,
     highProtein: false,
@@ -526,7 +525,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-veggie-pizza",
     name: "Roasted Veggie Pizza",
-    imageUri: FOODISH("pizza", 4),
+    imageUri: LOCAL("veggie-pizza.jpg"),
     difficulty: 2,
     price: 3,
     highProtein: false,
@@ -694,7 +693,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-overnight-oats",
     name: "Overnight Oats",
-    imageUri: FOODISH("dessert", 3),
+    imageUri: LOCAL("pb-banana-toast.png"),
     difficulty: 1,
     price: 1,
     highProtein: false,
@@ -798,7 +797,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-shrimp-pasta",
     name: "Garlic Shrimp Pasta",
-    imageUri: FOODISH("pasta", 3),
+    imageUri: LOCAL("pesto-penne.png"),
     difficulty: 3,
     price: 4,
     highProtein: true,
@@ -841,7 +840,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-honey-garlic-chicken",
     name: "Honey Garlic Chicken",
-    imageUri: FOODISH("butter-chicken", 3),
+    imageUri: LOCAL("oven-roasted-chicken-thighs.png"),
     difficulty: 2,
     price: 3,
     highProtein: true,
