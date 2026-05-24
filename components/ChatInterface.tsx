@@ -7,6 +7,7 @@ import { PromptChips } from "./PromptChips";
 import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
 import { generateAIResponse } from "@/lib/mockAI";
+import { applyInventoryUpdates, syncPantryState } from "@/lib/pantrySync";
 import { mergeSuggestedIntoShoppingList } from "@/lib/shoppingListHelpers";
 import type { AppState, ChatMessage } from "@/lib/types";
 
@@ -77,6 +78,7 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
           createdAt: new Date().toISOString(),
           suggestedItems: response.suggestedItems,
           mealPrepSteps: response.mealPrepSteps,
+          inventoryUpdates: response.inventoryUpdates,
         };
 
         onUpdate((prev) => ({
@@ -99,13 +101,15 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
       message.suggestedItems
     );
 
-    onUpdate((prev) => ({
-      ...prev,
-      shoppingList: list,
-      chatMessages: prev.chatMessages.map((m) =>
-        m.id === messageId ? { ...m, suggestedItemsAdded: true } : m
-      ),
-    }));
+    onUpdate((prev) =>
+      syncPantryState({
+        ...prev,
+        shoppingList: list,
+        chatMessages: prev.chatMessages.map((m) =>
+          m.id === messageId ? { ...m, suggestedItemsAdded: true } : m
+        ),
+      })
+    );
 
     const parts: string[] = [];
     if (added) parts.push(`${added} added`);
@@ -115,6 +119,30 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
       parts.length
         ? `Shopping list updated: ${parts.join(", ")}.`
         : "Items already on your shopping list."
+    );
+  };
+
+  const handleApplyInventoryUpdates = (messageId: string) => {
+    const message = appState.chatMessages.find((m) => m.id === messageId);
+    if (!message?.inventoryUpdates?.length || message.inventoryUpdatesApplied)
+      return;
+
+    onUpdate((prev) => {
+      const inventory = applyInventoryUpdates(
+        prev.inventory,
+        message.inventoryUpdates!
+      );
+      return syncPantryState({
+        ...prev,
+        inventory,
+        chatMessages: prev.chatMessages.map((m) =>
+          m.id === messageId ? { ...m, inventoryUpdatesApplied: true } : m
+        ),
+      });
+    });
+
+    setToast(
+      `Pantry updated — deducted ${message.inventoryUpdates.length} ingredient(s).`
     );
   };
 
@@ -165,6 +193,7 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
               key={msg.id}
               message={msg}
               onAddSuggestedItems={handleAddSuggestedItems}
+              onApplyInventoryUpdates={handleApplyInventoryUpdates}
             />
           ))}
           {thinking && (

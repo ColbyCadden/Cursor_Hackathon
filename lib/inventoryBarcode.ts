@@ -60,6 +60,12 @@ export function mergeScannedIntoExisting(
     ...existing,
     amount: newAmount,
     percentLeft: boostedPercent,
+    ingredientTags: [
+      ...new Set([
+        ...(existing.ingredientTags ?? []),
+        ...(scanned.ingredientTags ?? []),
+      ]),
+    ],
   };
 }
 
@@ -73,6 +79,7 @@ export function createInventoryItemFromScan(
     unit: scanned.unit,
     category: scanned.category,
     percentLeft: scanned.percentLeft,
+    ingredientTags: scanned.ingredientTags,
   };
 }
 

@@ -19,6 +19,7 @@ import {
   swipeLeft,
   swipeRight,
 } from "@/lib/meal/mealHelpers";
+import { prepMeal } from "@/lib/pantrySync";
 import type { Meal } from "@/lib/types";
 
 function MealdexContent() {
@@ -157,6 +158,16 @@ function MealdexContent() {
                 <button
                   type="button"
                   onClick={() => {
+                    updateState((prev) => prepMeal(prev, selected.id));
+                    setSelected(null);
+                  }}
+                  className="rounded-xl bg-[#7BAE7F] py-3 text-sm font-bold text-white"
+                >
+                  Mark as prepped (deduct from pantry)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     updateState((prev) => removeFromMealdex(prev, selected.id));
                     setSelected(null);
                   }}
@@ -167,7 +178,7 @@ function MealdexContent() {
                 <button
                   type="button"
                   onClick={() => setSelected(null)}
-                  className="rounded-xl bg-[#7BAE7F] py-3 text-sm font-bold text-white"
+                  className="rounded-xl border border-[#E8D5C4] py-3 text-sm font-semibold text-[#7A7268]"
                 >
                   Close
                 </button>

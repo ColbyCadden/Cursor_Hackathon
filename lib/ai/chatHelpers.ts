@@ -1,6 +1,7 @@
 import type {
   InventoryCategory,
   InventoryItem,
+  InventoryUpdate,
   ShoppingListItem,
   SuggestedShoppingItem,
   UserProfile,
@@ -10,6 +11,7 @@ export interface AIResponse {
   text: string;
   suggestedItems?: SuggestedShoppingItem[];
   mealPrepSteps?: string[];
+  inventoryUpdates?: InventoryUpdate[];
   source?: "gemini" | "groq" | "mock" | "quota" | "unconfigured";
 }
 
@@ -119,6 +121,7 @@ export function parseAIResponse(raw: string): AIResponse {
       text?: string;
       suggestedItems?: SuggestedShoppingItem[];
       mealPrepSteps?: string[];
+      inventoryUpdates?: InventoryUpdate[];
     };
 
     const text = typeof parsed.text === "string" ? parsed.text.trim() : trimmed;
@@ -144,10 +147,21 @@ export function parseAIResponse(raw: string): AIResponse {
       ? parsed.mealPrepSteps.map((s) => String(s).trim()).filter(Boolean)
       : undefined;
 
+    const inventoryUpdates = Array.isArray(parsed.inventoryUpdates)
+      ? parsed.inventoryUpdates
+          .filter((u) => u?.name?.trim())
+          .map((u) => ({
+            name: String(u.name).trim(),
+            amountUsed: String(u.amountUsed ?? "1").trim(),
+            unit: String(u.unit ?? "").trim(),
+          }))
+      : undefined;
+
     return {
       text,
       suggestedItems: suggestedItems?.length ? suggestedItems : undefined,
       mealPrepSteps: mealPrepSteps?.length ? mealPrepSteps : undefined,
+      inventoryUpdates: inventoryUpdates?.length ? inventoryUpdates : undefined,
     };
   } catch {
     return { text: trimmed };
@@ -161,6 +175,7 @@ Use the student's profile, kitchen inventory, Mealdex shopping cart, AI-suggeste
 
 When suggesting groceries the student should buy, include them in suggestedItems with realistic amounts and units.
 When giving a prep plan or cooking order, include mealPrepSteps as a numbered-style list (strings only, no numbers required in the string).
+When the student completes or plans meal prep, include inventoryUpdates with each ingredient used and realistic amountUsed/unit so pantry stock can be deducted.
 
 Respond with JSON only (no markdown fences), using this exact shape:
 {
@@ -168,11 +183,14 @@ Respond with JSON only (no markdown fences), using this exact shape:
   "suggestedItems": [
     { "name": "Eggs", "amount": "12", "unit": "count", "category": "Protein", "required": true }
   ],
-  "mealPrepSteps": ["Cook rice first", "Grill chicken while rice rests"]
+  "mealPrepSteps": ["Cook rice first", "Grill chicken while rice rests"],
+  "inventoryUpdates": [
+    { "name": "chicken breast", "amountUsed": "200", "unit": "g" }
+  ]
 }
 
 Rules:
-- suggestedItems and mealPrepSteps are optional; omit or use [] when not needed.
+- suggestedItems, mealPrepSteps, and inventoryUpdates are optional; omit or use [] when not needed.
 - category must be one of: Protein, Carbs, Produce, Fruit, Dairy, Snacks, Sauces/Spices, Frozen, Other.
 - Do not invent inventory the student already has unless suggesting they use it up.
 - Respect avoided foods and skill level.`;

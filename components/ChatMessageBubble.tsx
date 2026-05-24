@@ -6,11 +6,13 @@ import type { ChatMessage } from "@/lib/types";
 interface ChatMessageBubbleProps {
   message: ChatMessage;
   onAddSuggestedItems?: (messageId: string) => void;
+  onApplyInventoryUpdates?: (messageId: string) => void;
 }
 
 export function ChatMessageBubble({
   message,
   onAddSuggestedItems,
+  onApplyInventoryUpdates,
 }: ChatMessageBubbleProps) {
   const isUser = message.role === "user";
 
@@ -42,6 +44,34 @@ export function ChatMessageBubble({
             </ol>
           </div>
         )}
+
+        {!isUser &&
+          message.inventoryUpdates &&
+          message.inventoryUpdates.length > 0 &&
+          onApplyInventoryUpdates && (
+            <div className="mt-3 rounded-lg border border-[var(--card-border)] bg-[var(--surface)] p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                Pantry deductions
+              </p>
+              <ul className="mb-3 space-y-1 text-xs text-[var(--text-muted)]">
+                {message.inventoryUpdates.map((u) => (
+                  <li key={`${u.name}-${u.amountUsed}`}>
+                    · {u.name}: −{u.amountUsed} {u.unit}
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                disabled={message.inventoryUpdatesApplied}
+                onClick={() => onApplyInventoryUpdates(message.id)}
+                className="w-full rounded-lg bg-[var(--salmon)] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                {message.inventoryUpdatesApplied
+                  ? "Pantry updated"
+                  : "Deduct from pantry"}
+              </button>
+            </div>
+          )}
 
         {!isUser &&
           message.suggestedItems &&

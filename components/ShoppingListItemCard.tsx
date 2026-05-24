@@ -39,6 +39,16 @@ export function ShoppingListItemCard({
                 optional
               </span>
             )}
+            {item.source === "mealdex" && (
+              <span className="rounded-full bg-[#E3F2FD] px-2 py-0.5 text-xs text-[#1565C0]">
+                auto
+              </span>
+            )}
+            {item.bought && !item.addedToInventory && (
+              <span className="rounded-full bg-[#FFF8E1] px-2 py-0.5 text-xs text-[#F57F17]">
+                add to pantry
+              </span>
+            )}
           </div>
           <p className="mt-0.5 text-xs text-[#8A7B6D]">
             {item.amount} {item.unit}
