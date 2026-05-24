@@ -1,8 +1,16 @@
+import { filterMealsForProfile } from "@/lib/meal/mealPersonalization";
+import { profileHasSignupData } from "@/lib/signupProfile";
 import type { AppState, Meal } from "@/lib/types";
 
 export function getDeckMeals(state: AppState): Meal[] {
   const swiped = new Set(state.swipedMealIds);
-  return state.meals.filter((m) => !swiped.has(m.id));
+  const remaining = state.meals.filter((m) => !swiped.has(m.id));
+
+  if (!profileHasSignupData(state.profile)) {
+    return remaining;
+  }
+
+  return filterMealsForProfile(remaining, state.profile);
 }
 
 export function getSavedMeals(state: AppState): Meal[] {

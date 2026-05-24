@@ -167,7 +167,7 @@ function ProfileContent() {
             onChange={setSkill}
           />
           <RadioGroup
-            legend="Ingredients per recipe"
+            legend="How complex should recipes be?"
             name="ingredient_preference"
             options={INGREDIENT_PREFERENCE}
             value={ingredients}

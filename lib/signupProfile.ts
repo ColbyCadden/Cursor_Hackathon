@@ -1,5 +1,6 @@
 import { createInitialAppState } from "./demoData";
 import { registerUser, type RegisteredUser } from "./auth";
+import { normalizeIngredientPreference } from "./meal/mealPersonalization";
 import {
   COOKING_EQUIPMENT,
   COOKING_SKILL,
@@ -19,9 +20,8 @@ const SKILL_MAP: Record<string, string> = {
 };
 
 const INGREDIENT_TO_SIMPLICITY: Record<string, string> = {
-  minimal: "Very simple: 3–5 ingredients",
-  balanced: "Simple: 5–7 ingredients",
-  lots: "Flexible: 8–10 ingredients",
+  minimal: "Simple recipes with fewer ingredients",
+  lots: "Fuller recipes with more ingredients",
 };
 
 const DIET_TO_GOALS: Record<string, string[]> = {
@@ -36,12 +36,12 @@ export function pendingSignupToProfile(pending: PendingSignup): UserProfile {
   const diet = pending.eating_habits ?? "minimal_meat";
   const skill = pending.cooking_skill_level ?? "beginner";
   const timeBudget = pending.cooking_time_per_week ?? "3_6h";
-  const ingredients = pending.ingredient_preference ?? "balanced";
+  const ingredients = normalizeIngredientPreference(pending.ingredient_preference);
 
   return {
     name: pending.name ?? "Student",
     email: pending.email,
-    studentType: "University student",
+    studentType: "Home cook",
     cooking_equipment: equipmentKeys,
     eating_habits: diet,
     cooking_time_per_week: timeBudget,
@@ -53,7 +53,8 @@ export function pendingSignupToProfile(pending: PendingSignup): UserProfile {
     cookingSkill: SKILL_MAP[skill] ?? "Beginner",
     availableTime: COOKING_TIME_PER_WEEK[timeBudget] ?? "3–6 hours",
     simplicityPreference:
-      INGREDIENT_TO_SIMPLICITY[ingredients] ?? "Simple: 5–7 ingredients",
+      INGREDIENT_TO_SIMPLICITY[ingredients] ??
+      "Simple recipes with fewer ingredients",
     profileComplete: true,
   };
 }
@@ -80,9 +81,9 @@ export function buildPersonalizedExperience(profile: UserProfile) {
   const skill =
     COOKING_SKILL[profile.cooking_skill_level ?? "beginner"] ??
     profile.cookingSkill;
+  const ingredientKey = normalizeIngredientPreference(profile.ingredient_preference);
   const ingredients =
-    INGREDIENT_PREFERENCE[profile.ingredient_preference ?? "balanced"] ??
-    profile.simplicityPreference;
+    INGREDIENT_PREFERENCE[ingredientKey] ?? profile.simplicityPreference;
 
   const equipmentKeys = profile.cooking_equipment ?? [];
   const equipmentNames = equipmentKeys.map((key) => COOKING_EQUIPMENT[key] ?? key);

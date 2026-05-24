@@ -1,4 +1,5 @@
 import { createInitialAppState } from "./demoData";
+import { enrichMeal, normalizeIngredientPreference } from "./meal/mealPersonalization";
 import { SEED_MEALS } from "./meal/seedMeals";
 import { authenticateUser } from "./auth";
 import { clearPendingSignup } from "./signupSession";
@@ -14,16 +15,27 @@ import type {
 
 const STORAGE_KEY = "prepdeck-app-state";
 
+export { STORAGE_KEY };
+
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
 function migrateProfile(profile: Partial<UserProfile>): UserProfile {
   const base = createInitialAppState().profile;
-  return {
+  const merged = {
     ...base,
     ...profile,
     profileComplete: profile.profileComplete ?? false,
+  };
+  return {
+    ...merged,
+    ingredient_preference: normalizeIngredientPreference(
+      merged.ingredient_preference,
+    ),
+    cooking_equipment: (merged.cooking_equipment ?? []).filter(
+      (key) => key !== "grill",
+    ),
   };
 }
 
@@ -54,10 +66,11 @@ function migrateMeals(parsed: LegacyAppState): Meal[] {
 
   const mergedSeeds = SEED_MEALS.map((seed) => {
     const existing = rawMeals.find((m) => m.id === seed.id);
-    return existing ? { ...existing, ...seed } : seed;
+    const withSeed = existing ? { ...existing, ...seed } : seed;
+    return enrichMeal(withSeed, seed);
   });
 
-  return [...customs, ...mergedSeeds];
+  return [...customs.map((meal) => enrichMeal(meal)), ...mergedSeeds];
 }
 
 function migrateSwipedIds(parsed: LegacyAppState): string[] {
@@ -129,6 +142,7 @@ export function getAppState(): AppState {
 export function saveAppState(state: AppState): void {
   if (!isBrowser()) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  window.dispatchEvent(new Event("prepdeck-state-changed"));
 }
 
 export function resetDemoData(): AppState {

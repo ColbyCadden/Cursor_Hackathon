@@ -12,6 +12,9 @@ function DiscoverContent() {
   if (!state) return null;
 
   const deck = getDeckMeals(state);
+  const swiped = new Set(state.swipedMealIds);
+  const unswipedCount = state.meals.filter((m) => !swiped.has(m.id)).length;
+  const filteredOut = unswipedCount > 0 && deck.length === 0;
 
   return (
     <AppShell profile={state.profile}>
@@ -24,6 +27,16 @@ function DiscoverContent() {
           <p className="mt-1 text-sm text-[var(--text-muted)]">
             Swipe right to save to Mealdex · {deck.length} left
           </p>
+          {filteredOut && (
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              Nothing here matches your signup preferences right now. Try updating
+              your{" "}
+              <Link href="/profile" className="font-semibold text-[var(--green-dark)] underline">
+                profile
+              </Link>
+              .
+            </p>
+          )}
           <Link
             href="/create"
             className="mt-2 inline-block text-sm font-semibold text-[var(--green-dark)] underline"

@@ -33,7 +33,7 @@ export default function SignupAccountPage() {
     const normalizedEmail = email.trim().toLowerCase();
 
     if (!EMAIL_RE.test(normalizedEmail)) {
-      nextErrors.push("Enter a valid university email address.");
+      nextErrors.push("Enter a valid email address.");
     }
     if (password.length < 8) {
       nextErrors.push("Password must be at least 8 characters.");
@@ -62,7 +62,7 @@ export default function SignupAccountPage() {
     <SignupLayout
       currentPath={CURRENT_PATH}
       title="Create your account"
-      subtitle="Use your email as your username. We'll personalize meal planning for your uni life."
+      subtitle="Use your email as your username. We'll personalize meal planning around your kitchen and tastes."
     >
       <form onSubmit={handleSubmit}>
         {errors.length > 0 && (
@@ -79,7 +79,7 @@ export default function SignupAccountPage() {
               htmlFor="email"
               className="mb-1.5 block text-sm font-medium text-[#6B5E52]"
             >
-              University email
+              Email
             </label>
             <input
               id="email"
@@ -88,7 +88,7 @@ export default function SignupAccountPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              placeholder="you@university.ac.uk"
+              placeholder="you@example.com"
               className="w-full rounded-xl border border-[#E8DDD0] bg-[#FAF6F0] px-4 py-2.5 text-sm text-[#3D3429] outline-none transition focus:border-[#E8927C] focus:ring-2 focus:ring-[#F4A896]/40"
             />
             <p className="mt-1 text-xs text-[#8A7B6D]">This is your login username</p>

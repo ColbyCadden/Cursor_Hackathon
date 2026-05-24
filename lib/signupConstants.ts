@@ -1,6 +1,6 @@
 export const COOKING_EQUIPMENT: Record<string, string> = {
   oven: "Oven",
-  stovetop: "Stovetop / hob",
+  stovetop: "Stovetop",
   microwave: "Microwave",
   air_fryer: "Air fryer",
   slow_cooker: "Slow cooker",
@@ -8,7 +8,6 @@ export const COOKING_EQUIPMENT: Record<string, string> = {
   rice_cooker: "Rice cooker",
   kettle: "Electric kettle",
   toaster: "Toaster",
-  grill: "Grill / sandwich press",
 };
 
 export const EATING_HABITS: Record<string, string> = {
@@ -31,10 +30,12 @@ export const COOKING_SKILL: Record<string, string> = {
 };
 
 export const INGREDIENT_PREFERENCE: Record<string, string> = {
-  minimal: "Minimal — fewer ingredients per recipe",
-  balanced: "Balanced — mix of simple and fuller recipes",
-  lots: "Lots — don't mind longer ingredient lists",
+  minimal: "Keep it simple — recipes with fewer ingredients",
+  lots: "Bring it on — recipes with more ingredients",
 };
+
+/** Ingredient count split for simple vs fuller recipe preference */
+export const INGREDIENT_COUNT_THRESHOLD = 7;
 
 export const SIGNUP_STEPS = [
   { path: "/signup/account", label: "Account" },
