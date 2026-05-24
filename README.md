@@ -1,6 +1,6 @@
 # PrepDeck
 
-**Simple cooking for busy students.**
+**Simple cooking for busy people.**
 
 Swipe meals into your Mealdex, track pantry inventory, plan with mock AI, and shop smarter — all in one Next.js prototype.
 
