@@ -49,15 +49,25 @@ function hasMealShape(m: unknown): m is Meal {
 
 function migrateMeals(parsed: LegacyAppState): Meal[] {
   const rawMeals = parsed.meals as unknown[] | undefined;
+  let meals: Meal[];
+
   if (rawMeals?.length && hasMealShape(rawMeals[0])) {
-    return rawMeals as Meal[];
+    meals = rawMeals as Meal[];
+  } else {
+    const customFromCatalog = (rawMeals ?? []).filter(hasMealShape) as Meal[];
+    const seedIds = new Set(SEED_MEALS.map((m) => m.id));
+    const customs = customFromCatalog.filter((m) => !seedIds.has(m.id));
+    meals = [...customs, ...SEED_MEALS];
   }
 
-  const customFromCatalog = (rawMeals ?? []).filter(hasMealShape) as Meal[];
-  const seedIds = new Set(SEED_MEALS.map((m) => m.id));
-  const customs = customFromCatalog.filter((m) => !seedIds.has(m.id));
-
-  return [...customs, ...SEED_MEALS];
+  const seedById = new Map(SEED_MEALS.map((m) => [m.id, m]));
+  return meals.map((meal) => {
+    const seed = seedById.get(meal.id);
+    if (seed) {
+      return { ...meal, imageUri: seed.imageUri };
+    }
+    return meal;
+  });
 }
 
 function migrateSwipedIds(parsed: LegacyAppState): string[] {
@@ -91,7 +101,7 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
   return {
     isLoggedIn: parsed.isLoggedIn ?? false,
     profile: migrateProfile(parsed.profile ?? {}),
-    inventory: parsed.inventory?.length ? parsed.inventory : initial.inventory,
+    inventory: parsed.inventory ?? [],
     meals: migrateMeals(parsed),
     swipedMealIds: migrateSwipedIds(parsed),
     savedMealIds: migrateSavedIds(parsed),

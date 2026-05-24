@@ -46,7 +46,7 @@ export default function HomePage() {
         </div>
 
         <ul className="mt-10 flex flex-wrap justify-center gap-3 text-xs text-[var(--text-muted)]">
-          {["Mealdex swipe", "Auto shop list", "Pantry inventory", "AI planner"].map(
+          {["Mealdex swipe", "Auto shop list", "Custom cards", "AI planner"].map(
             (feature) => (
               <li
                 key={feature}

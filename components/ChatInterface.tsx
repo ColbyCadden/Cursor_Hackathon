@@ -12,7 +12,7 @@ import type { AppState, ChatMessage } from "@/lib/types";
 
 const EXAMPLE_PROMPTS = [
   "I need to meal prep 8 meals.",
-  "What can I cook with my inventory?",
+  "What meals fit my saved Mealdex?",
   "Use fewer ingredients.",
   "Make this simpler.",
   "What's on my shopping list?",

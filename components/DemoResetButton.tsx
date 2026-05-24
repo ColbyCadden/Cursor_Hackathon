@@ -13,7 +13,7 @@ export function DemoResetButton({ className = "", onAfterReset }: DemoResetButto
 
   const handleReset = () => {
     const confirmed = window.confirm(
-      "Reset demo data?\n\nThis restores inventory, meals, Mealdex, shopping list, and chat to defaults. Your login session stays active."
+      "Reset demo data?\n\nThis restores meals, Mealdex, shopping list, and chat to defaults. Your login session stays active."
     );
     if (!confirmed) return;
 

@@ -39,11 +39,6 @@ export function ShoppingListItemCard({
                 optional
               </span>
             )}
-            {item.addedToInventory && (
-              <span className="rounded-full bg-[#B8D4B8]/50 px-2 py-0.5 text-xs font-medium text-[#4A6B4A]">
-                In inventory
-              </span>
-            )}
           </div>
           <p className="mt-0.5 text-xs text-[#8A7B6D]">
             {item.amount} {item.unit}

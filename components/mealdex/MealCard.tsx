@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import type { Meal } from "@/lib/types";
 import { StarRating } from "./StarRating";
@@ -15,21 +16,30 @@ interface Props {
 }
 
 export function MealCard({ meal, compact = false, className = "" }: Props) {
+  const [imgError, setImgError] = useState(false);
   const imageHeight = compact ? "h-24" : "h-[min(42vw,200px)] sm:h-[200px]";
 
   return (
     <article
-      className={`overflow-hidden rounded-[20px] border-2 border-[#E8D5C4] bg-[#FFFBF7] shadow-md ${className}`}
+      className={`overflow-hidden rounded-[20px] border-2 border-[#E8D5C4] bg-[#FFFBF7] shadow-md select-none ${className}`}
     >
       <div className={`relative w-full ${imageHeight} bg-[#F5F0E8]`}>
-        <Image
-          src={meal.imageUri}
-          alt={meal.name}
-          fill
-          className="object-cover"
-          sizes="(max-width: 430px) 100vw, 360px"
-          unoptimized={meal.imageUri.startsWith("blob:")}
-        />
+        {imgError ? (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#F5F0E8] to-[#E8D5C4] text-5xl">
+            🍽️
+          </div>
+        ) : (
+          <Image
+            src={meal.imageUri}
+            alt={meal.name}
+            fill
+            draggable={false}
+            className="pointer-events-none object-cover select-none [-webkit-user-drag:none]"
+            sizes="(max-width: 430px) 100vw, 360px"
+            unoptimized={meal.imageUri.startsWith("blob:")}
+            onError={() => setImgError(true)}
+          />
+        )}
       </div>
 
       <div className="border-t-2 border-[#E8A598] p-3.5">

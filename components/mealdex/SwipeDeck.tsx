@@ -83,11 +83,12 @@ function SwipeableCard({
   return (
     <>
       <motion.div
-        className="relative z-10 w-full touch-pan-y"
-        style={{ x, rotate }}
+        className="relative z-10 w-full cursor-grab select-none active:cursor-grabbing"
+        style={{ x, rotate, touchAction: "none" }}
         drag={exiting ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.9}
+        dragMomentum={false}
         onDragEnd={onDragEnd}
       >
         <MealCard meal={meal} />

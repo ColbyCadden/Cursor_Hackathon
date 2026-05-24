@@ -6,7 +6,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-grilled-chicken-salad",
     name: "Grilled Chicken Salad",
     imageUri:
-      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80",
+      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80&auto=format",
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -26,7 +26,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-pasta-carbonara",
     name: "Pasta Carbonara",
     imageUri:
-      "https://images.unsplash.com/photo-1612874742237-652fb40bd880?w=800&q=80",
+      "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800&q=80&auto=format",
     difficulty: 3,
     price: 3,
     highProtein: true,
@@ -44,7 +44,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-veggie-stir-fry",
     name: "Vegetable Stir Fry",
     imageUri:
-      "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&q=80",
+      "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&q=80&auto=format",
     difficulty: 2,
     price: 2,
     highProtein: false,
@@ -65,7 +65,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-salmon-rice",
     name: "Baked Salmon & Rice",
     imageUri:
-      "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80",
+      "https://images.unsplash.com/photo-1519708227418-c8fd9a32b9a2?w=800&q=80&auto=format",
     difficulty: 3,
     price: 4,
     highProtein: true,
@@ -85,7 +85,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-burrito-bowl",
     name: "Bean Burrito Bowl",
     imageUri:
-      "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80",
+      "https://images.unsplash.com/photo-1626700051175-6811733b4ccd?w=800&q=80&auto=format",
     difficulty: 2,
     price: 2,
     highProtein: true,
@@ -105,7 +105,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-margherita-pizza",
     name: "Margherita Pizza",
     imageUri:
-      "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80",
+      "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80&auto=format",
     difficulty: 3,
     price: 3,
     highProtein: false,
@@ -123,7 +123,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-yogurt-parfait",
     name: "Greek Yogurt Parfait",
     imageUri:
-      "https://images.unsplash.com/photo-1488477181948-5a54d394a390?w=800&q=80",
+      "https://images.unsplash.com/photo-1482049010347-93d5853e4f72?w=800&q=80&auto=format",
     difficulty: 1,
     price: 2,
     highProtein: true,
@@ -134,7 +134,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-lentil-soup",
     name: "Red Lentil Soup",
     imageUri:
-      "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&q=80",
+      "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&q=80&auto=format",
     difficulty: 2,
     price: 1,
     highProtein: true,
@@ -154,7 +154,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-steak-potatoes",
     name: "Steak & Roasted Potatoes",
     imageUri:
-      "https://images.unsplash.com/photo-1600891964094-42f0d1f2d3b3?w=800&q=80",
+      "https://images.unsplash.com/photo-1546834366-cc45f8e79a55?w=800&q=80&auto=format",
     difficulty: 4,
     price: 5,
     highProtein: true,
@@ -173,7 +173,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-caprese-salad",
     name: "Caprese Salad",
     imageUri:
-      "https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=800&q=80",
+      "https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=800&q=80&auto=format",
     difficulty: 1,
     price: 3,
     highProtein: false,
@@ -191,7 +191,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-tuna-poke",
     name: "Tuna Poke Bowl",
     imageUri:
-      "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80",
+      "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80&auto=format",
     difficulty: 3,
     price: 4,
     highProtein: true,
@@ -211,7 +211,7 @@ export const SEED_MEALS: Meal[] = [
     id: "seed-vegetable-curry",
     name: "Vegetable Coconut Curry",
     imageUri:
-      "https://images.unsplash.com/photo-1455619452474-d2be8b1e70fb?w=800&q=80",
+      "https://images.unsplash.com/photo-1585937421612-8a816856843a?w=800&q=80&auto=format",
     difficulty: 3,
     price: 2,
     highProtein: false,

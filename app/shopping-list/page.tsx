@@ -17,7 +17,7 @@ function ShoppingContent() {
 
   const savedMeals = getSavedMeals(state);
   const mealdexItems = buildMealdexShoppingList(savedMeals);
-  const { shoppingList, inventory, profile } = state;
+  const { shoppingList, profile } = state;
 
   return (
     <AppShell profile={profile}>
@@ -60,17 +60,15 @@ function ShoppingContent() {
 
           <SectionCard
             title="Your shopping list"
-            description="Add items manually or from AI chat. Mark bought, then move to inventory."
+            description="Add items manually or from AI chat. Mark items as bought when you're done shopping."
             badge={`${shoppingList.length} items`}
           >
             <ShoppingListManager
               shoppingList={shoppingList}
-              inventory={inventory}
-              onUpdate={(nextList, nextInventory) =>
+              onUpdate={(nextList) =>
                 updateState((prev) => ({
                   ...prev,
                   shoppingList: nextList,
-                  inventory: nextInventory,
                 }))
               }
             />
