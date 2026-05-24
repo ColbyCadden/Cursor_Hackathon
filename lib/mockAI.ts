@@ -1,5 +1,7 @@
 import { getSavedMeals } from "./meal/mealHelpers";
 import { buildMealdexShoppingList } from "./meal/shoppingList";
+import { mealToSummary } from "./ai/mealSummaries";
+import { tryLocalChatReply } from "./localChatReplies";
 import type { AIResponse } from "./ai/chatHelpers";
 import type { AppState, SuggestedShoppingItem } from "./types";
 
@@ -72,7 +74,7 @@ function profileIntro(profile: AppState["profile"]): string {
 function inventoryList(inventory: AppState["inventory"]): string {
   if (!inventory.length) return "your pantry (currently empty)";
   return inventory
-    .map((i) => `${i.name} (${i.amount}${i.unit ? ` ${i.unit}` : ""}, ${i.percentLeft}% left)`)
+    .map((i) => `${i.name} (${i.amount}${i.unit ? ` ${i.unit}` : ""}, ${i.portionsLeft} portions left)`)
     .join(", ");
 }
 
@@ -181,6 +183,7 @@ function respondMealPrep(message: string, state: AppState): AIResponse {
   const { plan, reuse } = buildMealIdeas(state);
   const intro = profileIntro(state.profile);
   const saved = savedMealNames(state);
+  const savedMeals = getSavedMeals(state);
 
   let total = 0;
   const scaled = plan.map((p) => {
@@ -217,6 +220,46 @@ You'll get about ${count} portions without extra spices or specialty items.`;
     text,
     mealPrepSteps: defaultPrepSteps(state.profile),
     suggestedItems: defaultSuggestedItems(state, count),
+    recipes: savedMeals.slice(0, 2).map((meal) => ({
+      title: meal.name,
+      basedOnMealCardId: meal.id,
+      tags: meal.highProtein ? ["high protein"] : [],
+      usesInventory: state.inventory.slice(0, 3).map((i) => i.name),
+      missingIngredients: ["chicken breast"],
+      steps: defaultPrepSteps(state.profile).slice(0, 3),
+    })),
+    actions: [
+      {
+        label: "Add missing ingredients to shopping list",
+        type: "add_multiple_to_shopping_list",
+        payload: {
+          items: defaultSuggestedItems(state, count).map((item) => ({
+            ...item,
+            reason: "Needed for your meal prep plan",
+          })),
+        },
+      },
+      {
+        label: "Make this cheaper",
+        type: "request_ai_revision",
+        payload: { instruction: "Make the meal plan cheaper using current inventory." },
+      },
+      {
+        label: "Accept this meal plan",
+        type: "accept_meal_plan",
+        payload: {
+          mealPlan: {
+            recipes: savedMeals.slice(0, 2).map((meal) => ({
+              title: meal.name,
+              basedOnMealCardId: meal.id,
+              servings: count,
+            })),
+            servings: count,
+          },
+        },
+      },
+    ],
+    needsUserChoice: false,
   };
 }
 
@@ -224,6 +267,52 @@ function respondInventory(state: AppState): AIResponse {
   const intro = profileIntro(state.profile);
   const { inventory } = state;
   const mealLibrary = getSavedMeals(state);
+  const hasChicken = hasIngredient(inventory, "chicken");
+  const hasTurkey = hasIngredient(inventory, "turkey");
+  const savedBowl = mealLibrary.find(
+    (m) => m.name.toLowerCase().includes("bowl") || m.name.toLowerCase().includes("rice")
+  );
+
+  if (savedBowl && !hasChicken && hasTurkey) {
+    return {
+      text: `${intro}
+
+You saved **${savedBowl.name}**, but you don't have chicken in your inventory. You do have **turkey slices**.
+
+What would you like to do?`,
+      actions: [
+        {
+          label: "Use turkey instead",
+          type: "use_substitute",
+          payload: {
+            mealTitle: savedBowl.name,
+            originalIngredient: "chicken",
+            substituteIngredient: "turkey slices",
+          },
+        },
+        {
+          label: "Add chicken to shopping list",
+          type: "add_to_shopping_list",
+          payload: {
+            name: "Chicken breast",
+            amount: "500",
+            unit: "g",
+            category: "Protein",
+            required: true,
+            reason: `Needed for ${savedBowl.name}`,
+            sourceMealId: savedBowl.id,
+          },
+        },
+        {
+          label: "Pick another high-protein saved meal",
+          type: "pick_alternative_meal",
+          payload: { tag: "high protein" },
+        },
+      ],
+      needsUserChoice: true,
+    };
+  }
+
   const ideas: string[] = [];
 
   if (hasIngredient(inventory, "chicken") && hasIngredient(inventory, "rice")) {
@@ -318,41 +407,25 @@ For a beginner, I'd do chicken rice bowls one night and egg wraps another — sa
 function respondShoppingList(state: AppState): AIResponse {
   const saved = getSavedMeals(state);
   const shopItems = buildMealdexShoppingList(saved);
-  const { inventory } = state;
 
   if (!saved.length) {
     return {
-      text: `Your **Shopping** cart comes from meals saved in **Mealdex**.
+      text: `Your **Shop** list comes from meals saved in **Mealdex**.
 
-Open **Mealdex**, swipe right on meals you like, then check **Shopping** — ingredients merge automatically.`,
+Head to **Discover**, swipe right on meals you like, then check **Shop** — ingredients merge automatically. No manual list needed.`,
     };
   }
 
-  const alreadyHave = shopItems.filter((item) =>
-    inventory.some((inv) =>
-      inv.name.toLowerCase().includes(item.name.toLowerCase().slice(0, 4)),
-    ),
-  );
-  const stillNeed = shopItems.filter(
-    (item) =>
-      !inventory.some((inv) =>
-        inv.name.toLowerCase().includes(item.name.toLowerCase().slice(0, 4)),
-      ),
-  );
-
-  const preview = stillNeed
+  const preview = shopItems
     .slice(0, 10)
     .map((i) => `• ${i.name}${i.count > 1 ? ` ×${i.count}` : ""}`)
     .join("\n");
 
-  const haveNote =
-    alreadyHave.length > 0
-      ? `\n\nYou already have ${alreadyHave.length} item(s) from this list in your kitchen inventory.`
-      : "";
+  const text = `Your **Mealdex** has ${saved.length} saved meal(s), which gives you **${shopItems.length}** shopping item(s):
 
-  const text = `Your **Mealdex** has ${saved.length} saved meal(s) — **${shopItems.length}** ingredient(s) total, **${stillNeed.length}** still to buy:
+${preview}${shopItems.length > 10 ? "\n…and more on the Shop tab." : ""}
 
-${preview || "• (nothing left to buy — your inventory covers it!)"}${shopItems.length > 10 ? "\n…and more on the Shopping page." : ""}${haveNote}`;
+Save more meals on **Discover** to grow this list.`;
 
   return { text };
 }
@@ -374,16 +447,14 @@ Total active time: about ${state.profile.availableTime}. Do containers first so 
 
 function respondGeneral(message: string, state: AppState): AIResponse {
   const intro = profileIntro(state.profile);
-  const saved = savedMealNames(state);
-  const cartCount = buildMealdexShoppingList(getSavedMeals(state)).length;
   const text = `${intro}
 
-I can help you plan meals using your kitchen inventory (${inventoryList(state.inventory)}), Mealdex shopping cart (${cartCount} items), and saved ideas${saved.length ? `: ${saved.join(", ")}` : ""}.
+I can help you plan meals using what's in your kitchen (${inventoryList(state.inventory)}) and your saved ideas${savedMealNames(state).length ? `: ${savedMealNames(state).join(", ")}` : ""}.
 
 Try asking:
 • "I need to meal prep 8 meals."
 • "What can I cook with my inventory?"
-• "What's on my shopping list?"
+• "Update my shopping list."
 
 You asked: "${message.trim()}" — I'll keep suggestions student-friendly with fewer ingredients and less cleanup.`;
 
@@ -424,14 +495,11 @@ export async function generateAIResponse(
   userMessage: string,
   appState: AppState
 ): Promise<AIResponse> {
+  const local = tryLocalChatReply(userMessage, appState);
+  if (local) return local;
+
   try {
-    const savedMeals = getSavedMeals(appState).map((meal) => ({
-      name: meal.name,
-      ingredients: meal.ingredients,
-    }));
-    const mealdexShopping = buildMealdexShoppingList(getSavedMeals(appState)).map(
-      (item) => ({ name: item.name, count: item.count }),
-    );
+    const savedMeals = getSavedMeals(appState).map(mealToSummary);
 
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -440,9 +508,9 @@ export async function generateAIResponse(
         message: userMessage,
         profile: appState.profile,
         inventory: appState.inventory,
-        mealdexShopping,
         shoppingList: appState.shoppingList,
         savedMeals,
+        generatedMealPlan: appState.generatedMealPlan ?? null,
         recentMessages: appState.chatMessages.slice(-8).map((msg) => ({
           role: msg.role,
           content: msg.content,
@@ -452,7 +520,8 @@ export async function generateAIResponse(
 
     if (res.ok) {
       const data = (await res.json()) as AIResponse;
-      if (data.text?.trim()) {
+      const text = data.text?.trim();
+      if (text && text.length > 5) {
         return data;
       }
     }

@@ -3,21 +3,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
 import { ChatInput } from "./ChatInput";
+import { ChatContextSummary } from "./ChatContextSummary";
 import { PromptChips } from "./PromptChips";
 import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
+import { applyAIAction } from "@/lib/appStateActions";
+import { aiResponseToMealPlan } from "@/lib/ai/chatHelpers";
 import { generateAIResponse } from "@/lib/mockAI";
 import { applyInventoryUpdates, syncPantryState } from "@/lib/pantrySync";
 import { mergeSuggestedIntoShoppingList } from "@/lib/shoppingListHelpers";
-import type { AppState, ChatMessage } from "@/lib/types";
+import type { AIResponse } from "@/lib/ai/chatHelpers";
+import type { AppState, ChatAction, ChatMessage } from "@/lib/types";
 
 const EXAMPLE_PROMPTS = [
+  "What's in my inventory?",
   "I need to meal prep 8 meals.",
-  "What meals fit my saved Mealdex?",
-  "Use fewer ingredients.",
+  "Create meals from my saved cards.",
+  "Update my shopping list.",
   "Make this simpler.",
-  "What's on my shopping list?",
-  "Create a meal prep guide.",
+  "What should I meal prep this week?",
 ];
 
 interface ChatInterfaceProps {
@@ -25,14 +29,55 @@ interface ChatInterfaceProps {
   onUpdate: (updater: (prev: AppState) => AppState) => void;
 }
 
+function buildAssistantMessage(response: AIResponse): ChatMessage {
+  return {
+    id: createId("chat"),
+    role: "assistant",
+    content: response.text?.trim() || "Sorry, I didn't get a useful reply. Try again.",
+    createdAt: new Date().toISOString(),
+    suggestedItems: response.suggestedItems,
+    mealPrepSteps: response.mealPrepSteps,
+    inventoryUpdates: response.inventoryUpdates,
+    actions: response.actions,
+    actionsApplied: [],
+    recipes: response.recipes,
+    warnings: response.warnings,
+    needsUserChoice: response.needsUserChoice,
+  };
+}
+
+function appendChatMessages(
+  messages: ChatMessage[],
+  ...toAdd: ChatMessage[]
+): ChatMessage[] {
+  let next = messages;
+  for (const message of toAdd) {
+    if (next.some((existing) => existing.id === message.id)) continue;
+
+    const messageTime = new Date(message.createdAt).getTime();
+    const hasRecentDuplicate = next.some(
+      (existing) =>
+        existing.role === message.role &&
+        existing.content === message.content &&
+        Math.abs(messageTime - new Date(existing.createdAt).getTime()) < 5000
+    );
+    if (hasRecentDuplicate) continue;
+
+    next = [...next, message];
+  }
+  return next;
+}
+
 export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [aiSource, setAiSource] = useState<
-    "gemini" | "groq" | "mock" | "quota" | "unconfigured" | null
+    "gemini" | "groq" | "mock" | "quota" | "unconfigured" | "local" | null
   >(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sendingRef = useRef(false);
+  const lastSendRef = useRef<{ text: string; at: number } | null>(null);
 
   const messages = appState.chatMessages;
 
@@ -43,10 +88,34 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
     });
   }, [messages, thinking]);
 
+  const appendMessages = useCallback(
+    (...toAdd: ChatMessage[]) => {
+      onUpdate((prev) => ({
+        ...prev,
+        chatMessages: appendChatMessages(prev.chatMessages, ...toAdd),
+      }));
+    },
+    [onUpdate]
+  );
+
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, stateOverride?: AppState) => {
       const trimmed = text.trim();
-      if (!trimmed || thinking) return;
+      if (!trimmed || sendingRef.current) return;
+
+      sendingRef.current = true;
+
+      const now = Date.now();
+      const lastSend = lastSendRef.current;
+      if (lastSend?.text === trimmed && now - lastSend.at < 800) {
+        sendingRef.current = false;
+        return;
+      }
+      lastSendRef.current = { text: trimmed, at: now };
+
+      setThinking(true);
+
+      const baseState = stateOverride ?? appState;
 
       const userMessage: ChatMessage = {
         id: createId("chat"),
@@ -55,41 +124,99 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
         createdAt: new Date().toISOString(),
       };
 
-      onUpdate((prev) => ({
-        ...prev,
-        chatMessages: [...prev.chatMessages, userMessage],
-      }));
+      onUpdate((prev) => {
+        const nextMessages = appendChatMessages(prev.chatMessages, userMessage);
+        if (nextMessages === prev.chatMessages) return prev;
+        return { ...prev, chatMessages: nextMessages };
+      });
       setInput("");
-      setThinking(true);
 
-      const stateSnapshot = {
-        ...appState,
-        chatMessages: [...appState.chatMessages, userMessage],
+      const stateSnapshot: AppState = {
+        ...baseState,
+        chatMessages: [...baseState.chatMessages, userMessage],
       };
 
       try {
         const response = await generateAIResponse(trimmed, stateSnapshot);
         setAiSource(response.source ?? "mock");
 
-        const assistantMessage: ChatMessage = {
-          id: createId("chat"),
-          role: "assistant",
-          content: response.text,
-          createdAt: new Date().toISOString(),
-          suggestedItems: response.suggestedItems,
-          mealPrepSteps: response.mealPrepSteps,
-          inventoryUpdates: response.inventoryUpdates,
-        };
+        const assistantMessage = buildAssistantMessage(response);
+        const mealPlan = aiResponseToMealPlan(response);
 
-        onUpdate((prev) => ({
-          ...prev,
-          chatMessages: [...prev.chatMessages, assistantMessage],
-        }));
+        onUpdate((prev) => {
+          const nextMessages = appendChatMessages(
+            prev.chatMessages,
+            assistantMessage
+          );
+          return {
+            ...prev,
+            chatMessages: nextMessages,
+            generatedMealPlan: mealPlan ?? prev.generatedMealPlan ?? null,
+          };
+        });
       } finally {
         setThinking(false);
+        sendingRef.current = false;
       }
     },
-    [appState, onUpdate, thinking]
+    [appState, onUpdate]
+  );
+
+  const addConfirmationMessage = useCallback(
+    (content: string) => {
+      appendMessages({
+        id: createId("chat"),
+        role: "assistant",
+        content,
+        createdAt: new Date().toISOString(),
+      });
+    },
+    [appendMessages]
+  );
+
+  const handleAction = useCallback(
+    async (messageId: string, action: ChatAction, index: number) => {
+      if (sendingRef.current) return;
+
+      const message = appState.chatMessages.find((m) => m.id === messageId);
+      if (!message || message.actionsApplied?.includes(index)) return;
+
+      const { state: nextState, confirmation, aiRevisionInstruction } = applyAIAction(
+        appState,
+        action
+      );
+
+      const updatedMessages = nextState.chatMessages.map((m) =>
+        m.id === messageId
+          ? { ...m, actionsApplied: [...(m.actionsApplied ?? []), index] }
+          : m
+      );
+
+      onUpdate((prev) => ({
+        ...nextState,
+        chatMessages: prev.chatMessages.map((m) =>
+          m.id === messageId
+            ? {
+                ...m,
+                actionsApplied: [...(m.actionsApplied ?? []), index],
+              }
+            : m
+        ),
+      }));
+
+      setToast(confirmation);
+
+      if (aiRevisionInstruction) {
+        await sendMessage(aiRevisionInstruction, {
+          ...nextState,
+          chatMessages: updatedMessages,
+        });
+        return;
+      }
+
+      addConfirmationMessage(confirmation);
+    },
+    [appState, onUpdate, sendMessage, addConfirmationMessage]
   );
 
   const handleAddSuggestedItems = (messageId: string) => {
@@ -101,15 +228,13 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
       message.suggestedItems
     );
 
-    onUpdate((prev) =>
-      syncPantryState({
-        ...prev,
-        shoppingList: list,
-        chatMessages: prev.chatMessages.map((m) =>
-          m.id === messageId ? { ...m, suggestedItemsAdded: true } : m
-        ),
-      })
-    );
+    onUpdate((prev) => ({
+      ...prev,
+      shoppingList: list,
+      chatMessages: prev.chatMessages.map((m) =>
+        m.id === messageId ? { ...m, suggestedItemsAdded: true } : m
+      ),
+    }));
 
     const parts: string[] = [];
     if (added) parts.push(`${added} added`);
@@ -124,8 +249,7 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
 
   const handleApplyInventoryUpdates = (messageId: string) => {
     const message = appState.chatMessages.find((m) => m.id === messageId);
-    if (!message?.inventoryUpdates?.length || message.inventoryUpdatesApplied)
-      return;
+    if (!message?.inventoryUpdates?.length || message.inventoryUpdatesApplied) return;
 
     onUpdate((prev) => {
       const inventory = applyInventoryUpdates(
@@ -160,18 +284,22 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
     <>
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
+      <ChatContextSummary appState={appState} />
+
       <p className="demo-note mb-4">
         {aiSource === "gemini"
-          ? "Powered by Google Gemini — uses your profile, inventory, Mealdex, and shopping list."
+          ? "Powered by Gemini — meal plans & recipes from your app data."
           : aiSource === "groq"
-            ? "Powered by Groq (Llama) — Gemini was unavailable; using your second AI provider."
-            : aiSource === "quota"
-              ? "Both Gemini and Groq rate limits hit — wait a minute or use demo replies for now."
-              : aiSource === "unconfigured"
-                ? "Demo mode — add GEMINI_API_KEY and/or GROQ_API_KEY to .env.local or Vercel env vars."
-              : aiSource === "mock"
-                ? "Demo mode — AI API unavailable. Using mock responses."
-                : "Ask about meal prep, inventory, or shopping. Suggested groceries can go straight to your list."}
+            ? "Powered by Groq — Gemini was unavailable."
+            : aiSource === "local"
+              ? "Instant reply from your inventory & lists (no API used)."
+              : aiSource === "quota"
+                ? "Rate limits hit — wait a minute or use demo replies."
+                : aiSource === "unconfigured"
+                  ? "Demo mode — add GEMINI_API_KEY and/or GROQ_API_KEY to .env.local."
+                  : aiSource === "mock"
+                    ? "Demo mode — using offline replies."
+                    : "Ask about meal prep, inventory, or shopping. Tap action buttons to update your list."}
       </p>
 
       <div className="flex min-h-[min(70dvh,600px)] flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--surface)] shadow-sm">
@@ -181,10 +309,9 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
               <p className="empty-state-icon" aria-hidden>
                 💬
               </p>
-              <p className="empty-state-title">Ask PrepDeck anything</p>
+              <p className="empty-state-title">PrepDeck AI planner</p>
               <p className="empty-state-text">
-                Try meal prep plans, inventory ideas, or shopping suggestions.
-                Tap a prompt below to get started.
+                Try &quot;What&apos;s in my inventory?&quot; or tap a prompt below.
               </p>
             </div>
           )}
@@ -194,6 +321,8 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
               message={msg}
               onAddSuggestedItems={handleAddSuggestedItems}
               onApplyInventoryUpdates={handleApplyInventoryUpdates}
+              onAction={handleAction}
+              actionsDisabled={thinking}
             />
           ))}
           {thinking && (

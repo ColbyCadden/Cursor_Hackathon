@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { InventoryItemCard } from "./InventoryItemCard";
 import { createId } from "@/lib/id";
+import { DEFAULT_INVENTORY_PORTIONS } from "@/lib/inventoryPortions";
 import {
   INVENTORY_CATEGORIES,
   type InventoryCategory,
@@ -14,7 +15,7 @@ const emptyForm = {
   amount: "",
   unit: "",
   category: "Protein" as InventoryCategory,
-  percentLeft: 100,
+  portionsLeft: DEFAULT_INVENTORY_PORTIONS,
 };
 
 interface InventoryManagerProps {
@@ -51,7 +52,7 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
       amount: item.amount,
       unit: item.unit,
       category: item.category,
-      percentLeft: item.percentLeft,
+      portionsLeft: item.portionsLeft,
     });
     setShowForm(true);
   };
@@ -65,6 +66,8 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
   const handleSave = () => {
     if (!form.name.trim()) return;
 
+    const portionsLeft = Math.max(0, Math.round(form.portionsLeft));
+
     if (editingId) {
       onChange(
         inventory.map((item) =>
@@ -75,7 +78,7 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
                 amount: form.amount,
                 unit: form.unit,
                 category: form.category,
-                percentLeft: form.percentLeft,
+                portionsLeft,
               }
             : item
         )
@@ -89,7 +92,7 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
           amount: form.amount,
           unit: form.unit,
           category: form.category,
-          percentLeft: form.percentLeft,
+          portionsLeft,
         },
       ]);
     }
@@ -177,19 +180,22 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
                 ))}
               </select>
             </label>
-            <label className="block sm:col-span-2">
+            <label className="block">
               <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
-                Percent left: {form.percentLeft}%
+                Meal portions left
               </span>
               <input
-                type="range"
+                type="number"
                 min={0}
-                max={100}
-                value={form.percentLeft}
+                step={1}
+                value={form.portionsLeft}
                 onChange={(e) =>
-                  setForm({ ...form, percentLeft: Number(e.target.value) })
+                  setForm({
+                    ...form,
+                    portionsLeft: Math.max(0, Number(e.target.value) || 0),
+                  })
                 }
-                className="w-full accent-[#E8927C]"
+                className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
               />
             </label>
           </div>
@@ -223,7 +229,7 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
           <p className="empty-state-text">
             {search
               ? "Try a different search term."
-              : "Add items manually or use demo barcode scans below."}
+              : "Add items manually or scan them on the Scanner page."}
           </p>
           {!search && (
             <button type="button" onClick={openAdd} className="btn-primary mt-4">

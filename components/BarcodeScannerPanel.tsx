@@ -9,6 +9,7 @@ import {
   createInventoryItemFromScan,
   evaluateBarcodeScan,
 } from "@/lib/inventoryBarcode";
+import { DEFAULT_INVENTORY_PORTIONS, formatPortionsLeft } from "@/lib/inventoryPortions";
 import {
   INVENTORY_CATEGORIES,
   type InventoryCategory,
@@ -24,7 +25,7 @@ const TEST_SCANS: { label: string; item: ScannedInventoryItem }[] = [
       amount: "500",
       unit: "g",
       category: "Protein",
-      percentLeft: 100,
+      portionsLeft: DEFAULT_INVENTORY_PORTIONS,
     },
   },
   {
@@ -34,7 +35,7 @@ const TEST_SCANS: { label: string; item: ScannedInventoryItem }[] = [
       amount: "750",
       unit: "g",
       category: "Dairy",
-      percentLeft: 100,
+      portionsLeft: DEFAULT_INVENTORY_PORTIONS,
     },
   },
   {
@@ -44,7 +45,7 @@ const TEST_SCANS: { label: string; item: ScannedInventoryItem }[] = [
       amount: "2",
       unit: "cups",
       category: "Carbs",
-      percentLeft: 100,
+      portionsLeft: DEFAULT_INVENTORY_PORTIONS,
     },
   },
 ];
@@ -142,7 +143,7 @@ export function BarcodeScannerPanel({
         </p>
         <p className="mt-1 text-xs text-[var(--text-muted)]">
           Real scanner integration should call the existing barcode handler with
-          scanned item data: name, amount, unit, category, percentLeft.
+          scanned item data: name, amount, unit, category, portionsLeft.
         </p>
       </div>
 
@@ -183,7 +184,7 @@ export function BarcodeScannerPanel({
             </p>
             <p className="mt-2 text-xs text-[var(--text-muted)]">
               Current: {modal.existing.amount} {modal.existing.unit} (
-              {modal.existing.percentLeft}% left)
+              {formatPortionsLeft(modal.existing.portionsLeft)})
             </p>
             {unitWarning && (
               <p className="mt-2 rounded-lg bg-[var(--salmon)]/20 px-3 py-2 text-xs text-[var(--text)]">
@@ -259,20 +260,20 @@ export function BarcodeScannerPanel({
             </label>
             <label className="block">
               <span className="text-xs font-medium text-[var(--text-muted)]">
-                Percent left: {editScan.percentLeft}%
+                Meal portions left
               </span>
               <input
-                type="range"
+                type="number"
                 min={0}
-                max={100}
-                value={editScan.percentLeft}
+                step={1}
+                value={editScan.portionsLeft}
                 onChange={(e) =>
                   setEditScan({
                     ...editScan,
-                    percentLeft: Number(e.target.value),
+                    portionsLeft: Math.max(0, Number(e.target.value) || 0),
                   })
                 }
-                className="mt-1 w-full accent-[var(--salmon)]"
+                className="input-field mt-1"
               />
             </label>
           </div>

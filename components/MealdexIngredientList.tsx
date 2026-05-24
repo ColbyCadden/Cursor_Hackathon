@@ -51,8 +51,8 @@ export function MealdexIngredientList({ items }: Props) {
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}
                   >
                     {status.label}
-                    {item.percentLeft !== null && item.status !== "missing"
-                      ? ` (${item.percentLeft}%)`
+                    {item.portionsLeft !== null && item.status !== "missing"
+                      ? ` (${item.portionsLeft} portions)`
                       : ""}
                   </span>
                 </div>

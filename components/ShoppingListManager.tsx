@@ -5,14 +5,16 @@ import { ShoppingItemForm, type ShoppingItemFormData } from "./ShoppingItemForm"
 import { ShoppingListGroup } from "./ShoppingListGroup";
 import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
-import { addAllBoughtToInventory } from "@/lib/boughtToPantry";
+import {
+  addAllBoughtToInventory,
+  addSingleBoughtToInventory,
+} from "@/lib/boughtToPantry";
 import { syncPantryState } from "@/lib/pantrySync";
 import { SHOPPING_CATEGORIES, type AppState, type ShoppingListItem } from "@/lib/types";
 
 interface ShoppingListManagerProps {
   shoppingList: ShoppingListItem[];
   onUpdate: (shoppingList: ShoppingListItem[]) => void;
-  /** When provided, enables bought → pantry flow and auto-sync */
   onPantryUpdate?: (updater: (prev: AppState) => AppState) => void;
   appState?: AppState;
 }
@@ -42,23 +44,64 @@ export function ShoppingListManager({
 
   const showToast = (msg: string) => setToast(msg);
 
-  const handleToggleBought = (id: string) => {
-    const nextList = shoppingList.map((item) =>
-      item.id === id ? { ...item, bought: !item.bought } : item
-    );
+  const applyPantryChange = (
+    updater: (prev: AppState) => AppState,
+    toastMessage?: string
+  ) => {
     if (onPantryUpdate && appState) {
-      onPantryUpdate((prev) =>
-        syncPantryState({ ...prev, shoppingList: nextList })
-      );
-    } else {
-      onUpdate(nextList);
+      onPantryUpdate(updater);
     }
+    if (toastMessage) showToast(toastMessage);
+  };
+
+  const handleToggleBought = (id: string) => {
+    const item = shoppingList.find((entry) => entry.id === id);
+    if (!item) return;
+
+    const markingBought = !item.bought;
+
+    if (onPantryUpdate && appState) {
+      let toastMessage: string | undefined;
+
+      onPantryUpdate((prev) => {
+        let nextList = prev.shoppingList.map((entry) =>
+          entry.id === id ? { ...entry, bought: markingBought } : entry
+        );
+        let nextInventory = prev.inventory;
+
+        if (markingBought && !item.addedToInventory) {
+          const result = addSingleBoughtToInventory(
+            prev.inventory,
+            nextList,
+            id
+          );
+          nextInventory = result.inventory;
+          nextList = result.shoppingList;
+          toastMessage = `${item.name} added to kitchen inventory.`;
+        }
+
+        return syncPantryState({
+          ...prev,
+          inventory: nextInventory,
+          shoppingList: nextList,
+        });
+      });
+
+      if (toastMessage) showToast(toastMessage);
+      return;
+    }
+
+    onUpdate(
+      shoppingList.map((entry) =>
+        entry.id === id ? { ...entry, bought: markingBought } : entry
+      )
+    );
   };
 
   const handleDelete = (id: string) => {
     const nextList = shoppingList.filter((item) => item.id !== id);
     if (onPantryUpdate && appState) {
-      onPantryUpdate((prev) =>
+      applyPantryChange((prev) =>
         syncPantryState({ ...prev, shoppingList: nextList })
       );
     } else {
@@ -86,7 +129,7 @@ export function ShoppingListManager({
     }
 
     if (onPantryUpdate && appState) {
-      onPantryUpdate((prev) =>
+      applyPantryChange((prev) =>
         syncPantryState({ ...prev, shoppingList: nextList })
       );
     } else {
@@ -138,7 +181,7 @@ export function ShoppingListManager({
                 ) {
                   const nextList = shoppingList.filter((i) => !i.bought);
                   if (onPantryUpdate && appState) {
-                    onPantryUpdate((prev) =>
+                    applyPantryChange((prev) =>
                       syncPantryState({ ...prev, shoppingList: nextList })
                     );
                   } else {
@@ -162,7 +205,7 @@ export function ShoppingListManager({
                   )
                 ) {
                   if (onPantryUpdate && appState) {
-                    onPantryUpdate((prev) =>
+                    applyPantryChange((prev) =>
                       syncPantryState({ ...prev, shoppingList: [] })
                     );
                   } else {

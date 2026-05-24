@@ -15,7 +15,7 @@ import type {
   ShoppingListItem,
 } from "./types";
 
-export const LOW_STOCK_THRESHOLD = 25;
+export const LOW_STOCK_THRESHOLD = 2;
 
 export type PantryStatus = "in_stock" | "low" | "missing";
 
@@ -25,7 +25,7 @@ export interface PantryRequirement {
   unit: string;
   category: ShoppingListItem["category"];
   status: PantryStatus;
-  percentLeft: number | null;
+  portionsLeft: number | null;
   matchedInventoryId: string | null;
   mealNames: string[];
   mealCount: number;
@@ -70,16 +70,16 @@ export function computePantryRequirements(
         unit: defaults.unit,
         category: defaults.category,
         status: "missing" as const,
-        percentLeft: null,
+        portionsLeft: null,
         matchedInventoryId: null,
         mealNames: item.mealNames,
         mealCount: item.count,
       };
     }
 
-    const percentLeft = match.percentLeft;
+    const portionsLeft = match.portionsLeft;
     const status: PantryStatus =
-      percentLeft <= LOW_STOCK_THRESHOLD ? "low" : "in_stock";
+      portionsLeft <= LOW_STOCK_THRESHOLD ? "low" : "in_stock";
 
     return {
       name: item.name,
@@ -87,7 +87,7 @@ export function computePantryRequirements(
       unit: defaults.unit,
       category: defaults.category,
       status,
-      percentLeft,
+      portionsLeft,
       matchedInventoryId: match.id,
       mealNames: item.mealNames,
       mealCount: item.count,
@@ -156,7 +156,7 @@ export function deductIngredientFromInventory(
   inventory: InventoryItem[],
   ingredientName: string,
   amountUsed?: string,
-  unit?: string
+  _unit?: string
 ): InventoryItem[] {
   const match = findInventoryMatch(inventory, ingredientName);
   if (!match) return inventory;
@@ -168,26 +168,25 @@ export function deductIngredientFromInventory(
 
   if (usedNum !== null && currentNum !== null && currentNum > 0) {
     const newAmount = Math.max(0, currentNum - usedNum);
-    const percentUsed = (usedNum / currentNum) * 100;
-    const newPercent = Math.max(0, Math.round(match.percentLeft - percentUsed));
+    const portionsUsed = Math.max(1, Math.round((usedNum / currentNum) * match.portionsLeft));
 
     return inventory.map((item) =>
       item.id === match.id
         ? {
             ...item,
             amount: String(newAmount),
-            percentLeft: newPercent,
+            portionsLeft: Math.max(0, item.portionsLeft - portionsUsed),
           }
         : item
     );
   }
 
-  const percentPerUse = unit && match.unit && unit !== match.unit ? 20 : 25;
+  const portionsPerUse = 1;
   return inventory.map((item) =>
     item.id === match.id
       ? {
           ...item,
-          percentLeft: Math.max(0, item.percentLeft - percentPerUse),
+          portionsLeft: Math.max(0, item.portionsLeft - portionsPerUse),
         }
       : item
   );

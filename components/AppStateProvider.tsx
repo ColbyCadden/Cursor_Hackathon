@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -24,6 +25,9 @@ const AppStateContext = createContext<AppStateContextValue | null>(null);
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  /** Skip storage refresh for saves we just made — avoids duplicate state merges. */
+  const suppressStorageRefreshRef = useRef(false);
+  const skipNextPersistRef = useRef(true);
 
   useEffect(() => {
     setState(getAppState());
@@ -31,7 +35,21 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!state || !hydrated) return;
+    if (skipNextPersistRef.current) {
+      skipNextPersistRef.current = false;
+      return;
+    }
+
+    suppressStorageRefreshRef.current = true;
+    saveAppState(state);
+    suppressStorageRefreshRef.current = false;
+  }, [state, hydrated]);
+
+  useEffect(() => {
     const refreshFromStorage = () => {
+      if (suppressStorageRefreshRef.current) return;
+      skipNextPersistRef.current = true;
       setState(getAppState());
     };
 
@@ -50,9 +68,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const updateState = useCallback((updater: (prev: AppState) => AppState) => {
     setState((prev) => {
       if (!prev) return prev;
-      const next = updater(prev);
-      saveAppState(next);
-      return next;
+      return updater(prev);
     });
   }, []);
 

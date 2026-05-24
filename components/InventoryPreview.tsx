@@ -1,3 +1,4 @@
+import { formatPortionsLeft } from "@/lib/inventoryPortions";
 import type { InventoryItem } from "@/lib/types";
 
 interface InventoryPreviewProps {
@@ -18,17 +19,9 @@ export function InventoryPreview({ items }: InventoryPreviewProps) {
               {item.amount} {item.unit} · {item.category}
             </p>
           </div>
-          <div className="flex min-w-[72px] flex-col items-end gap-1">
-            <span className="text-xs font-medium text-[#8B6F5C]">
-              {item.percentLeft}%
-            </span>
-            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[#E8DDD0]">
-              <div
-                className="h-full rounded-full bg-[#E8927C] transition-all"
-                style={{ width: `${item.percentLeft}%` }}
-              />
-            </div>
-          </div>
+          <span className="text-xs font-medium text-[#8B6F5C]">
+            {formatPortionsLeft(item.portionsLeft)}
+          </span>
         </li>
       ))}
     </ul>

@@ -5,6 +5,7 @@ import {
   createInventoryItemFromScan,
   evaluateBarcodeScan,
 } from "./inventoryBarcode";
+import { DEFAULT_INVENTORY_PORTIONS } from "./inventoryPortions";
 import { shoppingCategoryToInventory } from "./shoppingCategories";
 import type { InventoryItem, ScannedInventoryItem, ShoppingListItem } from "./types";
 
@@ -14,7 +15,7 @@ export function shoppingItemToScanned(item: ShoppingListItem): ScannedInventoryI
     amount: item.amount,
     unit: item.unit,
     category: shoppingCategoryToInventory(item.category),
-    percentLeft: 100,
+    portionsLeft: DEFAULT_INVENTORY_PORTIONS,
   };
 }
 
@@ -46,6 +47,54 @@ export function evaluateShoppingItemForInventory(
   item: ShoppingListItem
 ) {
   return evaluateBarcodeScan(inventory, shoppingItemToScanned(item));
+}
+
+/** Move a checked-off shopping item into kitchen inventory (merge if name matches). */
+export function applyBoughtItemToInventory(
+  inventory: InventoryItem[],
+  item: ShoppingListItem
+): InventoryItem[] {
+  if (item.addedToInventory) return inventory;
+
+  const evaluation = evaluateShoppingItemForInventory(inventory, item);
+
+  if (evaluation.action === "duplicate") {
+    const { existing, scanned } = evaluation;
+    if (canMergeUnits(existing.unit, scanned.unit)) {
+      return applyMergeToExisting(inventory, existing.id, scanned).inventory;
+    }
+    return applyCreateSeparate(inventory, scanned);
+  }
+
+  return addNewFromShopping(inventory, item);
+}
+
+export function toggleShoppingItemBought(
+  shoppingList: ShoppingListItem[],
+  inventory: InventoryItem[],
+  id: string
+): {
+  shoppingList: ShoppingListItem[];
+  inventory: InventoryItem[];
+  toast?: string;
+} {
+  const item = shoppingList.find((entry) => entry.id === id);
+  if (!item) return { shoppingList, inventory };
+
+  const markingBought = !item.bought;
+  let nextList = shoppingList.map((entry) =>
+    entry.id === id ? { ...entry, bought: markingBought } : entry
+  );
+  let nextInventory = inventory;
+  let toast: string | undefined;
+
+  if (markingBought && !item.addedToInventory) {
+    nextInventory = applyBoughtItemToInventory(inventory, item);
+    nextList = markShoppingItemAdded(nextList, id);
+    toast = `${item.name} added to kitchen inventory.`;
+  }
+
+  return { shoppingList: nextList, inventory: nextInventory, toast };
 }
 
 export { canMergeUnits, applyMergeToExisting, applyCreateSeparate };

@@ -48,9 +48,13 @@ export interface InventoryItem {
   amount: string;
   unit: string;
   category: InventoryCategory;
-  percentLeft: number;
+  /** How many meal-sized portions remain */
+  portionsLeft: number;
   /** Keywords derived from product name — used to match meal ingredients */
   ingredientTags?: string[];
+  expiryDate?: string;
+  barcode?: string;
+  source?: "manual" | "barcode";
 }
 
 export interface ScannedInventoryItem {
@@ -58,7 +62,7 @@ export interface ScannedInventoryItem {
   amount: string;
   unit: string;
   category: InventoryCategory;
-  percentLeft: number;
+  portionsLeft: number;
   ingredientTags?: string[];
 }
 
@@ -120,6 +124,8 @@ export interface ShoppingListItem {
   addedToInventory: boolean;
   /** Where this item came from — mealdex items are auto-synced from saved meals */
   source?: "manual" | "mealdex" | "ai";
+  reason?: string;
+  sourceMealId?: string;
 }
 
 /** AI or manual deduction of pantry stock after meal prep */
@@ -137,6 +143,51 @@ export interface SuggestedShoppingItem {
   unit: string;
   category: ShoppingCategory;
   required: boolean;
+  reason?: string;
+  sourceMealId?: string;
+}
+
+export type AIActionType =
+  | "add_to_shopping_list"
+  | "add_multiple_to_shopping_list"
+  | "use_substitute"
+  | "remove_optional_ingredient"
+  | "request_ai_revision"
+  | "pick_alternative_meal"
+  | "accept_meal_plan"
+  | "save_generated_recipe";
+
+export interface ChatAction {
+  label: string;
+  type: AIActionType;
+  payload: Record<string, unknown>;
+}
+
+export interface AdaptedRecipeIngredient {
+  name: string;
+  amount: string;
+  unit: string;
+  source?: "inventory" | "shopping-list" | "missing";
+}
+
+export interface AdaptedRecipe {
+  title: string;
+  basedOnMealCardId?: string;
+  servings?: number;
+  tags?: string[];
+  usesInventory?: string[];
+  missingIngredients?: string[];
+  ingredients?: AdaptedRecipeIngredient[];
+  steps?: string[];
+}
+
+export interface GeneratedMealPlan {
+  selectedMealIds?: string[];
+  recipes: AdaptedRecipe[];
+  servings?: number;
+  missingIngredients?: string[];
+  userDecisions?: string[];
+  updatedAt?: string;
 }
 
 export interface ChatMessage {
@@ -152,6 +203,12 @@ export interface ChatMessage {
   suggestedItemsAdded?: boolean;
   /** True after pantry stock was deducted from this prep plan */
   inventoryUpdatesApplied?: boolean;
+  actions?: ChatAction[];
+  /** Indices of actions the user already clicked */
+  actionsApplied?: number[];
+  recipes?: AdaptedRecipe[];
+  warnings?: string[];
+  needsUserChoice?: boolean;
 }
 
 export interface AppState {
@@ -166,6 +223,8 @@ export interface AppState {
   savedMealIds: string[];
   shoppingList: ShoppingListItem[];
   chatMessages: ChatMessage[];
+  /** AI-generated meal plan / adapted recipes */
+  generatedMealPlan?: GeneratedMealPlan | null;
 }
 
 /** @deprecated — migrated on load */

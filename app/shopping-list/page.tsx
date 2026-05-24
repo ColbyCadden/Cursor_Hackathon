@@ -6,7 +6,6 @@ import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { MealdexIngredientList } from "@/components/MealdexIngredientList";
-import { InventoryManager } from "@/components/InventoryManager";
 import { ShoppingListManager } from "@/components/ShoppingListManager";
 import { useAppState } from "@/lib/useAppState";
 import { getSavedMeals } from "@/lib/meal/mealHelpers";
@@ -24,10 +23,10 @@ function ShoppingContent() {
   const savedMeals = getSavedMeals(state);
   const pantryRequirements = computePantryRequirements(
     state.inventory,
-    savedMeals,
+    savedMeals
   );
   const summary = getPantrySummary(pantryRequirements);
-  const { shoppingList, inventory, profile } = state;
+  const { shoppingList, profile } = state;
 
   const handlePantryUpdate = (updater: (prev: AppState) => AppState) => {
     updateState(updater);
@@ -42,7 +41,7 @@ function ShoppingContent() {
       <div className="mx-auto w-full max-w-lg md:max-w-3xl">
         <PageHeader
           title="Shopping"
-          subtitle="Pantry-aware list — auto-updates when you're low on ingredients for saved meals."
+          subtitle="Pantry-aware list — checking items off adds them to your kitchen inventory."
         />
 
         <div className="space-y-6">
@@ -84,7 +83,7 @@ function ShoppingContent() {
 
           <SectionCard
             title="Your shopping list"
-            description="Auto-filled from low stock, plus manual and AI items. Mark bought, then add to pantry."
+            description="Check items off when you buy them — they go straight into Pantry."
             badge={`${shoppingList.length} items`}
           >
             {savedMeals.length > 0 && (
@@ -96,6 +95,12 @@ function ShoppingContent() {
                 >
                   Sync from pantry
                 </button>
+                <Link
+                  href="/inventory"
+                  className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface)]"
+                >
+                  Open Pantry
+                </Link>
               </div>
             )}
             <ShoppingListManager
@@ -104,21 +109,6 @@ function ShoppingContent() {
               onPantryUpdate={handlePantryUpdate}
               onUpdate={(nextList) =>
                 updateState((prev) => ({ ...prev, shoppingList: nextList }))
-              }
-            />
-          </SectionCard>
-
-          <SectionCard
-            title="Kitchen inventory"
-            description="What you have at home — updates pantry matching and syncs your shopping list."
-            badge={`${inventory.length} items`}
-          >
-            <InventoryManager
-              inventory={inventory}
-              onChange={(next) =>
-                updateState((prev) =>
-                  syncPantryState({ ...prev, inventory: next }),
-                )
               }
             />
           </SectionCard>

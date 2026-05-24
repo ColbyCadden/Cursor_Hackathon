@@ -1,5 +1,6 @@
 import { createInitialAppState } from "./demoData";
 import { deriveIngredientTags } from "./ingredientAliases";
+import { DEFAULT_INVENTORY_PORTIONS, portionsFromLegacyPercent } from "./inventoryPortions";
 import { enrichMeal, normalizeIngredientPreference } from "./meal/mealPersonalization";
 import { syncPantryState } from "./pantrySync";
 import { SEED_MEALS } from "./meal/seedMeals";
@@ -9,13 +10,13 @@ import { registeredUserToProfile } from "./signupProfile";
 import { migrateShoppingCategory } from "./shoppingCategories";
 import type {
   AppState,
+  ChatMessage,
   InventoryItem,
   LegacyAppState,
   Meal,
   ShoppingListItem,
   UserProfile,
 } from "./types";
-
 const STORAGE_KEY = "prepdeck-app-state";
 
 export { STORAGE_KEY };
@@ -50,9 +51,10 @@ function migrateShoppingList(items: ShoppingListItem[]): ShoppingListItem[] {
     addedToInventory: item.addedToInventory ?? false,
     required: item.required ?? true,
     source: item.source ?? "manual",
+    reason: item.reason,
+    sourceMealId: item.sourceMealId,
   }));
 }
-
 function hasMealShape(m: unknown): m is Meal {
   return (
     typeof m === "object" &&
@@ -98,13 +100,40 @@ function migrateSavedIds(parsed: LegacyAppState): string[] {
   return parsed.mealLibrary?.map((m) => m.id) ?? [];
 }
 
-function migrateInventory(items: InventoryItem[]): InventoryItem[] {
-  return items.map((item) => ({
+function dedupeChatMessages(messages: ChatMessage[]): ChatMessage[] {
+  const result: ChatMessage[] = [];
+
+  for (const message of messages) {
+    const messageTime = new Date(message.createdAt).getTime();
+    const duplicate = result.some(
+      (existing) =>
+        existing.role === message.role &&
+        existing.content === message.content &&
+        Math.abs(messageTime - new Date(existing.createdAt).getTime()) < 5000
+    );
+    if (!duplicate) result.push(message);
+  }
+
+  return result;
+}
+
+function migrateInventoryItem(
+  item: InventoryItem & { percentLeft?: number }
+): InventoryItem {
+  let portionsLeft = item.portionsLeft;
+  if (typeof portionsLeft !== "number" && typeof item.percentLeft === "number") {
+    portionsLeft = portionsFromLegacyPercent(item.percentLeft);
+  }
+  if (typeof portionsLeft !== "number" || Number.isNaN(portionsLeft)) {
+    portionsLeft = DEFAULT_INVENTORY_PORTIONS;
+  }
+
+  return {
     ...item,
+    portionsLeft: Math.max(0, Math.round(portionsLeft)),
     ingredientTags:
-      item.ingredientTags ??
-      deriveIngredientTags(item.name, item.category),
-  }));
+      item.ingredientTags ?? deriveIngredientTags(item.name, item.category),
+  };
 }
 
 function migrateParsedState(parsed: LegacyAppState): AppState {
@@ -117,22 +146,29 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
   return syncPantryState({
     isLoggedIn: parsed.isLoggedIn ?? false,
     profile: migrateProfile(parsed.profile ?? {}),
-    inventory: migrateInventory(parsed.inventory ?? []),
+    inventory: (parsed.inventory ?? []).map((item) => migrateInventoryItem(item)),
     meals: migrateMeals(parsed),
     swipedMealIds: migrateSwipedIds(parsed),
     savedMealIds: migrateSavedIds(parsed),
     shoppingList,
-    chatMessages: (parsed.chatMessages ?? []).map((msg) => ({
-      ...msg,
-      suggestedItems: msg.suggestedItems ?? undefined,
-      mealPrepSteps: msg.mealPrepSteps ?? undefined,
-      inventoryUpdates: msg.inventoryUpdates ?? undefined,
-      suggestedItemsAdded: msg.suggestedItemsAdded ?? false,
-      inventoryUpdatesApplied: msg.inventoryUpdatesApplied ?? false,
-    })),
+    chatMessages: dedupeChatMessages(
+      (parsed.chatMessages ?? []).map((msg) => ({
+        ...msg,
+        suggestedItems: msg.suggestedItems ?? undefined,
+        mealPrepSteps: msg.mealPrepSteps ?? undefined,
+        inventoryUpdates: msg.inventoryUpdates ?? undefined,
+        suggestedItemsAdded: msg.suggestedItemsAdded ?? false,
+        inventoryUpdatesApplied: msg.inventoryUpdatesApplied ?? false,
+        actions: msg.actions ?? undefined,
+        actionsApplied: msg.actionsApplied ?? [],
+        recipes: msg.recipes ?? undefined,
+        warnings: msg.warnings ?? undefined,
+        needsUserChoice: msg.needsUserChoice ?? false,
+      }))
+    ),
+    generatedMealPlan: parsed.generatedMealPlan ?? null,
   });
 }
-
 export function getAppState(): AppState {
   if (!isBrowser()) {
     return createInitialAppState();
