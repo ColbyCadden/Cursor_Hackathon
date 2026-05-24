@@ -9,6 +9,7 @@ import {
   loginWithCredentials,
 } from "@/lib/storage";
 import { profileHasSignupData } from "@/lib/signupProfile";
+import { PrepDeckLogo } from "@/components/PrepDeckLogo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,8 +46,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-[var(--background)] px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--salmon)]/40 text-3xl shadow-sm">
-            🍳
+          <div className="mb-4 flex justify-center">
+            <PrepDeckLogo size="lg" className="drop-shadow-sm" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-[var(--text)]">
             PrepDeck

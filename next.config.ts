@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "foodish-api.com",
+        pathname: "/**",
+      },
     ],
   },
   async headers() {

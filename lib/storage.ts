@@ -60,24 +60,17 @@ function hasMealShape(m: unknown): m is Meal {
 }
 
 function migrateMeals(parsed: LegacyAppState): Meal[] {
-  const rawMeals = parsed.meals as unknown[] | undefined;
-  let meals: Meal[];
+  const rawMeals = (parsed.meals ?? []).filter(hasMealShape) as Meal[];
+  const seedIds = new Set(SEED_MEALS.map((m) => m.id));
+  const customs = rawMeals.filter((m) => m.isCustom || !seedIds.has(m.id));
 
-  if (rawMeals?.length && hasMealShape(rawMeals[0])) {
-    meals = rawMeals as Meal[];
-  } else {
-    const customFromCatalog = (rawMeals ?? []).filter(hasMealShape) as Meal[];
-    const seedIds = new Set(SEED_MEALS.map((m) => m.id));
-    const customs = customFromCatalog.filter((m) => !seedIds.has(m.id));
-    meals = [...customs, ...SEED_MEALS];
-  }
-
-  const seedById = new Map(SEED_MEALS.map((m) => [m.id, m]));
-  return meals.map((meal) => {
-    const seed = seedById.get(meal.id);
-    const withImage = seed ? { ...meal, imageUri: seed.imageUri } : meal;
-    return enrichMeal(withImage, seed);
+  const mergedSeeds = SEED_MEALS.map((seed) => {
+    const existing = rawMeals.find((m) => m.id === seed.id);
+    const withSeed = existing ? { ...existing, ...seed } : seed;
+    return enrichMeal(withSeed, seed);
   });
+
+  return [...customs.map((meal) => enrichMeal(meal)), ...mergedSeeds];
 }
 
 function migrateSwipedIds(parsed: LegacyAppState): string[] {

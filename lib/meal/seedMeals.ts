@@ -1,12 +1,14 @@
 import type { Meal } from "@/lib/types";
 
-/** Curated starter deck — common home-cook meals with ingredient lists. */
+const IMG = (id: string) =>
+  `https://images.unsplash.com/${id}?w=800&q=80&auto=format`;
+
+/** Curated starter deck — URLs verified reachable (May 2026). */
 export const SEED_MEALS: Meal[] = [
   {
     id: "seed-grilled-chicken-salad",
     name: "Grilled Chicken Salad",
-    imageUri:
-      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1546069901-ba9599a7e63c"),
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -28,8 +30,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-pasta-carbonara",
     name: "Pasta Carbonara",
-    imageUri:
-      "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1621996346565-e3dbc646d9a9"),
     difficulty: 3,
     price: 3,
     highProtein: true,
@@ -49,8 +50,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-veggie-stir-fry",
     name: "Vegetable Stir Fry",
-    imageUri:
-      "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1512058564366-18510be2db19"),
     difficulty: 2,
     price: 2,
     highProtein: false,
@@ -73,8 +73,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-salmon-rice",
     name: "Baked Salmon & Rice",
-    imageUri:
-      "https://images.unsplash.com/photo-1519708227418-c8fd9a32b9a2?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1467003909585-2f8a72700288"),
     difficulty: 3,
     price: 4,
     highProtein: true,
@@ -96,8 +95,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-burrito-bowl",
     name: "Bean Burrito Bowl",
-    imageUri:
-      "https://images.unsplash.com/photo-1626700051175-6811733b4ccd?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1512621776951-a57141f2eefd"),
     difficulty: 2,
     price: 2,
     highProtein: true,
@@ -119,8 +117,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-margherita-pizza",
     name: "Margherita Pizza",
-    imageUri:
-      "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1574071318508-1cdbab80d002"),
     difficulty: 3,
     price: 3,
     highProtein: false,
@@ -140,8 +137,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-yogurt-parfait",
     name: "Greek Yogurt Parfait",
-    imageUri:
-      "https://images.unsplash.com/photo-1482049010347-93d5853e4f72?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1498837167922-ddd27525d352"),
     difficulty: 1,
     price: 2,
     highProtein: true,
@@ -154,8 +150,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-lentil-soup",
     name: "Red Lentil Soup",
-    imageUri:
-      "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1547592166-23ac45744acd"),
     difficulty: 2,
     price: 1,
     highProtein: true,
@@ -177,8 +172,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-steak-potatoes",
     name: "Steak & Roasted Potatoes",
-    imageUri:
-      "https://images.unsplash.com/photo-1546834366-cc45f8e79a55?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1555939594-58d7cb561ad1"),
     difficulty: 4,
     price: 5,
     highProtein: true,
@@ -199,8 +193,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-caprese-salad",
     name: "Caprese Salad",
-    imageUri:
-      "https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1592417817098-8fd3d9eb14a5"),
     difficulty: 1,
     price: 3,
     highProtein: false,
@@ -220,8 +213,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-tuna-poke",
     name: "Tuna Poke Bowl",
-    imageUri:
-      "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80&auto=format",
+    imageUri: IMG("photo-1544025162-d76694265947"),
     difficulty: 3,
     price: 4,
     highProtein: true,
@@ -243,8 +235,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-vegetable-curry",
     name: "Vegetable Coconut Curry",
-    imageUri:
-      "https://images.unsplash.com/photo-1585937421612-8a816856843a?w=800&q=80&auto=format",
+    imageUri: "https://foodish-api.com/images/rice/rice2.jpg",
     difficulty: 3,
     price: 2,
     highProtein: false,
@@ -261,6 +252,147 @@ export const SEED_MEALS: Meal[] = [
       "onion",
       "garlic",
       "rice",
+    ],
+  },
+  {
+    id: "seed-ramen-bowl",
+    name: "Quick Ramen Bowl",
+    imageUri: IMG("photo-1551183053-bf91a1d81141"),
+    difficulty: 2,
+    price: 2,
+    highProtein: true,
+    highVegetables: false,
+    ingredients: [
+      "ramen noodles",
+      "soft-boiled egg",
+      "green onion",
+      "soy sauce",
+      "sesame oil",
+      "corn",
+      "spinach",
+    ],
+  },
+  {
+    id: "seed-smash-burger",
+    name: "Smash Burger",
+    imageUri: IMG("photo-1551782450-a2132b4ba21d"),
+    difficulty: 2,
+    price: 3,
+    highProtein: true,
+    highVegetables: false,
+    ingredients: [
+      "ground beef",
+      "burger bun",
+      "cheddar cheese",
+      "lettuce",
+      "tomato",
+      "pickles",
+      "ketchup",
+    ],
+  },
+  {
+    id: "seed-quesadilla",
+    name: "Cheese Quesadilla",
+    imageUri: IMG("photo-1618040996337-56904b7850b9"),
+    difficulty: 1,
+    price: 2,
+    highProtein: true,
+    highVegetables: false,
+    ingredients: [
+      "flour tortillas",
+      "cheddar cheese",
+      "black beans",
+      "salsa",
+      "sour cream",
+      "lime",
+    ],
+  },
+  {
+    id: "seed-pancakes",
+    name: "Stack of Pancakes",
+    imageUri: IMG("photo-1567620905732-2d1ec7ab7445"),
+    difficulty: 1,
+    price: 2,
+    highProtein: false,
+    highVegetables: false,
+    ingredients: [
+      "pancake mix",
+      "milk",
+      "egg",
+      "butter",
+      "maple syrup",
+      "berries",
+    ],
+  },
+  {
+    id: "seed-pepperoni-pizza",
+    name: "Pepperoni Pizza",
+    imageUri: IMG("photo-1565299624946-b28f40a0ae38"),
+    difficulty: 2,
+    price: 3,
+    highProtein: true,
+    highVegetables: false,
+    ingredients: [
+      "pizza dough",
+      "tomato sauce",
+      "mozzarella",
+      "pepperoni",
+      "oregano",
+      "olive oil",
+    ],
+  },
+  {
+    id: "seed-mixed-grill",
+    name: "Mixed Grill Plate",
+    imageUri: IMG("photo-1504674900247-0877df9cc836"),
+    difficulty: 3,
+    price: 4,
+    highProtein: true,
+    highVegetables: true,
+    ingredients: [
+      "chicken thigh",
+      "sausage",
+      "grilled vegetables",
+      "herb butter",
+      "lemon",
+      "garlic",
+      "olive oil",
+    ],
+  },
+  {
+    id: "seed-avocado-toast",
+    name: "Avocado Toast",
+    imageUri: IMG("photo-1540189549336-e6e99c3679fe"),
+    difficulty: 1,
+    price: 2,
+    highProtein: false,
+    highVegetables: true,
+    ingredients: [
+      "sourdough bread",
+      "avocado",
+      "lemon juice",
+      "chili flakes",
+      "salt",
+      "pepper",
+      "olive oil",
+    ],
+  },
+  {
+    id: "seed-chicken-wrap",
+    name: "Chicken Biryani",
+    imageUri: "https://foodish-api.com/images/biryani/biryani1.jpg",
+    difficulty: 3,
+    price: 3,
+    highProtein: true,
+    highVegetables: false,
+    ingredients: [
+      "basmati rice",
+      "chicken thigh",
+      "onion",
+      "biryani spice mix",
+      "yogurt",
+      "garlic",
+      "ginger",
     ],
   },
 ];

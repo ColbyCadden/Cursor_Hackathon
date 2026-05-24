@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DemoResetButton } from "./DemoResetButton";
+import { PrepDeckBrand } from "./PrepDeckLogo";
 import type { UserProfile } from "@/lib/types";
 
 const navItems = [
@@ -28,16 +29,12 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
   return (
     <aside className="flex h-full flex-col border-r border-[var(--card-border)] bg-[var(--surface)]">
       <div className="border-b border-[var(--card-border)] p-5">
-        <Link
+        <PrepDeckBrand
           href="/discover"
           onClick={onClose}
-          className="block text-xl font-bold tracking-tight text-[var(--text)]"
-        >
-          PrepDeck
-        </Link>
-        <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-          Simple cooking for busy students
-        </p>
+          size="md"
+          showTagline
+        />
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">

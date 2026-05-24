@@ -36,7 +36,7 @@ export function MealCard({ meal, compact = false, className = "" }: Props) {
             draggable={false}
             className="pointer-events-none object-cover select-none [-webkit-user-drag:none]"
             sizes="(max-width: 430px) 100vw, 360px"
-            unoptimized={meal.imageUri.startsWith("blob:")}
+            unoptimized
             onError={() => setImgError(true)}
           />
         )}

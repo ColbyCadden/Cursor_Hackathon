@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { onboardingProgress } from "@/lib/signupSession";
+import { PrepDeckLogo } from "@/components/PrepDeckLogo";
 
 interface SignupLayoutProps {
   currentPath: string;
@@ -22,14 +23,12 @@ export function SignupLayout({
     <div className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-gradient-to-br from-[#FAF6F0] via-[#FFF8F0] to-[#F4E8DC] px-4 py-8 sm:py-12">
       <div className="w-full max-w-lg">
         <div className="mb-6 text-center">
-          <Link href="/login" className="inline-block">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F4A896]/40 text-2xl shadow-sm">
-              🍳
-            </div>
+          <Link href="/" className="inline-flex flex-col items-center">
+            <PrepDeckLogo size="lg" className="drop-shadow-sm" />
+            <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#8B6F5C]">
+              PrepDeck sign up
+            </p>
           </Link>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#8B6F5C]">
-            PrepDeck sign up
-          </p>
         </div>
 
         <div className="rounded-2xl border border-[#E8DDD0] bg-white/90 p-6 shadow-lg backdrop-blur-sm">
