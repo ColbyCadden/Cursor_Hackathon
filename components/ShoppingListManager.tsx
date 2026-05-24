@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { ShoppingCartAmountModal } from "./ShoppingCartAmountModal";
+import { ShoppingDeleteModal } from "./ShoppingDeleteModal";
+import { ShoppingInventoryMergeModal } from "./ShoppingInventoryMergeModal";
 import { ShoppingItemForm, type ShoppingItemFormData } from "./ShoppingItemForm";
 import { ShoppingListGroup } from "./ShoppingListGroup";
+import { ShoppingSubstituteModal } from "./ShoppingSubstituteModal";
 import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
-import {
-  addAllBoughtToInventory,
-  addSingleBoughtToInventory,
-} from "@/lib/boughtToPantry";
+import { addCartToInventory, type PendingCartMerge } from "@/lib/cartToInventory";
 import { syncPantryState } from "@/lib/pantrySync";
-import { SHOPPING_CATEGORIES, type AppState, type ShoppingListItem } from "@/lib/types";
+import {
+  applyIngredientSubstitution,
+  markShoppingItemInCart,
+  removeAffectedMealsFromCurrentPlan,
+  removeShoppingListItem,
+  requestIngredientSubstitutionContext,
+  unmarkShoppingItemInCart,
+} from "@/lib/shoppingStateActions";
+import { getCartCount, getNeededCount, normalizeShoppingItem } from "@/lib/shoppingItemUtils";
+import { GROCERY_SECTIONS, type AppState, type ShoppingListItem } from "@/lib/types";
 
 interface ShoppingListManagerProps {
   shoppingList: ShoppingListItem[];
@@ -26,231 +36,204 @@ export function ShoppingListManager({
   appState,
 }: ShoppingListManagerProps) {
   const [showForm, setShowForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<ShoppingListItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [amountItem, setAmountItem] = useState<ShoppingListItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<ShoppingListItem | null>(null);
+  const [substituteContext, setSubstituteContext] = useState<ReturnType<
+    typeof requestIngredientSubstitutionContext
+  > | null>(null);
+  const [pendingMerge, setPendingMerge] = useState<PendingCartMerge | null>(null);
+  const [mergeDecisions, setMergeDecisions] = useState<
+    Record<string, "merge" | "separate">
+  >({});
 
-  const boughtCount = shoppingList.filter((i) => i.bought).length;
-  const pendingPantry = shoppingList.filter(
-    (i) => i.bought && !i.addedToInventory
-  ).length;
-  const autoCount = shoppingList.filter(
-    (i) => i.source === "mealdex" && !i.bought
-  ).length;
+  const normalizedList = useMemo(
+    () => shoppingList.map((item) => normalizeShoppingItem(item)),
+    [shoppingList]
+  );
 
-  const groups = SHOPPING_CATEGORIES.map((category) => ({
-    category,
-    items: shoppingList.filter((item) => item.category === category),
+  const neededCount = getNeededCount(normalizedList);
+  const cartCount = getCartCount(normalizedList);
+
+  const groups = GROCERY_SECTIONS.map((section) => ({
+    section,
+    items: normalizedList.filter(
+      (item) => (item.grocerySection ?? "Other") === section
+    ),
   })).filter((g) => g.items.length > 0);
+
+  const sectionCount = groups.length;
 
   const showToast = (msg: string) => setToast(msg);
 
-  const applyPantryChange = (
-    updater: (prev: AppState) => AppState,
-    toastMessage?: string
-  ) => {
+  const applyState = (updater: (prev: AppState) => AppState, toastMessage?: string) => {
     if (onPantryUpdate && appState) {
       onPantryUpdate(updater);
+    } else {
+      const next = updater(appState ?? ({} as AppState));
+      onUpdate(next.shoppingList);
     }
     if (toastMessage) showToast(toastMessage);
   };
 
-  const handleToggleBought = (id: string) => {
-    const item = shoppingList.find((entry) => entry.id === id);
-    if (!item) return;
-
-    const markingBought = !item.bought;
-
-    if (onPantryUpdate && appState) {
-      let toastMessage: string | undefined;
-
-      onPantryUpdate((prev) => {
-        let nextList = prev.shoppingList.map((entry) =>
-          entry.id === id ? { ...entry, bought: markingBought } : entry
-        );
-        let nextInventory = prev.inventory;
-
-        if (markingBought && !item.addedToInventory) {
-          const result = addSingleBoughtToInventory(
-            prev.inventory,
-            nextList,
-            id
-          );
-          nextInventory = result.inventory;
-          nextList = result.shoppingList;
-          toastMessage = `${item.name} added to kitchen inventory.`;
-        }
-
-        return syncPantryState({
-          ...prev,
-          inventory: nextInventory,
-          shoppingList: nextList,
-        });
-      });
-
-      if (toastMessage) showToast(toastMessage);
+  const handleTapItem = (item: ShoppingListItem) => {
+    if (item.inCart) {
+      applyState((prev) => unmarkShoppingItemInCart(prev, item.id));
       return;
     }
-
-    onUpdate(
-      shoppingList.map((entry) =>
-        entry.id === id ? { ...entry, bought: markingBought } : entry
-      )
-    );
+    setAmountItem(item);
   };
 
-  const handleDelete = (id: string) => {
-    const nextList = shoppingList.filter((item) => item.id !== id);
-    if (onPantryUpdate && appState) {
-      applyPantryChange((prev) =>
-        syncPantryState({ ...prev, shoppingList: nextList })
-      );
-    } else {
-      onUpdate(nextList);
-    }
+  const handleConfirmCart = (data: {
+    boughtAmount: string;
+    boughtUnit: string;
+    boughtEquivalentAmount?: string;
+    boughtEquivalentUnit?: string;
+  }) => {
+    if (!amountItem) return;
+    applyState(
+      (prev) => markShoppingItemInCart(prev, amountItem.id, data),
+      `${amountItem.name} added to cart.`
+    );
+    setAmountItem(null);
+  };
+
+  const handleAddCartToInventory = () => {
+    if (cartCount === 0 || !onPantryUpdate) return;
+
+    onPantryUpdate((prev) => {
+      const result = addCartToInventory(prev, mergeDecisions);
+
+      if (result.pendingMerges.length > 0) {
+        setPendingMerge(result.pendingMerges[0]);
+        return syncPantryState(result.state);
+      }
+
+      if (result.addedCount > 0) {
+        showToast(
+          `Added ${result.addedCount} item${result.addedCount === 1 ? "" : "s"} to inventory.`
+        );
+      }
+      setMergeDecisions({});
+      return syncPantryState(result.state);
+    });
+  };
+
+  const handleMergeDecision = (decision: "merge" | "separate") => {
+    if (!pendingMerge || !onPantryUpdate) return;
+
+    const itemId = pendingMerge.itemId;
+    const nextDecisions = { ...mergeDecisions, [itemId]: decision };
+
+    onPantryUpdate((prev) => {
+      const result = addCartToInventory(prev, nextDecisions);
+      const remaining = result.pendingMerges.filter((m) => m.itemId !== itemId);
+
+      setMergeDecisions(nextDecisions);
+      setPendingMerge(remaining[0] ?? null);
+
+      if (remaining.length === 0 && result.addedCount > 0) {
+        showToast(
+          `Added ${result.addedCount} item${result.addedCount === 1 ? "" : "s"} to inventory.`
+        );
+        setMergeDecisions({});
+      }
+
+      return syncPantryState(result.state);
+    });
+  };
+
+  const handleDeleteRequest = (id: string) => {
+    const item = normalizedList.find((i) => i.id === id);
+    if (!item) return;
+    setDeleteItem(item);
+  };
+
+  const handleDeleteSubstitute = () => {
+    if (!deleteItem || !appState) return;
+    const ctx = requestIngredientSubstitutionContext(appState, deleteItem.id);
+    setSubstituteContext(ctx);
+    setDeleteItem(null);
+  };
+
+  const handleSubstituteSelect = (substitute: string) => {
+    if (!substituteContext) return;
+    applyState(
+      (prev) =>
+        applyIngredientSubstitution(prev, substituteContext.item.id, substitute),
+      `Substituted ${substitute} for ${substituteContext.item.name}.`
+    );
+    setSubstituteContext(null);
   };
 
   const handleSaveForm = (data: ShoppingItemFormData) => {
-    let nextList: ShoppingListItem[];
-    if (editingItem) {
-      nextList = shoppingList.map((item) =>
-        item.id === editingItem.id ? { ...item, ...data } : item
-      );
-    } else {
-      nextList = [
-        ...shoppingList,
-        {
-          id: createId("shop"),
-          ...data,
-          bought: false,
-          addedToInventory: false,
-          source: "manual" as const,
-        },
-      ];
-    }
+    const nextItem = normalizeShoppingItem({
+      id: createId("shop"),
+      name: data.name,
+      amount: data.amount,
+      unit: data.unit,
+      amountNeeded: data.amount,
+      unitNeeded: data.unit,
+      category: data.category,
+      required: data.required,
+      bought: false,
+      addedToInventory: false,
+      inCart: false,
+      source: "manual",
+    });
 
-    if (onPantryUpdate && appState) {
-      applyPantryChange((prev) =>
-        syncPantryState({ ...prev, shoppingList: nextList })
-      );
-    } else {
-      onUpdate(nextList);
-    }
+    const nextList = [...shoppingList, nextItem];
+    applyState((prev) => syncPantryState({ ...prev, shoppingList: nextList }));
     setShowForm(false);
-    setEditingItem(null);
-  };
-
-  const handleAddBoughtToPantry = () => {
-    if (!onPantryUpdate || !appState || pendingPantry === 0) return;
-    onPantryUpdate((prev) => addAllBoughtToInventory(prev));
-    showToast(`Added ${pendingPantry} item(s) to your pantry.`);
   };
 
   return (
     <>
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      <div className="mb-4 rounded-xl border-2 border-[#E8927C]/30 bg-gradient-to-r from-[#FFF8F0] to-[#F4E8DC]/40 px-4 py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#8B6F5C]">
+              Shopping mode
+            </p>
+            <p className="mt-1 text-sm font-medium text-[#3D3429]">
+              {neededCount} item{neededCount === 1 ? "" : "s"} needed · {cartCount}{" "}
+              in cart · {sectionCount} section{sectionCount === 1 ? "" : "s"}
+            </p>
+          </div>
           <button
             type="button"
-            onClick={() => {
-              setEditingItem(null);
-              setShowForm(true);
-            }}
-            className="btn-primary"
+            onClick={handleAddCartToInventory}
+            disabled={cartCount === 0 || !onPantryUpdate}
+            className="btn-primary min-h-[44px] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            + Add item
+            Add cart to inventory
           </button>
-          {pendingPantry > 0 && onPantryUpdate && (
-            <button
-              type="button"
-              onClick={handleAddBoughtToPantry}
-              className="btn-secondary min-h-[44px]"
-            >
-              Add {pendingPantry} bought to pantry
-            </button>
-          )}
-          {boughtCount > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    `Remove ${boughtCount} bought item(s) from the list?`
-                  )
-                ) {
-                  const nextList = shoppingList.filter((i) => !i.bought);
-                  if (onPantryUpdate && appState) {
-                    applyPantryChange((prev) =>
-                      syncPantryState({ ...prev, shoppingList: nextList })
-                    );
-                  } else {
-                    onUpdate(nextList);
-                  }
-                  showToast("Bought items cleared.");
-                }
-              }}
-              className="btn-secondary min-h-[44px]"
-            >
-              Clear bought
-            </button>
-          )}
-          {shoppingList.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Clear the entire shopping list? This cannot be undone."
-                  )
-                ) {
-                  if (onPantryUpdate && appState) {
-                    applyPantryChange((prev) =>
-                      syncPantryState({ ...prev, shoppingList: [] })
-                    );
-                  } else {
-                    onUpdate([]);
-                  }
-                  showToast("Shopping list cleared.");
-                }
-              }}
-              className="btn-secondary min-h-[44px] text-[var(--salmon-dark)]"
-            >
-              Clear all
-            </button>
-          )}
         </div>
-        <p className="text-xs text-[var(--text-muted)]">
-          {shoppingList.length} item(s) · {boughtCount} bought
-          {autoCount > 0 ? ` · ${autoCount} auto from Mealdex` : ""}
-        </p>
+      </div>
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setShowForm(true)}
+          className="btn-secondary min-h-[44px]"
+        >
+          + Add item
+        </button>
       </div>
 
       {showForm && (
         <div className="mb-6">
           <ShoppingItemForm
-            title={editingItem ? "Edit item" : "Add item"}
-            initial={
-              editingItem
-                ? {
-                    name: editingItem.name,
-                    amount: editingItem.amount,
-                    unit: editingItem.unit,
-                    category: editingItem.category,
-                    required: editingItem.required,
-                  }
-                : undefined
-            }
+            title="Add item"
             onSave={handleSaveForm}
-            onCancel={() => {
-              setShowForm(false);
-              setEditingItem(null);
-            }}
+            onCancel={() => setShowForm(false)}
           />
         </div>
       )}
 
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-3 sm:space-y-4">
         {groups.length === 0 ? (
           <div className="empty-state py-10">
             <p className="empty-state-icon" aria-hidden>
@@ -263,21 +246,68 @@ export function ShoppingListManager({
             </p>
           </div>
         ) : (
-          groups.map(({ category, items }) => (
+          groups.map(({ section, items }) => (
             <ShoppingListGroup
-              key={category}
-              category={category}
+              key={section}
+              section={section}
               items={items}
-              onToggleBought={handleToggleBought}
-              onEdit={(item) => {
-                setEditingItem(item);
-                setShowForm(true);
-              }}
-              onDelete={handleDelete}
+              onTapItem={handleTapItem}
+              onDelete={handleDeleteRequest}
             />
           ))
         )}
       </div>
+
+      <ShoppingCartAmountModal
+        item={amountItem}
+        open={!!amountItem}
+        onConfirm={handleConfirmCart}
+        onCancel={() => setAmountItem(null)}
+      />
+
+      <ShoppingDeleteModal
+        item={deleteItem}
+        open={!!deleteItem}
+        onSubstitute={handleDeleteSubstitute}
+        onRemoveMeals={() => {
+          if (!deleteItem) return;
+          applyState(
+            (prev) => removeAffectedMealsFromCurrentPlan(prev, deleteItem.id),
+            "Removed affected meals from your current plan."
+          );
+          setDeleteItem(null);
+        }}
+        onRemoveOnly={() => {
+          if (!deleteItem) return;
+          applyState((prev) => removeShoppingListItem(prev, deleteItem.id));
+          setDeleteItem(null);
+        }}
+        onCancel={() => setDeleteItem(null)}
+      />
+
+      <ShoppingSubstituteModal
+        item={substituteContext?.item ?? null}
+        affectedRecipes={substituteContext?.affectedRecipes ?? []}
+        localSuggestions={substituteContext?.localSuggestions ?? []}
+        appState={appState ?? null}
+        open={!!substituteContext}
+        onSelect={handleSubstituteSelect}
+        onCancel={() => setSubstituteContext(null)}
+      />
+
+      {pendingMerge && (
+        <ShoppingInventoryMergeModal
+          open
+          cartItemName={pendingMerge.cartItemName}
+          existingName={pendingMerge.existingName}
+          onMerge={() => handleMergeDecision("merge")}
+          onCreateNew={() => handleMergeDecision("separate")}
+          onCancel={() => {
+            setPendingMerge(null);
+            setMergeDecisions({});
+          }}
+        />
+      )}
     </>
   );
 }

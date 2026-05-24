@@ -3,6 +3,8 @@
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCard } from "@/components/OverviewCard";
+import { PersonalizationSummary } from "@/components/PersonalizationSummary";
+import { ProfileSettings } from "@/components/ProfileSettings";
 import { SectionCard } from "@/components/SectionCard";
 import { QuickNav } from "@/components/QuickNav";
 import { PageHeader } from "@/components/PageHeader";
@@ -15,7 +17,7 @@ import {
 import { buildPersonalizedExperience } from "@/lib/signupProfile";
 
 function DashboardContent() {
-  const { state } = useAppState();
+  const { state, updateState } = useAppState();
 
   if (!state) return null;
 
@@ -69,6 +71,24 @@ function DashboardContent() {
         >
           <QuickNav />
         </SectionCard>
+
+        <div id="profile" className="mt-6 scroll-mt-24">
+          <SectionCard
+            title="Your profile"
+            description={`Signed in as ${profile.name}${profile.email ? ` · ${profile.email}` : ""}`}
+            badge="Settings"
+          >
+            <PersonalizationSummary profile={profile} />
+            <div className="mt-6 border-t border-[#E8DDD0] pt-6">
+              <ProfileSettings
+                profile={profile}
+                onSave={(updatedProfile) =>
+                  updateState((prev) => ({ ...prev, profile: updatedProfile }))
+                }
+              />
+            </div>
+          </SectionCard>
+        </div>
       </div>
     </AppShell>
   );

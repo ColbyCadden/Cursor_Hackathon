@@ -1,4 +1,9 @@
 import { createId } from "./id";
+import {
+  createShoppingItemFromSuggested,
+  mergeUsedInRecipes,
+  normalizeShoppingItem,
+} from "./shoppingItemUtils";
 import type { ShoppingListItem, SuggestedShoppingItem } from "./types";
 
 function normalizeName(name: string): string {
@@ -46,18 +51,7 @@ export function addSingleToShoppingList(
     return {
       list: [
         ...shoppingList,
-        {
-          id: createId("shop"),
-          name: item.name,
-          amount: formatAmount(item.amount),
-          unit: item.unit,
-          category: item.category,
-          required: item.required,
-          bought: false,
-          addedToInventory: false,
-          reason: item.reason,
-          sourceMealId: item.sourceMealId,
-        },
+        createShoppingItemFromSuggested(item, { id: createId("shop") }),
       ],
       added: true,
       updated: false,
@@ -66,21 +60,35 @@ export function addSingleToShoppingList(
   }
 
   const existing = shoppingList[idx];
-  const existingNum = parseAmount(existing.amount);
-  const newNum = parseAmount(formatAmount(item.amount));
+  const existingNum = parseAmount(existing.amountNeeded ?? existing.amount);
+  const newAmount = item.amountNeeded ?? item.amount;
+  const newNum = parseAmount(formatAmount(newAmount));
+  const existingUnit = (existing.unitNeeded ?? existing.unit).trim().toLowerCase();
+  const newUnit = (item.unitNeeded ?? item.unit).trim().toLowerCase();
 
   if (
     existingNum !== null &&
     newNum !== null &&
-    existing.unit.trim().toLowerCase() === item.unit.trim().toLowerCase()
+    existingUnit === newUnit
   ) {
     const list = [...shoppingList];
-    list[idx] = {
+    list[idx] = normalizeShoppingItem({
       ...existing,
       amount: String(existingNum + newNum),
+      amountNeeded: String(existingNum + newNum),
       reason: item.reason ?? existing.reason,
       sourceMealId: item.sourceMealId ?? existing.sourceMealId,
-    };
+      sourceMealIds: mergeUsedInRecipes(
+        existing.sourceMealIds,
+        item.sourceMealIds ??
+          (item.sourceMealId ? [item.sourceMealId] : undefined)
+      ),
+      usedInRecipes: mergeUsedInRecipes(
+        existing.usedInRecipes,
+        item.usedInRecipes
+      ),
+      source: existing.source === "manual" ? item.source ?? existing.source : existing.source,
+    });
     return { list, added: false, updated: true, skipped: false };
   }
 
@@ -119,4 +127,11 @@ export function removeShoppingItemByName(
     list: shoppingList.filter((_, i) => i !== idx),
     removed: true,
   };
+}
+
+export function removeShoppingListItemById(
+  shoppingList: ShoppingListItem[],
+  itemId: string
+): ShoppingListItem[] {
+  return shoppingList.filter((item) => item.id !== itemId);
 }

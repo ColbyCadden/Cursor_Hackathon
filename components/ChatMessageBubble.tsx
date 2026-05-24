@@ -2,6 +2,7 @@
 
 import { ChatActionButtons } from "./ChatActionButtons";
 import { ChatRecipeCards } from "./ChatRecipeCards";
+import { SharedIngredientsStrategyCard } from "./SharedIngredientsStrategyCard";
 import { SuggestedShoppingItems } from "./SuggestedShoppingItems";
 import { parseAIResponse } from "@/lib/ai/chatHelpers";
 import type { ChatAction, ChatMessage } from "@/lib/types";
@@ -20,6 +21,11 @@ interface ChatMessageBubbleProps {
   message: ChatMessage;
   onAddSuggestedItems?: (messageId: string) => void;
   onApplyInventoryUpdates?: (messageId: string) => void;
+  onConfirmCooked?: (
+    messageId: string,
+    recipeIndex: number,
+    recipe: import("@/lib/types").AdaptedRecipe
+  ) => void;
   onAction?: (messageId: string, action: ChatAction, index: number) => void;
   actionsDisabled?: boolean;
 }
@@ -28,6 +34,7 @@ export function ChatMessageBubble({
   message,
   onAddSuggestedItems,
   onApplyInventoryUpdates,
+  onConfirmCooked,
   onAction,
   actionsDisabled,
 }: ChatMessageBubbleProps) {
@@ -57,8 +64,20 @@ export function ChatMessageBubble({
           </ul>
         )}
 
+        {message.sharedIngredientsStrategy && (
+          <SharedIngredientsStrategyCard
+            strategy={message.sharedIngredientsStrategy}
+            beforeAfter={message.beforeAfterComparison}
+          />
+        )}
+
         {message.recipes && message.recipes.length > 0 && (
-          <ChatRecipeCards recipes={message.recipes} />
+          <ChatRecipeCards
+            recipes={message.recipes}
+            messageId={message.id}
+            cookedRecipeKeys={message.cookedRecipeKeys}
+            onConfirmCooked={onConfirmCooked}
+          />
         )}
 
         {message.mealPrepSteps && message.mealPrepSteps.length > 0 && (

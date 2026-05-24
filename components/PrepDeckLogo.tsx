@@ -56,7 +56,7 @@ export function PrepDeckBrand({
         </span>
         {showTagline && (
           <span className="block text-xs text-[var(--text-muted)]">
-            Mealdex · swipe, save, shop
+            meals made easy
           </span>
         )}
       </div>

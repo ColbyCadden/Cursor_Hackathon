@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NavIcon, type NavIconName } from "./NavIcon";
 
-const tabs = [
-  { href: "/mealdex", label: "Mealdex", icon: "📚" },
-  { href: "/inventory", label: "Pantry", icon: "🧊" },
-  { href: "/shopping-list", label: "Shop", icon: "🛒" },
-  { href: "/chat", label: "Chat", icon: "💬" },
-  { href: "/scanner", label: "Scan", icon: "📷" },
-  { href: "/dashboard", label: "Home", icon: "🏠" },
+const tabs: { href: string; label: string; icon: NavIconName }[] = [
+  { href: "/mealdex", label: "Mealdex", icon: "mealdex" },
+  { href: "/inventory", label: "Pantry", icon: "pantry" },
+  { href: "/shopping-list", label: "Shop", icon: "shop" },
+  { href: "/chat", label: "Chat", icon: "chat" },
+  { href: "/scanner", label: "Scan", icon: "scan" },
+  { href: "/dashboard", label: "Home", icon: "home" },
 ];
 
 export function MobileTabBar() {
@@ -24,18 +25,27 @@ export function MobileTabBar() {
         {tabs.map((tab) => {
           const active =
             pathname === tab.href ||
+            (tab.href === "/dashboard" && pathname === "/profile") ||
             (tab.href === "/mealdex" &&
               (pathname === "/discover" || pathname === "/create"));
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-semibold transition-colors ${
+              className={`flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 px-1 text-[10px] font-semibold transition-colors ${
                 active ? "text-[var(--green-dark)]" : "text-[var(--text-muted)]"
               }`}
             >
-              <span className="text-lg" aria-hidden>
-                {tab.icon}
+              <span
+                className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                  active ? "bg-[var(--salmon)]/25" : ""
+                }`}
+              >
+                <NavIcon
+                  name={tab.icon}
+                  size={20}
+                  strokeWidth={active ? 2.25 : 1.75}
+                />
               </span>
               {tab.label}
             </Link>

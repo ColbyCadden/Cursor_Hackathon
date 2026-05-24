@@ -38,7 +38,7 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: false,
     highVegetables: false,
-    requiredEquipment: ["stovetop","air_fryer"],
+    requiredEquipment: ["stovetop", "air_fryer"],
     containsMeat: true,
     estimatedMinutes: 30,
     ingredients: [
@@ -125,7 +125,7 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: false,
     highVegetables: false,
-    requiredEquipment: ["oven","stovetop"],
+    requiredEquipment: ["oven", "stovetop"],
     containsMeat: false,
     estimatedMinutes: 35,
     ingredients: [
@@ -265,7 +265,7 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: true,
     highVegetables: false,
-    requiredEquipment: ["stovetop","microwave"],
+    requiredEquipment: ["stovetop", "microwave"],
     containsMeat: false,
     estimatedMinutes: 15,
     ingredients: [
@@ -286,7 +286,7 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: true,
     highVegetables: false,
-    requiredEquipment: ["stovetop","air_fryer"],
+    requiredEquipment: ["stovetop", "air_fryer"],
     containsMeat: true,
     estimatedMinutes: 20,
     ingredients: [
@@ -307,7 +307,7 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: true,
     highVegetables: false,
-    requiredEquipment: ["stovetop","oven","air_fryer"],
+    requiredEquipment: ["stovetop", "oven", "air_fryer"],
     containsMeat: false,
     estimatedMinutes: 15,
     ingredients: [
@@ -347,7 +347,7 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: true,
     highVegetables: false,
-    requiredEquipment: ["oven","stovetop","microwave"],
+    requiredEquipment: ["oven", "stovetop", "microwave"],
     containsMeat: true,
     estimatedMinutes: 30,
     ingredients: [
@@ -451,7 +451,7 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: true,
     highVegetables: true,
-    requiredEquipment: ["stovetop","air_fryer"],
+    requiredEquipment: ["stovetop", "air_fryer"],
     containsMeat: false,
     estimatedMinutes: 20,
     ingredients: [
@@ -492,7 +492,7 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: false,
     highVegetables: true,
-    requiredEquipment: ["stovetop","air_fryer"],
+    requiredEquipment: ["stovetop", "air_fryer"],
     containsMeat: false,
     estimatedMinutes: 35,
     ingredients: [
@@ -720,7 +720,7 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: true,
     highVegetables: true,
-    requiredEquipment: ["stovetop","air_fryer"],
+    requiredEquipment: ["stovetop", "air_fryer"],
     containsMeat: true,
     estimatedMinutes: 20,
     ingredients: [
@@ -863,7 +863,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-chickpea-bowl",
     name: "Mediterranean Chickpea Bowl",
-    imageUri: UNSPLASH("photo-1512621776951-a57141f2eefd"),
+    imageUri: "/meals/roasted-veggie-buddha-bowl.png",
     difficulty: 2,
     price: 2,
     highProtein: true,

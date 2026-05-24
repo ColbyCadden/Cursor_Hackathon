@@ -1,82 +1,133 @@
 "use client";
 
+import { useState } from "react";
+import {
+  formatBuyLabel,
+  formatNeededLabel,
+} from "@/lib/grocerySections";
+import {
+  getAmountNeeded,
+  getBuyAmount,
+  getBuyUnit,
+  getUnitNeeded,
+  getUsedInRecipes,
+  isItemInCart,
+} from "@/lib/shoppingItemUtils";
 import type { ShoppingListItem } from "@/lib/types";
 
 interface ShoppingListItemCardProps {
   item: ShoppingListItem;
-  onToggleBought: (id: string) => void;
-  onEdit: (item: ShoppingListItem) => void;
+  onTap: (item: ShoppingListItem) => void;
   onDelete: (id: string) => void;
 }
 
 export function ShoppingListItemCard({
   item,
-  onToggleBought,
-  onEdit,
+  onTap,
   onDelete,
 }: ShoppingListItemCardProps) {
+  const [expandedRecipes, setExpandedRecipes] = useState(false);
+  const inCart = isItemInCart(item);
+  const usedIn = getUsedInRecipes(item);
+  const buyLabel = formatBuyLabel(getBuyAmount(item), getBuyUnit(item));
+  const neededLabel = formatNeededLabel(
+    getAmountNeeded(item),
+    getUnitNeeded(item)
+  );
+
+  const usedInLabel =
+    usedIn.length === 0
+      ? null
+      : usedIn.length <= 2
+        ? `Used in: ${usedIn.join(", ")}`
+        : expandedRecipes
+          ? `Used in: ${usedIn.join(", ")}`
+          : `Used in ${usedIn.length} recipes`;
+
   return (
-    <li className="rounded-xl border border-[#E8DDD0] bg-[#FAF6F0] p-3">
-      <div className="flex flex-wrap items-start gap-3">
-        <input
-          type="checkbox"
-          checked={item.bought}
-          onChange={() => onToggleBought(item.id)}
-          className="mt-1 h-5 w-5 shrink-0 rounded border-[#E8DDD0] accent-[#E8927C]"
-          aria-label={`Mark ${item.name} as bought`}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`text-sm font-medium text-[#3D3429] ${
-                item.bought ? "line-through opacity-70" : ""
-              }`}
-            >
-              {item.name}
-            </span>
-            {!item.required && (
-              <span className="rounded-full bg-[#F4E8DC] px-2 py-0.5 text-xs text-[#8A7B6D]">
-                optional
+    <li>
+      <div
+        className={`rounded-xl border p-3 transition-colors ${
+          inCart
+            ? "border-[#E8DDD0] bg-[#F0EBE3]/80 opacity-75"
+            : "border-[#E8DDD0] bg-[#FAF6F0] hover:border-[#E8927C]/40"
+        }`}
+      >
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => onTap(item)}
+            className={`min-w-0 flex-1 rounded-lg p-2 text-left transition-colors ${
+              inCart ? "" : "hover:bg-white/60 active:bg-white"
+            }`}
+            aria-label={`${inCart ? "Edit cart amount for" : "Add to cart"} ${item.name}`}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`text-sm font-medium text-[#3D3429] ${
+                  inCart ? "text-[#8A7B6D]" : ""
+                }`}
+              >
+                {item.name}
               </span>
+              {!item.required && (
+                <span className="rounded-full bg-[#F4E8DC] px-2 py-0.5 text-xs text-[#8A7B6D]">
+                  Optional
+                </span>
+              )}
+              {inCart && (
+                <span className="rounded-full bg-[#E8E8E8] px-2 py-0.5 text-xs text-[#6B5E52]">
+                  In cart
+                </span>
+              )}
+              {item.source === "mealdex" && (
+                <span className="rounded-full bg-[#E3F2FD] px-2 py-0.5 text-xs text-[#1565C0]">
+                  auto
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs font-medium text-[#6B5E52]">
+              Buy: {inCart && item.boughtAmount ? `${item.boughtAmount} ${item.boughtUnit}` : buyLabel}
+            </p>
+            {!inCart && (
+              <p className="mt-0.5 text-[10px] text-[#E8927C]">Tap to add to cart →</p>
             )}
-            {item.source === "mealdex" && (
-              <span className="rounded-full bg-[#E3F2FD] px-2 py-0.5 text-xs text-[#1565C0]">
-                auto
-              </span>
+            <p className="mt-0.5 text-xs text-[#8A7B6D]">Needed: {neededLabel}</p>
+            {item.grocerySection && (
+              <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[#B0A090]">
+                {item.grocerySection}
+              </p>
             )}
-            {item.addedToInventory && (
-              <span className="rounded-full bg-[#E8F5E9]/80 px-2 py-0.5 text-xs text-[#5C7A5C]">
-                In pantry
-              </span>
+            {usedInLabel && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  if (usedIn.length >= 3) {
+                    e.stopPropagation();
+                    setExpandedRecipes((v) => !v);
+                  }
+                }}
+                className={`mt-1 block text-xs text-[#8A7B6D] ${
+                  usedIn.length >= 3 ? "underline-offset-2 hover:underline" : ""
+                }`}
+              >
+                {usedInLabel}
+                {usedIn.length >= 3 && !expandedRecipes ? " · tap to expand" : ""}
+              </button>
             )}
-            {item.bought && !item.addedToInventory && (
-              <span className="rounded-full bg-[#FFF8E1] px-2 py-0.5 text-xs text-[#F57F17]">
-                adding…
-              </span>
-            )}          </div>
-          <p className="mt-0.5 text-xs text-[#8A7B6D]">
-            {item.amount} {item.unit}
-          </p>
-          {item.reason ? (
-            <p className="mt-0.5 text-xs italic text-[#8A7B6D]">{item.reason}</p>
-          ) : null}
+            {item.reason && !usedIn.length && (
+              <p className="mt-1 text-xs italic text-[#8A7B6D]">{item.reason}</p>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(item.id)}
+            className="shrink-0 rounded-lg p-2 text-[#B85C4A] hover:bg-white/80"
+            aria-label={`Delete ${item.name}`}
+          >
+            ✕
+          </button>
         </div>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2 pl-8 sm:pl-8">
-        <button
-          type="button"
-          onClick={() => onEdit(item)}
-          className="min-h-[36px] rounded-lg border border-[#E8DDD0] px-3 py-1.5 text-xs font-medium text-[#6B5E52] hover:bg-white"
-        >
-          Edit
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(item.id)}
-          className="min-h-[36px] rounded-lg border border-[#E8DDD0] px-3 py-1.5 text-xs font-medium text-[#B85C4A] hover:bg-white"
-        >
-          Delete
-        </button>
       </div>
     </li>
   );

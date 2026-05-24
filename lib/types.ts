@@ -113,19 +113,69 @@ export type ShoppingCategory = InventoryCategory;
 
 export const SHOPPING_CATEGORIES: ShoppingCategory[] = [...INVENTORY_CATEGORIES];
 
+/** Grocery store aisle grouping for shopping mode */
+export type GrocerySection =
+  | "Produce"
+  | "Meat & Seafood"
+  | "Dairy & Eggs"
+  | "Grains & Bread"
+  | "Pantry"
+  | "Frozen"
+  | "Spices & Sauces"
+  | "Snacks"
+  | "Other";
+
+export const GROCERY_SECTIONS: GrocerySection[] = [
+  "Produce",
+  "Meat & Seafood",
+  "Dairy & Eggs",
+  "Grains & Bread",
+  "Pantry",
+  "Frozen",
+  "Spices & Sauces",
+  "Snacks",
+  "Other",
+];
+
 export interface ShoppingListItem {
   id: string;
   name: string;
+  /** Legacy — prefer amountNeeded */
   amount: string;
+  /** Legacy — prefer unitNeeded */
   unit: string;
   category: ShoppingCategory;
+  /** Store aisle for shopping mode UI */
+  grocerySection?: GrocerySection;
   required: boolean;
+  optional?: boolean;
+  reason?: string;
+  amountNeeded?: string;
+  unitNeeded?: string;
+  buyAmount?: string;
+  buyUnit?: string;
+  equivalentAmount?: string;
+  equivalentUnit?: string;
+  usedInRecipes?: string[];
+  sourceMealIds?: string[];
+  /** Waiting in cart for final "Add to inventory" confirmation */
+  inCart?: boolean;
+  boughtAmount?: string;
+  boughtUnit?: string;
+  boughtEquivalentAmount?: string;
+  boughtEquivalentUnit?: string;
   bought: boolean;
   addedToInventory: boolean;
   /** Where this item came from — mealdex items are auto-synced from saved meals */
   source?: "manual" | "mealdex" | "ai";
-  reason?: string;
   sourceMealId?: string;
+}
+
+export interface CartBoughtData {
+  boughtAmount: string;
+  boughtUnit: string;
+  boughtEquivalentAmount?: string;
+  boughtEquivalentUnit?: string;
 }
 
 /** AI or manual deduction of pantry stock after meal prep */
@@ -139,12 +189,66 @@ export type ChatRole = "user" | "assistant";
 
 export interface SuggestedShoppingItem {
   name: string;
+  /** Legacy — prefer amountNeeded */
   amount: string;
+  /** Legacy — prefer unitNeeded */
   unit: string;
   category: ShoppingCategory;
+  grocerySection?: GrocerySection;
   required: boolean;
   reason?: string;
+  amountNeeded?: string;
+  unitNeeded?: string;
+  buyAmount?: string;
+  buyUnit?: string;
+  equivalentAmount?: string;
+  equivalentUnit?: string;
+  usedInRecipes?: string[];
+  sourceMealIds?: string[];
   sourceMealId?: string;
+  source?: "manual" | "mealdex" | "ai";
+}
+
+export interface IngredientSubstitution {
+  original: string;
+  substitute: string;
+  core: boolean;
+  note?: string;
+}
+
+export interface ReusedIngredient {
+  name: string;
+  usedInMeals: string[];
+  reason?: string;
+}
+
+export interface SecondaryIngredientChange {
+  original: string;
+  replacement: string;
+  mealsAffected: string[];
+  reason?: string;
+}
+
+export interface CoreIngredientChange {
+  mealTitle?: string;
+  mealId?: string;
+  originalCoreIngredient?: string;
+  newCoreIngredient?: string;
+  reason?: string;
+}
+
+export interface SharedIngredientsStrategy {
+  summary?: string;
+  reusedIngredients?: ReusedIngredient[];
+  preservedVariety?: string[];
+  coreChanges?: CoreIngredientChange[];
+  secondaryChanges?: SecondaryIngredientChange[];
+}
+
+export interface BeforeAfterComparison {
+  before?: string[];
+  after?: string[];
+  result?: string[];
 }
 
 export type AIActionType =
@@ -155,7 +259,14 @@ export type AIActionType =
   | "request_ai_revision"
   | "pick_alternative_meal"
   | "accept_meal_plan"
-  | "save_generated_recipe";
+  | "save_generated_recipe"
+  | "accept_simplified_plan"
+  | "keep_original_plan"
+  | "request_another_simplification"
+  | "approve_core_change"
+  | "reject_core_change"
+  | "replace_meal_for_simpler_ingredients"
+  | "keep_meal_despite_extra_ingredients";
 
 export interface ChatAction {
   label: string;
@@ -164,14 +275,28 @@ export interface ChatAction {
 }
 
 export interface AdaptedRecipeIngredient {
+  id?: string;
   name: string;
   amount: string;
   unit: string;
-  source?: "inventory" | "shopping-list" | "missing";
+  source?: "inventory" | "shopping-list" | "missing" | "manual" | "unknown";
+  inventoryItemId?: string;
+  availableAmount?: string;
+  availableUnit?: string;
+  usedAmount?: string;
+  usedUnit?: string;
+  isAvailableInInventory?: boolean;
+  isSubstituted?: boolean;
+  originalIngredient?: string;
 }
 
 export interface AdaptedRecipe {
+  id?: string;
   title: string;
+  /** Original title before core-ingredient substitution */
+  originalTitle?: string;
+  /** Display title — may include substitution note */
+  displayTitle?: string;
   basedOnMealCardId?: string;
   servings?: number;
   tags?: string[];
@@ -179,6 +304,10 @@ export interface AdaptedRecipe {
   missingIngredients?: string[];
   ingredients?: AdaptedRecipeIngredient[];
   steps?: string[];
+  substitutions?: IngredientSubstitution[];
+  ingredientNotes?: string[];
+  cooked?: boolean;
+  cookedAt?: string;
 }
 
 export interface GeneratedMealPlan {
@@ -187,6 +316,7 @@ export interface GeneratedMealPlan {
   servings?: number;
   missingIngredients?: string[];
   userDecisions?: string[];
+  sharedIngredientsStrategy?: SharedIngredientsStrategy;
   updatedAt?: string;
 }
 
@@ -207,6 +337,10 @@ export interface ChatMessage {
   /** Indices of actions the user already clicked */
   actionsApplied?: number[];
   recipes?: AdaptedRecipe[];
+  /** Recipe keys (messageId:index:title) confirmed as cooked */
+  cookedRecipeKeys?: string[];
+  sharedIngredientsStrategy?: SharedIngredientsStrategy;
+  beforeAfterComparison?: BeforeAfterComparison;
   warnings?: string[];
   needsUserChoice?: boolean;
 }

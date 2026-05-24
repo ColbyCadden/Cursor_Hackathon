@@ -8,6 +8,7 @@ import { authenticateUser } from "./auth";
 import { clearPendingSignup } from "./signupSession";
 import { registeredUserToProfile } from "./signupProfile";
 import { migrateShoppingCategory } from "./shoppingCategories";
+import { normalizeShoppingItem } from "./shoppingItemUtils";
 import type {
   AppState,
   ChatMessage,
@@ -44,16 +45,22 @@ function migrateProfile(profile: Partial<UserProfile>): UserProfile {
 }
 
 function migrateShoppingList(items: ShoppingListItem[]): ShoppingListItem[] {
-  return items.map((item) => ({
-    ...item,
-    category: migrateShoppingCategory(item.category),
-    bought: item.bought ?? false,
-    addedToInventory: item.addedToInventory ?? false,
-    required: item.required ?? true,
-    source: item.source ?? "manual",
-    reason: item.reason,
-    sourceMealId: item.sourceMealId,
-  }));
+  return items.map((item) =>
+    normalizeShoppingItem({
+      ...item,
+      category: migrateShoppingCategory(item.category),
+      bought: item.bought ?? false,
+      addedToInventory: item.addedToInventory ?? false,
+      required: item.required ?? true,
+      source: item.source ?? "manual",
+      reason: item.reason,
+      sourceMealId: item.sourceMealId,
+      // Legacy bought items not yet in inventory → treat as in-cart
+      inCart: item.inCart ?? (item.bought && !item.addedToInventory ? true : false),
+      boughtAmount: item.boughtAmount ?? (item.bought ? item.amount : undefined),
+      boughtUnit: item.boughtUnit ?? (item.bought ? item.unit : undefined),
+    })
+  );
 }
 function hasMealShape(m: unknown): m is Meal {
   return (
@@ -162,6 +169,9 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
         actions: msg.actions ?? undefined,
         actionsApplied: msg.actionsApplied ?? [],
         recipes: msg.recipes ?? undefined,
+        cookedRecipeKeys: msg.cookedRecipeKeys ?? [],
+        sharedIngredientsStrategy: msg.sharedIngredientsStrategy ?? undefined,
+        beforeAfterComparison: msg.beforeAfterComparison ?? undefined,
         warnings: msg.warnings ?? undefined,
         needsUserChoice: msg.needsUserChoice ?? false,
       }))
