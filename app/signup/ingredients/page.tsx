@@ -25,7 +25,7 @@ export default function SignupIngredientsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selected || !(selected in INGREDIENT_PREFERENCE)) {
-      alert("Please select your ingredient preference.");
+      alert("Please choose how complex you want your recipes to be.");
       return;
     }
 
@@ -41,8 +41,8 @@ export default function SignupIngredientsPage() {
   return (
     <SignupLayout
       currentPath={CURRENT_PATH}
-      title="Ingredients per recipe"
-      subtitle="Do you prefer quick shops with fewer items, or fuller recipes?"
+      title="How complex should recipes be?"
+      subtitle="Some recipes use just a few ingredients; others need a fuller shopping list. Pick what suits you."
     >
       <form onSubmit={handleSubmit}>
         <div className="space-y-2">

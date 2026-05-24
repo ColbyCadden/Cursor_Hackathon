@@ -11,6 +11,9 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: true,
     highVegetables: true,
+    requiredEquipment: ["stovetop"],
+    containsMeat: true,
+    estimatedMinutes: 25,
     ingredients: [
       "chicken breast",
       "mixed greens",
@@ -31,6 +34,9 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: true,
     highVegetables: false,
+    requiredEquipment: ["stovetop"],
+    containsMeat: true,
+    estimatedMinutes: 30,
     ingredients: [
       "spaghetti",
       "eggs",
@@ -49,6 +55,9 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: false,
     highVegetables: true,
+    requiredEquipment: ["stovetop"],
+    containsMeat: false,
+    estimatedMinutes: 25,
     ingredients: [
       "broccoli",
       "bell pepper",
@@ -70,6 +79,9 @@ export const SEED_MEALS: Meal[] = [
     price: 4,
     highProtein: true,
     highVegetables: false,
+    requiredEquipment: ["oven", "stovetop"],
+    containsMeat: true,
+    estimatedMinutes: 40,
     ingredients: [
       "salmon fillet",
       "jasmine rice",
@@ -90,6 +102,9 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: true,
     highVegetables: true,
+    requiredEquipment: ["stovetop"],
+    containsMeat: false,
+    estimatedMinutes: 20,
     ingredients: [
       "black beans",
       "brown rice",
@@ -110,6 +125,9 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: false,
     highVegetables: false,
+    requiredEquipment: ["oven"],
+    containsMeat: false,
+    estimatedMinutes: 35,
     ingredients: [
       "pizza dough",
       "tomato sauce",
@@ -128,6 +146,9 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: true,
     highVegetables: false,
+    requiredEquipment: [],
+    containsMeat: false,
+    estimatedMinutes: 5,
     ingredients: ["greek yogurt", "granola", "berries", "honey", "chia seeds"],
   },
   {
@@ -139,6 +160,9 @@ export const SEED_MEALS: Meal[] = [
     price: 1,
     highProtein: true,
     highVegetables: true,
+    requiredEquipment: ["stovetop"],
+    containsMeat: false,
+    estimatedMinutes: 35,
     ingredients: [
       "red lentils",
       "onion",
@@ -159,6 +183,9 @@ export const SEED_MEALS: Meal[] = [
     price: 5,
     highProtein: true,
     highVegetables: false,
+    requiredEquipment: ["oven", "stovetop"],
+    containsMeat: true,
+    estimatedMinutes: 50,
     ingredients: [
       "ribeye or sirloin steak",
       "yukon potatoes",
@@ -178,6 +205,9 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: false,
     highVegetables: true,
+    requiredEquipment: [],
+    containsMeat: false,
+    estimatedMinutes: 10,
     ingredients: [
       "tomatoes",
       "fresh mozzarella",
@@ -196,6 +226,9 @@ export const SEED_MEALS: Meal[] = [
     price: 4,
     highProtein: true,
     highVegetables: false,
+    requiredEquipment: ["stovetop"],
+    containsMeat: true,
+    estimatedMinutes: 30,
     ingredients: [
       "sushi-grade tuna",
       "sushi rice",
@@ -216,6 +249,9 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: false,
     highVegetables: true,
+    requiredEquipment: ["stovetop"],
+    containsMeat: false,
+    estimatedMinutes: 35,
     ingredients: [
       "coconut milk",
       "curry paste",
