@@ -36,9 +36,9 @@ export const SEED_MEALS: Meal[] = [
     imageUri: FOODISH("pasta", 1),
     difficulty: 3,
     price: 3,
-    highProtein: true,
+    highProtein: false,
     highVegetables: false,
-    requiredEquipment: ["stovetop"],
+    requiredEquipment: ["stovetop","air_fryer"],
     containsMeat: true,
     estimatedMinutes: 30,
     ingredients: [
@@ -98,7 +98,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-burrito-bowl",
     name: "Bean Burrito Bowl",
-    imageUri: UNSPLASH("photo-1512621776951-a57141f2eefd"),
+    imageUri: "/meals/bean-burrito-bowl.png",
     difficulty: 2,
     price: 2,
     highProtein: true,
@@ -125,7 +125,7 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: false,
     highVegetables: false,
-    requiredEquipment: ["oven"],
+    requiredEquipment: ["oven","stovetop"],
     containsMeat: false,
     estimatedMinutes: 35,
     ingredients: [
@@ -143,7 +143,7 @@ export const SEED_MEALS: Meal[] = [
     imageUri: UNSPLASH("photo-1488477181946-6428a0291777"),
     difficulty: 1,
     price: 2,
-    highProtein: true,
+    highProtein: false,
     highVegetables: false,
     requiredEquipment: [],
     containsMeat: false,
@@ -175,7 +175,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-steak-potatoes",
     name: "Steak & Roasted Potatoes",
-    imageUri: UNSPLASH("photo-1555939594-58d7cb561ad1"),
+    imageUri: "/meals/steak-roasted-potatoes.png",
     difficulty: 4,
     price: 5,
     highProtein: true,
@@ -216,7 +216,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-tuna-poke",
     name: "Tuna Poke Bowl",
-    imageUri: UNSPLASH("photo-1544025162-d76694265947"),
+    imageUri: "/meals/tuna-poke-bowl.png",
     difficulty: 3,
     price: 4,
     highProtein: true,
@@ -238,7 +238,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-vegetable-curry",
     name: "Vegetable Coconut Curry",
-    imageUri: FOODISH("butter-chicken", 2),
+    imageUri: "/meals/vegetable-coconut-curry.png",
     difficulty: 3,
     price: 2,
     highProtein: false,
@@ -265,7 +265,7 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: true,
     highVegetables: false,
-    requiredEquipment: ["stovetop"],
+    requiredEquipment: ["stovetop","microwave"],
     containsMeat: false,
     estimatedMinutes: 15,
     ingredients: [
@@ -286,7 +286,7 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: true,
     highVegetables: false,
-    requiredEquipment: ["stovetop"],
+    requiredEquipment: ["stovetop","air_fryer"],
     containsMeat: true,
     estimatedMinutes: 20,
     ingredients: [
@@ -302,12 +302,12 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-quesadilla",
     name: "Cheese Quesadilla",
-    imageUri: FOODISH("pizza", 6),
+    imageUri: UNSPLASH("photo-1639744093483-86714cd62a3b"),
     difficulty: 1,
     price: 2,
     highProtein: true,
     highVegetables: false,
-    requiredEquipment: ["stovetop"],
+    requiredEquipment: ["stovetop","oven","air_fryer"],
     containsMeat: false,
     estimatedMinutes: 15,
     ingredients: [
@@ -347,7 +347,7 @@ export const SEED_MEALS: Meal[] = [
     price: 3,
     highProtein: true,
     highVegetables: false,
-    requiredEquipment: ["oven"],
+    requiredEquipment: ["oven","stovetop","microwave"],
     containsMeat: true,
     estimatedMinutes: 30,
     ingredients: [
@@ -383,7 +383,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-avocado-toast",
     name: "Avocado Toast",
-    imageUri: UNSPLASH("photo-1540189549336-e6e99c3679fe"),
+    imageUri: "/meals/avocado-toast.png",
     difficulty: 1,
     price: 2,
     highProtein: false,
@@ -425,7 +425,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-spaghetti-bolognese",
     name: "Spaghetti Bolognese",
-    imageUri: FOODISH("pasta", 2),
+    imageUri: "/meals/spaghetti-bolognese.png",
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -451,7 +451,7 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: true,
     highVegetables: true,
-    requiredEquipment: ["stovetop"],
+    requiredEquipment: ["stovetop","air_fryer"],
     containsMeat: false,
     estimatedMinutes: 20,
     ingredients: [
@@ -492,7 +492,7 @@ export const SEED_MEALS: Meal[] = [
     price: 2,
     highProtein: false,
     highVegetables: true,
-    requiredEquipment: ["stovetop"],
+    requiredEquipment: ["stovetop","air_fryer"],
     containsMeat: false,
     estimatedMinutes: 35,
     ingredients: [
@@ -547,7 +547,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-chicken-wrap",
     name: "Grilled Chicken Wrap",
-    imageUri: FOODISH("burger", 4),
+    imageUri: "/meals/grilled-chicken-wrap.png",
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -588,7 +588,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-scrambled-eggs-toast",
     name: "Scrambled Eggs & Toast",
-    imageUri: FOODISH("idly", 2),
+    imageUri: "/meals/scrambled-eggs-toast.png",
     difficulty: 1,
     price: 1,
     highProtein: true,
@@ -608,10 +608,10 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-microwave-mac",
     name: "Microwave Mac & Cheese",
-    imageUri: FOODISH("pasta", 6),
+    imageUri: "/meals/microwave-mac-cheese.png",
     difficulty: 1,
     price: 2,
-    highProtein: true,
+    highProtein: false,
     highVegetables: false,
     requiredEquipment: ["microwave"],
     containsMeat: false,
@@ -628,7 +628,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-chicken-tacos",
     name: "Chicken Tacos",
-    imageUri: UNSPLASH("photo-1551504734-5ee1c4a1479b"),
+    imageUri: "/meals/chicken-tacos.png",
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -650,7 +650,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-bean-chili",
     name: "Veggie Black Bean Chili",
-    imageUri: UNSPLASH("photo-1547592166-23ac45744acd"),
+    imageUri: "/meals/veggie-black-bean-chili.png",
     difficulty: 2,
     price: 2,
     highProtein: true,
@@ -672,7 +672,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-tuna-sandwich",
     name: "Tuna Salad Sandwich",
-    imageUri: FOODISH("burger", 5),
+    imageUri: "/meals/tuna-salad-sandwich.png",
     difficulty: 1,
     price: 2,
     highProtein: true,
@@ -715,12 +715,12 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-chicken-caesar",
     name: "Chicken Caesar Salad",
-    imageUri: UNSPLASH("photo-1546069901-ba9599a7e63c"),
+    imageUri: "/meals/chicken-caesar-salad.png",
     difficulty: 2,
     price: 3,
     highProtein: true,
     highVegetables: true,
-    requiredEquipment: ["stovetop"],
+    requiredEquipment: ["stovetop","air_fryer"],
     containsMeat: true,
     estimatedMinutes: 20,
     ingredients: [
@@ -736,7 +736,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-beef-broccoli",
     name: "Beef & Broccoli Stir Fry",
-    imageUri: UNSPLASH("photo-1512058564366-18510be2db19"),
+    imageUri: "/meals/beef-broccoli-stir-fry.png",
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -758,7 +758,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-tomato-soup",
     name: "Tomato Soup & Bread",
-    imageUri: UNSPLASH("photo-1547592166-23ac45744acd"),
+    imageUri: "/meals/tomato-soup-bread.png",
     difficulty: 1,
     price: 2,
     highProtein: false,
@@ -780,10 +780,10 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-grilled-cheese",
     name: "Grilled Cheese Sandwich",
-    imageUri: FOODISH("pizza", 7),
+    imageUri: "/meals/grilled-cheese-sandwich.png",
     difficulty: 1,
     price: 2,
-    highProtein: true,
+    highProtein: false,
     highVegetables: false,
     requiredEquipment: ["stovetop"],
     containsMeat: false,
@@ -820,7 +820,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-falafel-pita",
     name: "Falafel Pita Wrap",
-    imageUri: FOODISH("samosa", 2),
+    imageUri: "/meals/falafel-pita-wrap.png",
     difficulty: 2,
     price: 2,
     highProtein: true,
@@ -885,7 +885,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-pb-banana-toast",
     name: "Peanut Butter Banana Toast",
-    imageUri: UNSPLASH("photo-1540189549336-e6e99c3679fe"),
+    imageUri: "/meals/pb-banana-toast.png",
     difficulty: 1,
     price: 1,
     highProtein: true,
@@ -925,7 +925,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-roasted-chicken",
     name: "Oven Roasted Chicken Thighs",
-    imageUri: FOODISH("butter-chicken", 6),
+    imageUri: "/meals/oven-roasted-chicken-thighs.png",
     difficulty: 2,
     price: 3,
     highProtein: true,
@@ -947,7 +947,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-mushroom-risotto",
     name: "Creamy Mushroom Risotto",
-    imageUri: FOODISH("pasta", 8),
+    imageUri: "/meals/creamy-mushroom-risotto.png",
     difficulty: 3,
     price: 3,
     highProtein: false,
@@ -969,7 +969,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-club-sandwich",
     name: "Turkey Club Sandwich",
-    imageUri: FOODISH("burger", 6),
+    imageUri: "/meals/turkey-club-sandwich.png",
     difficulty: 1,
     price: 3,
     highProtein: true,
@@ -990,7 +990,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-sweet-potato-hash",
     name: "Sweet Potato Breakfast Hash",
-    imageUri: UNSPLASH("photo-1506084868230-bb9d95c24759"),
+    imageUri: "/meals/sweet-potato-breakfast-hash.png",
     difficulty: 2,
     price: 2,
     highProtein: true,
@@ -1012,7 +1012,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-buddha-bowl",
     name: "Roasted Veggie Buddha Bowl",
-    imageUri: UNSPLASH("photo-1546069901-ba9599a7e63c"),
+    imageUri: "/meals/roasted-veggie-buddha-bowl.png",
     difficulty: 2,
     price: 2,
     highProtein: false,
@@ -1034,7 +1034,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-pesto-penne",
     name: "Pesto Penne",
-    imageUri: FOODISH("pasta", 5),
+    imageUri: "/meals/pesto-penne.png",
     difficulty: 1,
     price: 2,
     highProtein: false,
