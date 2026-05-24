@@ -13,7 +13,9 @@ What it does:
 PrepDeck is an AI-powered student meal prep app that uses profile, inventory, Meal Deck cards, and shopping list data to generate simple meal plans and recipes.
 
 Environment variables:
+
 GEMINI_API_KEY
+
 GROQ_API_KEY
 
 Note:
