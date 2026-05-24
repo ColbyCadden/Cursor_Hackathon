@@ -204,7 +204,7 @@ export function ShoppingListManager({
               setEditingItem(null);
               setShowForm(true);
             }}
-            className="min-h-[44px] rounded-xl bg-[#E8927C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#D97F68]"
+            className="btn-primary"
           >
             + Add item
           </button>
@@ -224,7 +224,7 @@ export function ShoppingListManager({
                   showToast("Bought items cleared.");
                 }
               }}
-              className="min-h-[44px] rounded-xl border border-[#E8DDD0] px-4 py-2.5 text-sm font-medium text-[#6B5E52] hover:bg-[#F4E8DC]/60"
+              className="btn-secondary min-h-[44px]"
             >
               Clear bought
             </button>
@@ -242,13 +242,13 @@ export function ShoppingListManager({
                   showToast("Shopping list cleared.");
                 }
               }}
-              className="min-h-[44px] rounded-xl border border-[#E8DDD0] px-4 py-2.5 text-sm font-medium text-[#B85C4A] hover:bg-[#FAF6F0]"
+              className="btn-secondary min-h-[44px] text-[var(--salmon-dark)]"
             >
               Clear all
             </button>
           )}
         </div>
-        <p className="text-xs text-[#8A7B6D]">
+        <p className="text-xs text-[var(--text-muted)]">
           {shoppingList.length} item(s) · {pendingCount} ready for inventory
         </p>
       </div>
@@ -279,10 +279,14 @@ export function ShoppingListManager({
 
       <div className="space-y-4 sm:space-y-6">
         {groups.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[#E8DDD0] bg-[#FAF6F0] px-4 py-10 text-center sm:px-6 sm:py-12">
-            <p className="text-sm text-[#8A7B6D]">
-              Your shopping list is empty. Add items manually or ask the AI meal
-              planner to suggest groceries.
+          <div className="empty-state py-10">
+            <p className="empty-state-icon" aria-hidden>
+              🛍️
+            </p>
+            <p className="empty-state-title">Shopping list is empty</p>
+            <p className="empty-state-text">
+              Add items manually or ask the AI meal planner to suggest groceries —
+              then tap &quot;Add suggested items to shopping list&quot; in chat.
             </p>
           </div>
         ) : (
@@ -302,17 +306,17 @@ export function ShoppingListManager({
         )}
       </div>
 
-      <div className="mt-8 flex flex-col gap-3 border-t border-[#E8DDD0] pt-6 sm:flex-row sm:items-center">
+      <div className="mt-8 flex flex-col gap-3 border-t border-[var(--card-border)] pt-6 sm:flex-row sm:items-center">
         <button
           type="button"
           onClick={handleAddBoughtToInventory}
           disabled={pendingCount === 0}
-          className="min-h-[48px] w-full rounded-xl bg-[#9BBF9B] px-5 py-3 text-sm font-semibold text-[#2D4A2D] hover:bg-[#8AAF8A] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="btn-green min-h-[48px] w-full sm:w-auto"
         >
           Add bought items to inventory
           {pendingCount > 0 && ` (${pendingCount})`}
         </button>
-        <p className="text-xs text-[#8A7B6D]">
+        <p className="text-xs text-[var(--text-muted)]">
           Check items as bought at the store, then add them to your kitchen
           inventory here.
         </p>

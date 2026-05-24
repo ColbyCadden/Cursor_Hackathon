@@ -1,8 +1,8 @@
 # PrepDeck
 
-**Swipe meals. Save to Mealdex. Shop smarter.**
+**Simple cooking for busy students.**
 
-One unified Next.js app — demo login, Pokémon-style meal cards (Mealdex), kitchen tools, and AI chat.
+Swipe meals into your Mealdex, track pantry inventory, plan with mock AI, and shop smarter — all in one Next.js prototype.
 
 ## Run
 
@@ -11,27 +11,33 @@ npm install
 npm run dev
 ```
 
-Open the **Local** URL from the terminal (e.g. `http://localhost:3000`). **Continue as demo user** → lands on **Discover**.
+PowerShell (if scripts blocked): `npm.cmd run dev`
 
-## Flow
+Open the Local URL (e.g. `http://localhost:3000`). Hit **Continue as demo user** for the fastest demo.
 
-1. **Login** — demo sign-in (localStorage)
+See **[DEVELOPER_NOTES.md](./DEVELOPER_NOTES.md)** for file map, integration TODOs, and demo script.
+
+## Demo flow
+
+1. **Login** — demo user (localStorage, no real backend)
 2. **Discover** — swipe meals; save to **Mealdex** (right) or skip (left)
-3. **Go to Home** — profile, inventory, barcode scanner
-4. **Shop** — ingredients auto-merged from saved Mealdex meals only
-5. **Chat** — AI meal planner using inventory + Mealdex
+3. **Home** — profile, inventory, barcode demo scans
+4. **Chat** — mock AI meal planner; add suggested items to shopping list
+5. **Shop** — Mealdex ingredients + manual list; mark bought → add to inventory
+
+Use **Reset demo data** in the sidebar between demos.
 
 ## Routes
 
 | Route | Description |
 |-------|-------------|
 | `/login` | PrepDeck sign-in |
-| `/discover` | Swipe deck (first screen after login) |
+| `/discover` | Swipe deck |
 | `/mealdex` | Saved meal cards |
-| `/create` | Add custom meal cards |
-| `/shopping-list` | Mealdex ingredient checklist |
 | `/dashboard` | Home — profile, inventory, barcode |
-| `/chat` | AI meal planner |
+| `/chat` | AI meal planner (mocked) |
+| `/shopping-list` | Mealdex + shopping list workflow |
+| `/create` | Custom meal cards |
 
 ## Phone
 
@@ -39,8 +45,8 @@ Bottom tabs: **Discover · Mealdex · Shop · Chat · Home**
 
 ## Tech
 
-Next.js · TypeScript · Tailwind · localStorage
+Next.js 15 · TypeScript · Tailwind · localStorage · Framer Motion (swipe)
 
-## Colors
+## Design
 
-Beige `#F5F0E8`, salmon `#E8A598`, green `#7BAE7F`, surface `#FFFBF7`
+Cream `#F5F0E8`, salmon `#E8A598`, green `#7BAE7F`, surface `#FFFBF7`

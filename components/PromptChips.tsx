@@ -15,7 +15,7 @@ export function PromptChips({ prompts, onSelect, disabled }: PromptChipsProps) {
           type="button"
           disabled={disabled}
           onClick={() => onSelect(prompt)}
-          className="rounded-full border border-[#E8DDD0] bg-[#FAF6F0] px-3 py-1.5 text-xs font-medium text-[#6B5E52] transition hover:bg-[#F4E8DC]/60 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-[36px] rounded-full border border-[var(--card-border)] bg-[var(--background)] px-3 py-1.5 text-xs font-medium text-[var(--text)] transition hover:border-[var(--salmon)] hover:bg-[var(--surface)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {prompt}
         </button>

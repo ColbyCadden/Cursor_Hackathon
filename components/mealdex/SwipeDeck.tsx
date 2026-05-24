@@ -19,13 +19,14 @@ export function SwipeDeck({ meals, onSwipeLeft, onSwipeRight }: Props) {
 
   if (!top) {
     return (
-      <div className="px-6 py-12 text-center">
-        <p className="text-4xl" aria-hidden>
+      <div className="empty-state px-4 py-10">
+        <p className="empty-state-icon" aria-hidden>
           ✓
         </p>
-        <p className="mt-4 text-xl font-bold text-[#3D3832]">Deck complete!</p>
-        <p className="mt-2 text-sm text-[#7A7268]">
-          Add custom cards or reset swipes from Mealdex to browse again.
+        <p className="empty-state-title">All caught up!</p>
+        <p className="empty-state-text">
+          You&apos;ve swiped through every card. Create a custom meal or reset
+          swipes from Mealdex to browse again.
         </p>
       </div>
     );

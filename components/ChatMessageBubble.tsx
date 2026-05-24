@@ -1,12 +1,17 @@
 "use client";
 
+import { SuggestedShoppingItems } from "./SuggestedShoppingItems";
 import type { ChatMessage } from "@/lib/types";
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
+  onAddSuggestedItems?: (messageId: string) => void;
 }
 
-export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
+export function ChatMessageBubble({
+  message,
+  onAddSuggestedItems,
+}: ChatMessageBubbleProps) {
   const isUser = message.role === "user";
 
   const bubbleClass = isUser
@@ -37,6 +42,17 @@ export function ChatMessageBubble({ message }: ChatMessageBubbleProps) {
             </ol>
           </div>
         )}
+
+        {!isUser &&
+          message.suggestedItems &&
+          message.suggestedItems.length > 0 &&
+          onAddSuggestedItems && (
+            <SuggestedShoppingItems
+              items={message.suggestedItems}
+              added={message.suggestedItemsAdded}
+              onAdd={() => onAddSuggestedItems(message.id)}
+            />
+          )}
       </div>
     </div>
   );

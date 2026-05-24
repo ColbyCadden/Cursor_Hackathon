@@ -7,7 +7,6 @@ import {
   getAppState,
   loginDemoUser,
   loginWithCredentials,
-  resetAllAppData,
 } from "@/lib/storage";
 import { profileHasSignupData } from "@/lib/signupProfile";
 
@@ -46,22 +45,44 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-[var(--background)] px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-block">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--salmon)]/40 text-3xl shadow-sm">
-              🍳
-            </div>
-          </Link>
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--salmon)]/40 text-3xl shadow-sm">
+            🍳
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-[var(--text)]">
-            Log in
+            PrepDeck
           </h1>
           <p className="mt-2 text-sm text-[var(--text-muted)]">
-            Use the email you signed up with
+            Simple cooking for busy students.
           </p>
+        </div>
+
+        <div className="demo-note mb-4 text-center">
+          Prototype login — no real backend yet. Use demo mode for the fastest
+          hackathon walkthrough.
+        </div>
+
+        <button
+          type="button"
+          onClick={handleDemo}
+          className="btn-primary mb-4 w-full min-h-[52px] text-base shadow-sm"
+        >
+          Continue as demo user →
+        </button>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-[var(--card-border)]" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-[var(--background)] px-3 text-[var(--text-muted)]">
+              or sign in
+            </span>
+          </div>
         </div>
 
         <form
           onSubmit={handleLogin}
-          className="rounded-2xl border-2 border-[var(--card-border)] bg-[var(--surface)] p-6 shadow-md"
+          className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface)] p-6 shadow-sm"
         >
           {error && (
             <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -85,7 +106,7 @@ export default function LoginPage() {
                 required
                 autoComplete="email"
                 placeholder="you@university.edu"
-                className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--text)] outline-none focus:border-[var(--salmon)] focus:ring-2 focus:ring-[var(--salmon)]/30"
+                className="input-field"
               />
             </div>
             <div>
@@ -103,24 +124,16 @@ export default function LoginPage() {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--background)] px-4 py-2.5 text-sm text-[var(--text)] outline-none focus:border-[var(--salmon)] focus:ring-2 focus:ring-[var(--salmon)]/30"
+                className="input-field"
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="mt-6 w-full min-h-[48px] rounded-xl bg-[var(--salmon)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--salmon-dark)]"
+            className="btn-secondary mt-6 w-full min-h-[48px]"
           >
-            Log in
-          </button>
-
-          <button
-            type="button"
-            onClick={handleDemo}
-            className="mt-3 w-full min-h-[48px] rounded-xl border-2 border-[var(--card-border)] bg-[var(--background)] px-4 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--salmon)]"
-          >
-            Continue as demo user
+            Log in with email
           </button>
         </form>
 
@@ -132,19 +145,6 @@ export default function LoginPage() {
           >
             Create an account
           </Link>
-        </p>
-
-        <p className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              resetAllAppData();
-              window.location.href = "/";
-            }}
-            className="text-xs text-[var(--text-muted)] underline-offset-2 hover:underline"
-          >
-            Reset app data (testing)
-          </button>
         </p>
       </div>
     </div>

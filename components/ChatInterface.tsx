@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
 import { ChatInput } from "./ChatInput";
 import { PromptChips } from "./PromptChips";
+import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
 import { generateAIResponse } from "@/lib/mockAI";
+import { mergeSuggestedIntoShoppingList } from "@/lib/shoppingListHelpers";
 import type { AppState, ChatMessage } from "@/lib/types";
 
 const EXAMPLE_PROMPTS = [
@@ -25,6 +27,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const messages = appState.chatMessages;
@@ -83,43 +86,112 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
     [appState, onUpdate, thinking]
   );
 
+  const handleAddSuggestedItems = (messageId: string) => {
+    const message = appState.chatMessages.find((m) => m.id === messageId);
+    if (!message?.suggestedItems?.length || message.suggestedItemsAdded) return;
+
+    const { list, added, updated, skipped } = mergeSuggestedIntoShoppingList(
+      appState.shoppingList,
+      message.suggestedItems
+    );
+
+    onUpdate((prev) => ({
+      ...prev,
+      shoppingList: list,
+      chatMessages: prev.chatMessages.map((m) =>
+        m.id === messageId ? { ...m, suggestedItemsAdded: true } : m
+      ),
+    }));
+
+    const parts: string[] = [];
+    if (added) parts.push(`${added} added`);
+    if (updated) parts.push(`${updated} updated`);
+    if (skipped) parts.push(`${skipped} skipped (unit mismatch)`);
+    setToast(
+      parts.length
+        ? `Shopping list updated: ${parts.join(", ")}.`
+        : "Items already on your shopping list."
+    );
+  };
+
   const handleClearChat = () => {
+    if (
+      appState.chatMessages.length > 0 &&
+      !window.confirm("Clear all chat messages?")
+    ) {
+      return;
+    }
     onUpdate((prev) => ({ ...prev, chatMessages: [] }));
   };
 
   return (
-    <div className="flex min-h-[min(70dvh,600px)] flex-col rounded-2xl border-2 border-[var(--card-border)] bg-[var(--surface)] shadow-sm">
-      <div
-        ref={scrollRef}
-        className="flex-1 space-y-4 overflow-y-auto p-4"
-      >
-        {messages.length === 0 && (
-          <p className="text-center text-sm text-[var(--text-muted)]">
-            Ask about meal prep, your inventory, or your Mealdex shop list.
-          </p>
-        )}
-        {messages.map((msg) => (
-          <ChatMessageBubble key={msg.id} message={msg} />
-        ))}
-        {thinking && (
-          <p className="text-sm text-[var(--text-muted)]">PrepDeck is thinking…</p>
-        )}
-      </div>
+    <>
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      <PromptChips prompts={EXAMPLE_PROMPTS} onSelect={sendMessage} />
+      <p className="demo-note mb-4">
+        Responses are mocked for this prototype — no real AI API yet. Chat history
+        is saved in your browser.
+      </p>
 
-      <div className="border-t border-[var(--card-border)] p-3">
-        <div className="mb-2 flex justify-end">
-          <button
-            type="button"
-            onClick={handleClearChat}
-            className="text-xs text-[var(--text-muted)] underline"
-          >
-            Clear chat
-          </button>
+      <div className="flex min-h-[min(70dvh,600px)] flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--surface)] shadow-sm">
+        <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
+          {messages.length === 0 && !thinking && (
+            <div className="empty-state py-10">
+              <p className="empty-state-icon" aria-hidden>
+                💬
+              </p>
+              <p className="empty-state-title">Ask PrepDeck anything</p>
+              <p className="empty-state-text">
+                Try meal prep plans, inventory ideas, or shopping suggestions.
+                Tap a prompt below to get started.
+              </p>
+            </div>
+          )}
+          {messages.map((msg) => (
+            <ChatMessageBubble
+              key={msg.id}
+              message={msg}
+              onAddSuggestedItems={handleAddSuggestedItems}
+            />
+          ))}
+          {thinking && (
+            <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+              <span
+                className="inline-block h-2 w-2 animate-pulse rounded-full bg-[var(--salmon)]"
+                aria-hidden
+              />
+              PrepDeck is thinking…
+            </div>
+          )}
         </div>
-        <ChatInput value={input} onChange={setInput} onSend={() => sendMessage(input)} />
+
+        <div className="border-t border-[var(--card-border)] px-3 py-3">
+          <PromptChips
+            prompts={EXAMPLE_PROMPTS}
+            onSelect={sendMessage}
+            disabled={thinking}
+          />
+        </div>
+
+        <div className="border-t border-[var(--card-border)] p-3">
+          <div className="mb-2 flex justify-end">
+            <button
+              type="button"
+              onClick={handleClearChat}
+              disabled={messages.length === 0}
+              className="text-xs text-[var(--text-muted)] underline-offset-2 hover:underline disabled:opacity-40"
+            >
+              Clear chat
+            </button>
+          </div>
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onSend={() => sendMessage(input)}
+            disabled={thinking}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

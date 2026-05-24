@@ -15,7 +15,7 @@ function ChatContent() {
       <div className="mx-auto w-full max-w-3xl">
         <PageHeader
           title="AI Meal Planner"
-          subtitle="Ask PrepDeck to turn your inventory and saved meal ideas into simple meal prep plans."
+          subtitle="Mock AI for now — ask about meal prep, inventory, or shopping. Suggested groceries can go straight to your list."
         />
 
         <ChatInterface appState={state} onUpdate={updateState} />

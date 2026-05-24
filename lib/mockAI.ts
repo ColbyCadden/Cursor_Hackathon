@@ -376,7 +376,15 @@ You asked: "${message.trim()}" — I'll keep suggestions student-friendly with f
 }
 
 /**
- * Mock AI response generator. Replace this function with a real API call in a later stage.
+ * Mock AI response generator.
+ *
+ * TODO (real AI API): Replace the body of this function with a fetch call to your
+ * backend/LLM endpoint. Keep the same `AIResponse` return shape so ChatInterface
+ * and suggested-shopping-item flows keep working without UI changes.
+ *
+ * Example:
+ *   const res = await fetch("/api/chat", { method: "POST", body: JSON.stringify({ message: userMessage, profile, inventory }) });
+ *   return res.json() as AIResponse;
  */
 export async function generateAIResponse(
   userMessage: string,

@@ -108,12 +108,12 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search inventory…"
-          className="w-full rounded-xl border border-[#E8DDD0] bg-[#FAF6F0] px-4 py-2.5 text-sm outline-none focus:border-[#E8927C] sm:max-w-xs"
+          className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--salmon)] sm:max-w-xs"
         />
         <button
           type="button"
           onClick={openAdd}
-          className="rounded-xl bg-[#E8927C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#D97F68]"
+          className="btn-primary"
         >
           + Add item
         </button>
@@ -213,9 +213,24 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-[#8A7B6D]">
-          {search ? "No items match your search." : "No inventory items yet."}
-        </p>
+        <div className="empty-state py-8">
+          <p className="empty-state-icon" aria-hidden>
+            🧊
+          </p>
+          <p className="empty-state-title">
+            {search ? "No matches" : "No inventory yet"}
+          </p>
+          <p className="empty-state-text">
+            {search
+              ? "Try a different search term."
+              : "Add items manually or use demo barcode scans below."}
+          </p>
+          {!search && (
+            <button type="button" onClick={openAdd} className="btn-primary mt-4">
+              + Add first item
+            </button>
+          )}
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map((item) => (

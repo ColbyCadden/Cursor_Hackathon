@@ -6,10 +6,10 @@ interface OverviewCardProps {
 }
 
 const accentStyles = {
-  salmon: "bg-[#F4A896]/30 border-[#E8927C]/40",
-  sage: "bg-[#B8D4B8]/35 border-[#9BBF9B]/50",
-  honey: "bg-[#F5D9A8]/40 border-[#E8C47A]/50",
-  sky: "bg-[#B8D4E8]/35 border-[#9BBFD4]/50",
+  salmon: "bg-[var(--salmon)]/25 border-[var(--salmon)]/40",
+  sage: "bg-[var(--green)]/20 border-[var(--green)]/40",
+  honey: "bg-[#f5d9a8]/40 border-[#e8c47a]/50",
+  sky: "bg-[#b8d4e8]/35 border-[#9bbfd4]/50",
 };
 
 export function OverviewCard({
@@ -20,12 +20,12 @@ export function OverviewCard({
 }: OverviewCardProps) {
   return (
     <div
-      className={`rounded-2xl border p-5 shadow-sm transition-shadow hover:shadow-md ${accentStyles[accent]}`}
+      className={`rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5 ${accentStyles[accent]}`}
     >
-      <p className="text-sm font-medium text-[#6B5E52]">{title}</p>
-      <p className="mt-1 text-2xl font-bold text-[#3D3429]">{value}</p>
+      <p className="text-sm font-medium text-[var(--text-muted)]">{title}</p>
+      <p className="mt-1 text-2xl font-bold text-[var(--text)]">{value}</p>
       {subtitle && (
-        <p className="mt-1 text-xs text-[#8A7B6D]">{subtitle}</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">{subtitle}</p>
       )}
     </div>
   );

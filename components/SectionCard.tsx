@@ -17,17 +17,17 @@ export function SectionCard({
 }: SectionCardProps) {
   return (
     <section
-      className={`rounded-2xl border border-[#E8DDD0] bg-white/80 p-6 shadow-sm backdrop-blur-sm ${className}`}
+      className={`rounded-2xl border border-[var(--card-border)] bg-[var(--surface)] p-5 shadow-sm sm:p-6 ${className}`}
     >
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold text-[#3D3429]">{title}</h2>
+          <h2 className="text-lg font-semibold text-[var(--text)]">{title}</h2>
           {description && (
-            <p className="mt-1 text-sm text-[#8A7B6D]">{description}</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{description}</p>
           )}
         </div>
         {badge && (
-          <span className="rounded-full bg-[#F4E8DC] px-3 py-1 text-xs font-medium text-[#8B6F5C]">
+          <span className="rounded-full bg-[var(--background)] px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
             {badge}
           </span>
         )}

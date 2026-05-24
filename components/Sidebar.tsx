@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { DemoResetButton } from "./DemoResetButton";
 import type { UserProfile } from "@/lib/types";
 
 const navItems = [
@@ -34,7 +35,7 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
           PrepDeck
         </Link>
         <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-          Mealdex · swipe, save, shop
+          Simple cooking for busy students
         </p>
       </div>
 
@@ -66,10 +67,16 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
           <p className="text-sm font-semibold text-[var(--text)]">{profile.name}</p>
           <p className="text-xs text-[var(--text-muted)]">{profile.cookingSkill} cook</p>
         </div>
+        <div className="mb-2 rounded-xl border border-dashed border-[var(--card-border)] bg-[var(--background)] p-2">
+          <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+            Demo tools
+          </p>
+          <DemoResetButton />
+        </div>
         <button
           type="button"
           onClick={onLogout}
-          className="w-full rounded-xl border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--background)]"
+          className="w-full min-h-[44px] rounded-xl border border-[var(--card-border)] px-4 py-2 text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--background)]"
         >
           Log out
         </button>

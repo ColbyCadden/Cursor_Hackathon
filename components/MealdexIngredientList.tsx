@@ -12,7 +12,7 @@ export function MealdexIngredientList({ items }: Props) {
 
   if (!items.length) {
     return (
-      <p className="rounded-xl border border-dashed border-[#E8D5C4] bg-[#FFFBF7] px-4 py-6 text-center text-sm text-[#7A7268]">
+      <p className="empty-state py-6 text-sm text-[var(--text-muted)]">
         Save meals in Discover to auto-fill ingredients here.
       </p>
     );
@@ -35,7 +35,7 @@ export function MealdexIngredientList({ items }: Props) {
             <button
               type="button"
               onClick={() => toggle(key)}
-              className={`flex w-full items-start gap-3 rounded-xl border border-[#E8D5C4] bg-[#FFFBF7] p-3.5 text-left transition-opacity ${
+              className={`flex w-full min-h-[44px] items-start gap-3 rounded-xl border border-[var(--card-border)] bg-[var(--surface)] p-3.5 text-left transition hover:border-[var(--salmon)] ${
                 isChecked ? "opacity-60" : ""
               }`}
             >
@@ -44,12 +44,12 @@ export function MealdexIngredientList({ items }: Props) {
               </span>
               <span className="min-w-0 flex-1">
                 <span
-                  className={`block font-semibold text-[#3D3832] ${isChecked ? "line-through" : ""}`}
+                  className={`block font-semibold text-[var(--text)] ${isChecked ? "line-through" : ""}`}
                 >
                   {item.name}
                   {item.count > 1 ? ` ×${item.count}` : ""}
                 </span>
-                <span className="mt-0.5 block truncate text-xs text-[#7A7268]">
+                <span className="mt-0.5 block truncate text-xs text-[var(--text-muted)]">
                   {item.mealNames.join(", ")}
                 </span>
               </span>

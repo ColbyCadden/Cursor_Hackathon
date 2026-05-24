@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
@@ -16,6 +15,7 @@ import { useAppState } from "@/lib/useAppState";
 import { getDeckMeals, getSavedMeals } from "@/lib/meal/mealHelpers";
 import { buildMealdexShoppingList } from "@/lib/meal/shoppingList";
 import { buildPersonalizedExperience } from "@/lib/signupProfile";
+import Link from "next/link";
 
 function DashboardContent() {
   const { state, updateState } = useAppState();
@@ -23,10 +23,11 @@ function DashboardContent() {
 
   if (!state) return null;
 
-  const { profile, inventory } = state;
+  const { profile, inventory, shoppingList } = state;
   const savedMeals = getSavedMeals(state);
   const deckLeft = getDeckMeals(state).length;
   const shopItems = buildMealdexShoppingList(savedMeals).length;
+  const aiListCount = shoppingList.length;
   const experience = buildPersonalizedExperience(profile);
 
   const showToast = (message: string) => setToast(message);
@@ -38,23 +39,23 @@ function DashboardContent() {
       <div className="mx-auto w-full max-w-lg md:max-w-5xl">
         <PageHeader title={experience.greeting} subtitle={experience.subtitle} />
 
-        <div className="mb-8 grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <OverviewCard
             title="Mealdex"
             value={savedMeals.length}
-            subtitle="Saved cards"
+            subtitle={savedMeals.length ? "Saved cards" : "Swipe to save"}
             accent="salmon"
           />
           <OverviewCard
             title="To swipe"
             value={deckLeft}
-            subtitle="In Discover"
+            subtitle={deckLeft ? "In Discover" : "Deck complete"}
             accent="honey"
           />
           <OverviewCard
             title="Shop list"
-            value={shopItems}
-            subtitle="From Mealdex"
+            value={shopItems + aiListCount}
+            subtitle={`${shopItems} Mealdex · ${aiListCount} manual`}
             accent="sky"
           />
           <OverviewCard
@@ -79,15 +80,12 @@ function DashboardContent() {
           </SectionCard>
         </div>
 
-        <div className="mt-6 rounded-2xl border-2 border-[var(--salmon)] bg-gradient-to-br from-[var(--surface)] to-[var(--background)] p-6 text-center">
+        <div className="mt-6 rounded-2xl border border-[var(--salmon)] bg-gradient-to-br from-[var(--surface)] to-[var(--background)] p-6 text-center">
           <h2 className="text-lg font-bold text-[var(--text)]">Ready to swipe?</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
             Save cards to your Mealdex — shopping updates automatically.
           </p>
-          <Link
-            href="/discover"
-            className="mt-4 inline-block min-h-[48px] rounded-xl bg-[var(--salmon)] px-8 py-3 text-sm font-bold text-white hover:bg-[var(--salmon-dark)]"
-          >
+          <Link href="/discover" className="btn-primary mt-4 inline-flex min-h-[48px] px-8">
             Open Discover →
           </Link>
         </div>
@@ -106,7 +104,11 @@ function DashboardContent() {
             />
           </SectionCard>
 
-          <SectionCard title="Barcode Scanner" description="Test mode scanning." badge="Test">
+          <SectionCard
+            title="Barcode scanner"
+            description="Demo test scans — real hardware plugs in here later."
+            badge="Demo"
+          >
             <BarcodeScannerPanel
               inventory={inventory}
               onInventoryChange={(next) =>

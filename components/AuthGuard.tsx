@@ -33,7 +33,11 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   if (!hydrated || !state?.isLoggedIn) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--background)]">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[var(--background)]">
+        <span
+          className="inline-block h-8 w-8 animate-pulse rounded-full bg-[var(--salmon)]/50"
+          aria-hidden
+        />
         <p className="text-sm text-[var(--text-muted)]">Loading PrepDeck…</p>
       </div>
     );
@@ -43,14 +47,6 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--background)]">
         <p className="text-sm text-[var(--text-muted)]">Continuing setup…</p>
-      </div>
-    );
-  }
-
-  if (!profileHasSignupData(state.profile)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAF6F0]">
-        <p className="text-sm text-[#8A7B6D]">Continuing setup…</p>
       </div>
     );
   }

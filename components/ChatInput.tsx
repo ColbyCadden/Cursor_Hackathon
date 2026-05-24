@@ -31,13 +31,13 @@ export function ChatInput({
         onKeyDown={handleKeyDown}
         disabled={disabled}
         placeholder={placeholder}
-        className="min-h-[44px] flex-1 rounded-xl border border-[#E8DDD0] bg-[#FAF6F0] px-4 py-2.5 text-base text-[#3D3429] outline-none focus:border-[#E8927C] focus:ring-2 focus:ring-[#F4A896]/40 disabled:opacity-60 sm:text-sm"
+        className="input-field min-h-[44px] flex-1 text-base sm:text-sm"
       />
       <button
         type="button"
         onClick={onSend}
         disabled={disabled || !value.trim()}
-        className="min-h-[44px] shrink-0 rounded-xl bg-[#E8927C] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#D97F68] disabled:cursor-not-allowed disabled:opacity-50"
+        className="btn-primary min-h-[44px] shrink-0 px-5"
       >
         Send
       </button>

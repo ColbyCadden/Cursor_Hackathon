@@ -50,18 +50,15 @@ function MealdexContent() {
         </div>
 
         {saved.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[#E8D5C4] bg-[#FFFBF7] py-16 text-center">
-            <p className="text-4xl" aria-hidden>
+          <div className="empty-state py-16">
+            <p className="empty-state-icon" aria-hidden>
               📚
             </p>
-            <p className="mt-4 font-bold text-[#3D3832]">No cards yet</p>
-            <p className="mt-2 text-sm text-[#7A7268]">
+            <p className="empty-state-title">No cards yet</p>
+            <p className="empty-state-text">
               Swipe right on Discover to build your collection.
             </p>
-            <Link
-              href="/discover"
-              className="mt-6 inline-block rounded-xl bg-[#E8A598] px-6 py-3 text-sm font-bold text-white"
-            >
+            <Link href="/discover" className="btn-primary mt-6 inline-flex">
               Go to Discover
             </Link>
           </div>
