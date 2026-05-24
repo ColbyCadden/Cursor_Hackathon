@@ -32,7 +32,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-pasta-carbonara",
     name: "Pasta Carbonara",
-    imageUri: LOCAL("pesto-penne.png"),
+    imageUri: UNSPLASH("photo-1621996346565-e3dbc646d9a9"),
     difficulty: 3,
     price: 3,
     highProtein: false,
@@ -119,7 +119,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-margherita-pizza",
     name: "Margherita Pizza",
-    imageUri: LOCAL("pepperoni-pizza.jpg"),
+    imageUri: UNSPLASH("photo-1574071318508-1cdbab80d002"),
     difficulty: 3,
     price: 3,
     highProtein: false,
@@ -361,7 +361,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-butter-chicken",
     name: "Butter Chicken & Rice",
-    imageUri: LOCAL("vegetable-coconut-curry.png"),
+    imageUri: UNSPLASH("photo-1742599361498-79824d24e355"),
     difficulty: 3,
     price: 3,
     highProtein: true,
@@ -403,7 +403,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-chicken-biryani",
     name: "Chicken Biryani",
-    imageUri: LOCAL("bean-burrito-bowl.png"),
+    imageUri: UNSPLASH("photo-1559528896-c5310744cce8"),
     difficulty: 3,
     price: 3,
     highProtein: true,
@@ -466,7 +466,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-samosa-snack",
     name: "Samosa Snack Plate",
-    imageUri: LOCAL("falafel-pita-wrap.png"),
+    imageUri: UNSPLASH("photo-1772729996007-40bad08b3c40"),
     difficulty: 2,
     price: 2,
     highProtein: false,
@@ -486,7 +486,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-masala-dosa",
     name: "Masala Dosa",
-    imageUri: LOCAL("falafel-pita-wrap.png"),
+    imageUri: UNSPLASH("photo-1743615467204-8fdaa85ff2db"),
     difficulty: 3,
     price: 2,
     highProtein: false,
@@ -693,7 +693,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-overnight-oats",
     name: "Overnight Oats",
-    imageUri: LOCAL("pb-banana-toast.png"),
+    imageUri: UNSPLASH("photo-1756457892871-88522afffbdc"),
     difficulty: 1,
     price: 1,
     highProtein: false,
@@ -797,7 +797,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-shrimp-pasta",
     name: "Garlic Shrimp Pasta",
-    imageUri: LOCAL("pesto-penne.png"),
+    imageUri: UNSPLASH("photo-1563379926898-05f4575a45d8"),
     difficulty: 3,
     price: 4,
     highProtein: true,
@@ -840,7 +840,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-honey-garlic-chicken",
     name: "Honey Garlic Chicken",
-    imageUri: LOCAL("oven-roasted-chicken-thighs.png"),
+    imageUri: UNSPLASH("photo-1710508774177-7ac2f3492675"),
     difficulty: 2,
     price: 3,
     highProtein: true,

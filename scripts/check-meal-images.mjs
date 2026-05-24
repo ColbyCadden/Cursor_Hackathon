@@ -12,12 +12,12 @@ for (const line of text.split("\n")) {
       `https://images.unsplash.com/${unsplashMatch[1]}?w=800&q=80&auto=format`;
     meals[meals.length - 1].source = "unsplash";
   }
-  const foodishMatch = line.match(/FOODISH\("([^"]+)", (\d+)\)/);
-  if (foodishMatch && meals.length) {
-    const cat = foodishMatch[1];
-    const n = foodishMatch[2];
-    meals[meals.length - 1].url = `https://foodish-api.com/images/${cat}/${cat}${n}.jpg`;
-    meals[meals.length - 1].source = "foodish";
+  const localMatch =
+    line.match(/imageUri: "\/meals\/([^"]+)"/) ??
+    line.match(/LOCAL\("([^"]+)"\)/);
+  if (localMatch && meals.length) {
+    meals[meals.length - 1].url = `http://localhost:3000/meals/${localMatch[1]}`;
+    meals[meals.length - 1].source = "local";
   }
 }
 
