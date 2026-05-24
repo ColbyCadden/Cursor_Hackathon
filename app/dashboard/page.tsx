@@ -1,18 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCard } from "@/components/OverviewCard";
 import { SectionCard } from "@/components/SectionCard";
-import { ProfileQuiz } from "@/components/ProfileQuiz";
+import { PersonalizationSummary } from "@/components/PersonalizationSummary";
 import { InventoryManager } from "@/components/InventoryManager";
 import { BarcodeScannerPanel } from "@/components/BarcodeScannerPanel";
-import { MealSwipeDeck } from "@/components/MealSwipeDeck";
-import { MealLibrary } from "@/components/MealLibrary";
+import { QuickNav } from "@/components/QuickNav";
+import { PageHeader } from "@/components/PageHeader";
 import { Toast } from "@/components/Toast";
 import { useAppState } from "@/lib/useAppState";
-import type { UserProfile } from "@/lib/types";
+import { getDeckMeals, getSavedMeals } from "@/lib/meal/mealHelpers";
+import { buildMealdexShoppingList } from "@/lib/meal/shoppingList";
+import { buildPersonalizedExperience } from "@/lib/signupProfile";
 
 function DashboardContent() {
   const { state, updateState } = useAppState();
@@ -20,9 +23,11 @@ function DashboardContent() {
 
   if (!state) return null;
 
-  const { profile, inventory, mealLibrary, shoppingList, swipeDeck, swipeIndex } =
-    state;
-  const requiredShopping = shoppingList.filter((s) => s.required && !s.bought);
+  const { profile, inventory } = state;
+  const savedMeals = getSavedMeals(state);
+  const deckLeft = getDeckMeals(state).length;
+  const shopItems = buildMealdexShoppingList(savedMeals).length;
+  const experience = buildPersonalizedExperience(profile);
 
   const showToast = (message: string) => setToast(message);
 
@@ -30,125 +35,86 @@ function DashboardContent() {
     <AppShell profile={profile}>
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      <div className="mx-auto w-full max-w-5xl">
-        <header className="mb-6 sm:mb-8">
-          <h1 className="text-2xl font-bold text-[#3D3429] md:text-3xl">
-            Welcome back, {profile.name}
-          </h1>
-          <p className="mt-2 text-[#8A7B6D]">
-            Plan simple meals around what you have, what you like, and how much
-            time you&apos;ve got tonight.
-          </p>
-        </header>
+      <div className="mx-auto w-full max-w-lg md:max-w-5xl">
+        <PageHeader title={experience.greeting} subtitle={experience.subtitle} />
 
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid gap-4 grid-cols-2 lg:grid-cols-4">
           <OverviewCard
-            title="Profile status"
-            value={profile.profileComplete ? "Complete" : "Incomplete"}
-            subtitle={
-              profile.profileComplete ? "Ready for meal ideas" : "Take the quiz"
-            }
-            accent="honey"
-          />
-          <OverviewCard
-            title="Inventory items"
-            value={inventory.length}
-            subtitle="Items tracked"
-            accent="sage"
-          />
-          <OverviewCard
-            title="Saved meal ideas"
-            value={mealLibrary.length}
-            subtitle="In your library"
+            title="Mealdex"
+            value={savedMeals.length}
+            subtitle="Saved cards"
             accent="salmon"
           />
           <OverviewCard
-            title="Shopping list"
-            value={requiredShopping.length}
-            subtitle="Required items left"
+            title="To swipe"
+            value={deckLeft}
+            subtitle="In Discover"
+            accent="honey"
+          />
+          <OverviewCard
+            title="Shop list"
+            value={shopItems}
+            subtitle="From Mealdex"
             accent="sky"
+          />
+          <OverviewCard
+            title="Inventory"
+            value={inventory.length}
+            subtitle="In kitchen"
+            accent="sage"
           />
         </div>
 
-        <div className="space-y-6">
-          <SectionCard
-            title="Profile Setup"
-            description="Tell PrepDeck how you cook so meal ideas fit your life."
-            badge={profile.profileComplete ? "Complete" : "Quiz"}
+        <SectionCard
+          title="Your profile"
+          description="Preferences from sign-up — edit anytime."
+          badge="Personalized"
+        >
+          <PersonalizationSummary profile={profile} />
+        </SectionCard>
+
+        <div className="mt-6">
+          <SectionCard title="Quick links" description="Jump anywhere in PrepDeck." badge="Navigate">
+            <QuickNav />
+          </SectionCard>
+        </div>
+
+        <div className="mt-6 rounded-2xl border-2 border-[var(--salmon)] bg-gradient-to-br from-[var(--surface)] to-[var(--background)] p-6 text-center">
+          <h2 className="text-lg font-bold text-[var(--text)]">Ready to swipe?</h2>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
+            Save cards to your Mealdex — shopping updates automatically.
+          </p>
+          <Link
+            href="/discover"
+            className="mt-4 inline-block min-h-[48px] rounded-xl bg-[var(--salmon)] px-8 py-3 text-sm font-bold text-white hover:bg-[var(--salmon-dark)]"
           >
-            <ProfileQuiz
-              profile={profile}
-              onSave={(updated: UserProfile) =>
-                updateState((prev) => ({ ...prev, profile: updated }))
+            Open Discover →
+          </Link>
+        </div>
+
+        <div className="mt-8 space-y-6">
+          <SectionCard
+            title="Inventory"
+            description="What's in your fridge and pantry."
+            badge={`${inventory.length} items`}
+          >
+            <InventoryManager
+              inventory={inventory}
+              onChange={(next) =>
+                updateState((prev) => ({ ...prev, inventory: next }))
               }
             />
           </SectionCard>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <SectionCard
-              title="Inventory"
-              description="What's in your fridge, pantry, and freezer right now."
-              badge={`${inventory.length} items`}
-            >
-              <InventoryManager
-                inventory={inventory}
-                onChange={(next) =>
-                  updateState((prev) => ({ ...prev, inventory: next }))
-                }
-              />
-            </SectionCard>
-
-            <SectionCard
-              title="Barcode Scanner"
-              description="Quickly add groceries by scanning barcodes."
-              badge="Test mode"
-            >
-              <BarcodeScannerPanel
-                inventory={inventory}
-                onInventoryChange={(next) =>
-                  updateState((prev) => ({ ...prev, inventory: next }))
-                }
-                onToast={showToast}
-              />
-            </SectionCard>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            <SectionCard
-              title="Meal Swipe Cards"
-              description="Save meal ideas you like — skip the rest."
-              badge={`${swipeIndex}/${swipeDeck.length}`}
-            >
-              <MealSwipeDeck
-                swipeDeck={swipeDeck}
-                swipeIndex={swipeIndex}
-                mealLibrary={mealLibrary}
-                onSwipeIndexChange={(index) =>
-                  updateState((prev) => ({ ...prev, swipeIndex: index }))
-                }
-                onLibraryChange={(library) =>
-                  updateState((prev) => ({ ...prev, mealLibrary: library }))
-                }
-                onToast={showToast}
-              />
-            </SectionCard>
-
-            <SectionCard
-              title="Meal Library"
-              description="Saved preferences for your future AI meal planner."
-              badge={`${mealLibrary.length} saved`}
-            >
-              <MealLibrary
-                meals={mealLibrary}
-                onRemove={(id) =>
-                  updateState((prev) => ({
-                    ...prev,
-                    mealLibrary: prev.mealLibrary.filter((m) => m.id !== id),
-                  }))
-                }
-              />
-            </SectionCard>
-          </div>
+          <SectionCard title="Barcode Scanner" description="Test mode scanning." badge="Test">
+            <BarcodeScannerPanel
+              inventory={inventory}
+              onInventoryChange={(next) =>
+                updateState((prev) => ({ ...prev, inventory: next }))
+              }
+              onToast={showToast}
+            />
+          </SectionCard>
         </div>
       </div>
     </AppShell>

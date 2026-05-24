@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --cream: #faf6f0;
-  --cream-dark: #f4e8dc;
-  --tan: #e8ddd0;
-  --salmon: #f4a896;
-  --salmon-deep: #e8927c;
-  --brown: #3d3429;
-  --brown-muted: #6b5e52;
-  --brown-light: #8a7b6d;
+  --background: #f5f0e8;
+  --surface: #fffbf7;
+  --card-border: #e8d5c4;
+  --salmon: #e8a598;
+  --salmon-dark: #d48476;
+  --green: #7bae7f;
+  --green-dark: #5e9462;
+  --text: #3d3832;
+  --text-muted: #7a7268;
+  --skip: #c4b8a8;
+  --white: #ffffff;
 }
 
 html {
@@ -16,8 +19,8 @@ html {
 }
 
 body {
-  background: var(--cream);
-  color: var(--brown);
+  background: var(--background);
+  color: var(--text);
   overflow-x: hidden;
   max-width: 100vw;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,

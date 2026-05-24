@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "./Sidebar";
+import { MobileTabBar } from "./MobileTabBar";
 import { logoutUser } from "@/lib/storage";
 import type { UserProfile } from "@/lib/types";
 
@@ -21,7 +22,7 @@ export function AppShell({ children, profile }: AppShellProps) {
   };
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-[#FAF6F0]">
+    <div className="flex min-h-screen overflow-x-hidden bg-[var(--background)]">
       <div className="hidden w-64 shrink-0 md:block">
         <div className="fixed inset-y-0 left-0 w-64">
           <Sidebar profile={profile} onLogout={handleLogout} />
@@ -50,21 +51,22 @@ export function AppShell({ children, profile }: AppShellProps) {
       </div>
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col md:ml-64">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[#E8DDD0] bg-[#FFF8F0]/95 px-3 py-3 backdrop-blur sm:px-4 md:hidden">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--card-border)] bg-[var(--surface)]/95 px-3 py-3 backdrop-blur sm:px-4 md:hidden">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-[#E8DDD0] px-3 text-lg font-medium text-[#3D3429]"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-[var(--card-border)] px-3 text-lg font-medium text-[var(--text)]"
             aria-label="Open menu"
           >
             ☰
           </button>
-          <span className="font-bold text-[#3D3429]">PrepDeck</span>
+          <span className="font-bold text-[var(--text)]">PrepDeck</span>
         </header>
 
-        <main className="min-w-0 flex-1 overflow-x-hidden px-3 py-4 sm:px-4 md:p-8">
+        <main className="min-w-0 flex-1 overflow-x-hidden px-3 py-4 pb-20 sm:px-4 md:p-8 md:pb-8">
           {children}
         </main>
+        <MobileTabBar />
       </div>
     </div>
   );

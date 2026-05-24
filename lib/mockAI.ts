@@ -1,8 +1,6 @@
-import type {
-  AppState,
-  MealCard,
-  SuggestedShoppingItem,
-} from "./types";
+import { getSavedMeals } from "./meal/mealHelpers";
+import { buildMealdexShoppingList } from "./meal/shoppingList";
+import type { AppState, SuggestedShoppingItem } from "./types";
 
 export interface AIResponse {
   text: string;
@@ -81,8 +79,8 @@ function inventoryList(inventory: AppState["inventory"]): string {
     .join(", ");
 }
 
-function savedMealNames(library: MealCard[]): string[] {
-  return library.map((m) => m.name);
+function savedMealNames(state: AppState): string[] {
+  return getSavedMeals(state).map((m) => m.name);
 }
 
 function hasIngredient(inventory: AppState["inventory"], keyword: string): boolean {
@@ -94,8 +92,8 @@ function buildMealIdeas(state: AppState): {
   plan: { name: string; count: number; note: string }[];
   reuse: string[];
 } {
-  const { inventory, mealLibrary } = state;
-  const saved = savedMealNames(mealLibrary);
+  const { inventory } = state;
+  const saved = savedMealNames(state);
   const plan: { name: string; count: number; note: string }[] = [];
   const reuse = new Set<string>();
 
@@ -185,7 +183,7 @@ function respondMealPrep(message: string, state: AppState): AIResponse {
   const count = extractMealCount(message);
   const { plan, reuse } = buildMealIdeas(state);
   const intro = profileIntro(state.profile);
-  const saved = savedMealNames(state.mealLibrary);
+  const saved = savedMealNames(state);
 
   let total = 0;
   const scaled = plan.map((p) => {
@@ -227,7 +225,8 @@ You'll get about ${count} portions without extra spices or specialty items.`;
 
 function respondInventory(state: AppState): AIResponse {
   const intro = profileIntro(state.profile);
-  const { inventory, mealLibrary } = state;
+  const { inventory } = state;
+  const mealLibrary = getSavedMeals(state);
   const ideas: string[] = [];
 
   if (hasIngredient(inventory, "chicken") && hasIngredient(inventory, "rice")) {
@@ -320,23 +319,29 @@ For a beginner, I'd do chicken rice bowls one night and egg wraps another — sa
 }
 
 function respondShoppingList(state: AppState): AIResponse {
-  const suggested = defaultSuggestedItems(state, 8);
-  const existing = state.shoppingList.map((i) => i.name.toLowerCase());
-  const missing = suggested.filter(
-    (s) => !existing.some((e) => e.includes(s.name.toLowerCase()))
-  );
+  const saved = getSavedMeals(state);
+  const shopItems = buildMealdexShoppingList(saved);
 
-  const text = `Based on your inventory and a simple meal prep plan, here are items you're likely missing:
+  if (!saved.length) {
+    return {
+      text: `Your **Shop** list comes from meals saved in **Mealdex**.
 
-${(missing.length ? missing : suggested)
-  .map((s) => `• ${s.name} — ${s.amount} ${s.unit}${s.required ? "" : " (optional)"}`)
-  .join("\n")}
+Head to **Discover**, swipe right on meals you like, then check **Shop** — ingredients merge automatically. No manual list needed.`,
+    };
+  }
 
-Tap **Add suggested items to shopping list** below to add these — nothing gets added until you confirm.
+  const preview = shopItems
+    .slice(0, 10)
+    .map((i) => `• ${i.name}${i.count > 1 ? ` ×${i.count}` : ""}`)
+    .join("\n");
 
-Current list has ${state.shoppingList.length} item(s) already.`;
+  const text = `Your **Mealdex** has ${saved.length} saved meal(s), which gives you **${shopItems.length}** shopping item(s):
 
-  return { text, suggestedItems: missing.length ? missing : suggested };
+${preview}${shopItems.length > 10 ? "\n…and more on the Shop tab." : ""}
+
+Save more meals on **Discover** to grow this list.`;
+
+  return { text };
 }
 
 function respondPrepGuide(state: AppState): AIResponse {
@@ -358,7 +363,7 @@ function respondGeneral(message: string, state: AppState): AIResponse {
   const intro = profileIntro(state.profile);
   const text = `${intro}
 
-I can help you plan meals using what's in your kitchen (${inventoryList(state.inventory)}) and your saved ideas${savedMealNames(state.mealLibrary).length ? `: ${savedMealNames(state.mealLibrary).join(", ")}` : ""}.
+I can help you plan meals using what's in your kitchen (${inventoryList(state.inventory)}) and your saved ideas${savedMealNames(state).length ? `: ${savedMealNames(state).join(", ")}` : ""}.
 
 Try asking:
 • "I need to meal prep 8 meals."
