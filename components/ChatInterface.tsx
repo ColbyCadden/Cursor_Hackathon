@@ -28,6 +28,9 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [aiSource, setAiSource] = useState<
+    "gemini" | "groq" | "mock" | "quota" | "unconfigured" | null
+  >(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const messages = appState.chatMessages;
@@ -65,6 +68,7 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
 
       try {
         const response = await generateAIResponse(trimmed, stateSnapshot);
+        setAiSource(response.source ?? "mock");
 
         const assistantMessage: ChatMessage = {
           id: createId("chat"),
@@ -129,8 +133,17 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
       <p className="demo-note mb-4">
-        Responses are mocked for this prototype — no real AI API yet. Chat history
-        is saved in your browser.
+        {aiSource === "gemini"
+          ? "Powered by Google Gemini — uses your profile, inventory, Mealdex, and shopping list."
+          : aiSource === "groq"
+            ? "Powered by Groq (Llama) — Gemini was unavailable; using your second AI provider."
+            : aiSource === "quota"
+              ? "Both Gemini and Groq rate limits hit — wait a minute or use demo replies for now."
+              : aiSource === "unconfigured"
+                ? "Demo mode — add GEMINI_API_KEY and/or GROQ_API_KEY to .env.local or Vercel env vars."
+              : aiSource === "mock"
+                ? "Demo mode — AI API unavailable. Using mock responses."
+                : "Ask about meal prep, inventory, or shopping. Suggested groceries can go straight to your list."}
       </p>
 
       <div className="flex min-h-[min(70dvh,600px)] flex-col rounded-2xl border border-[var(--card-border)] bg-[var(--surface)] shadow-sm">

@@ -60,7 +60,13 @@ Open the Local URL from the terminal (e.g. `http://localhost:3000`).
 
 ### AI API
 
-Replace `generateAIResponse` in `lib/mockAI.ts` with a real API call. Keep the same return shape:
+Real AI runs through **`POST /api/chat`** (Google Gemini + Groq free tiers). The client calls `generateAIResponse` in `lib/mockAI.ts`, which tries the API first and falls back to mock logic if keys are missing.
+
+1. Copy `.env.example` → `.env.local` and set `GEMINI_API_KEY` and/or `GROQ_API_KEY`.
+2. On Vercel: Project → Settings → Environment Variables → add both keys.
+3. Redeploy.
+
+Return shape (unchanged for UI):
 
 ```ts
 interface AIResponse {
@@ -70,7 +76,9 @@ interface AIResponse {
 }
 ```
 
-`ChatInterface` already merges `suggestedItems` into `shoppingList` via `lib/shoppingListHelpers.ts`.
+`ChatInterface` merges `suggestedItems` into `shoppingList` via `lib/shoppingListHelpers.ts`.
+
+Key files: `app/api/chat/route.ts`, `lib/ai/chatHelpers.ts`, `lib/mockAI.ts`.
 
 ### Barcode scanner
 

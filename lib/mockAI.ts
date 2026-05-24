@@ -1,12 +1,9 @@
 import { getSavedMeals } from "./meal/mealHelpers";
 import { buildMealdexShoppingList } from "./meal/shoppingList";
+import type { AIResponse } from "./ai/chatHelpers";
 import type { AppState, SuggestedShoppingItem } from "./types";
 
-export interface AIResponse {
-  text: string;
-  suggestedItems?: SuggestedShoppingItem[];
-  mealPrepSteps?: string[];
-}
+export type { AIResponse } from "./ai/chatHelpers";
 
 type Intent =
   | "meal_prep"
@@ -376,21 +373,12 @@ You asked: "${message.trim()}" — I'll keep suggestions student-friendly with f
 }
 
 /**
- * Mock AI response generator.
- *
- * TODO (real AI API): Replace the body of this function with a fetch call to your
- * backend/LLM endpoint. Keep the same `AIResponse` return shape so ChatInterface
- * and suggested-shopping-item flows keep working without UI changes.
- *
- * Example:
- *   const res = await fetch("/api/chat", { method: "POST", body: JSON.stringify({ message: userMessage, profile, inventory }) });
- *   return res.json() as AIResponse;
+ * Mock AI fallback when `/api/chat` is unavailable or GEMINI_API_KEY is not set.
  */
-export async function generateAIResponse(
+async function generateMockAIResponse(
   userMessage: string,
   appState: AppState
 ): Promise<AIResponse> {
-  // Simulate network/API latency — remove or replace when wiring a real API.
   await new Promise((resolve) => setTimeout(resolve, 900 + Math.random() * 400));
 
   const intent = detectIntent(userMessage);
@@ -411,4 +399,55 @@ export async function generateAIResponse(
     default:
       return respondGeneral(userMessage, appState);
   }
+}
+
+/** Calls Gemini/Groq via `/api/chat`, falls back to mock responses when needed. */
+export async function generateAIResponse(
+  userMessage: string,
+  appState: AppState
+): Promise<AIResponse> {
+  try {
+    const savedMeals = getSavedMeals(appState).map((meal) => ({
+      name: meal.name,
+      ingredients: meal.ingredients,
+    }));
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: userMessage,
+        profile: appState.profile,
+        inventory: appState.inventory,
+        shoppingList: appState.shoppingList,
+        savedMeals,
+        recentMessages: appState.chatMessages.slice(-8).map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+      }),
+    });
+
+    if (res.ok) {
+      const data = (await res.json()) as AIResponse;
+      if (data.text?.trim()) {
+        return data;
+      }
+    }
+
+    if (res.status === 503) {
+      const mock = await generateMockAIResponse(userMessage, appState);
+      return { ...mock, source: "unconfigured" };
+    }
+
+    if (res.status === 429) {
+      const mock = await generateMockAIResponse(userMessage, appState);
+      return { ...mock, source: "quota" };
+    }
+  } catch (error) {
+    console.debug("[AI] API unavailable, using mock fallback:", error);
+  }
+
+  const mock = await generateMockAIResponse(userMessage, appState);
+  return { ...mock, source: "mock" };
 }
