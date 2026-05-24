@@ -111,7 +111,7 @@ export function ShoppingListManager({
 
       if (result.addedCount > 0) {
         showToast(
-          `Added ${result.addedCount} item${result.addedCount === 1 ? "" : "s"} to inventory.`
+          `Added ${result.addedCount} item${result.addedCount === 1 ? "" : "s"} to pantry.`
         );
       }
       setMergeDecisions({});
@@ -134,7 +134,7 @@ export function ShoppingListManager({
 
       if (remaining.length === 0 && result.addedCount > 0) {
         showToast(
-          `Added ${result.addedCount} item${result.addedCount === 1 ? "" : "s"} to inventory.`
+          `Added ${result.addedCount} item${result.addedCount === 1 ? "" : "s"} to pantry.`
         );
         setMergeDecisions({});
       }
@@ -208,7 +208,7 @@ export function ShoppingListManager({
             disabled={cartCount === 0 || !onPantryUpdate}
             className="btn-primary min-h-[44px] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Add cart to inventory
+            Add cart to pantry
           </button>
         </div>
       </div>
@@ -241,7 +241,7 @@ export function ShoppingListManager({
             </p>
             <p className="empty-state-title">Shopping list is empty</p>
             <p className="empty-state-text">
-              Save meals in Mealdex and low-stock ingredients appear here
+              Save meals in Mealdeck and low-stock ingredients appear here
               automatically. You can also add items manually or from AI chat.
             </p>
           </div>

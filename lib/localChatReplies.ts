@@ -18,7 +18,7 @@ export function tryLocalChatReply(
     const { inventory } = appState;
     if (!inventory.length) {
       return {
-        text: "Your kitchen inventory is empty right now. Scan items on the Scanner page or add them from Inventory.",
+        text: "Your pantry is empty right now. Scan items on the Scanner page or add them from Pantry.",
         source: "local",
       };
     }
@@ -27,7 +27,7 @@ export function tryLocalChatReply(
         `• ${i.name} — ${i.amount} ${i.unit} (${i.category}, ${i.portionsLeft} portion${i.portionsLeft === 1 ? "" : "s"} left)`
     );
     return {
-      text: `Here's everything in your kitchen inventory (${inventory.length} items):\n\n${lines.join("\n")}`,
+      text: `Here's everything in your pantry (${inventory.length} items):\n\n${lines.join("\n")}`,
       source: "local",
     };
   }
@@ -54,7 +54,7 @@ export function tryLocalChatReply(
     const saved = getSavedMeals(appState);
     if (!saved.length) {
       return {
-        text: "You haven't saved any meals yet. Swipe right on Discover to build your Mealdex.",
+        text: "You haven't saved any meals yet. Swipe right on Discover to build your Mealdeck.",
         source: "local",
       };
     }
@@ -62,7 +62,7 @@ export function tryLocalChatReply(
       (meal) => `• ${meal.name} (${mealToTags(meal).join(", ") || "meal template"})`
     );
     return {
-      text: `Your saved Mealdex cards (${saved.length}):\n\n${lines.join("\n")}\n\nThese are flexible templates — ask me to turn them into a meal plan.`,
+      text: `Your saved Mealdeck cards (${saved.length}):\n\n${lines.join("\n")}\n\nThese are flexible templates — ask me to turn them into a meal plan.`,
       source: "local",
     };
   }

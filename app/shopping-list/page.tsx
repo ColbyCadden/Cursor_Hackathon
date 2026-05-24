@@ -1,24 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
-import { MealdexIngredientList } from "@/components/MealdexIngredientList";
 import { PageHeader } from "@/components/PageHeader";
 import { ShoppingListManager } from "@/components/ShoppingListManager";
 import { useAppState } from "@/lib/useAppState";
 import { getSavedMeals } from "@/lib/meal/mealHelpers";
-import {
-  computePantryRequirements,
-  getPantrySummary,
-  syncPantryState,
-} from "@/lib/pantrySync";
+import { syncPantryState } from "@/lib/pantrySync";
 import type { AppState } from "@/lib/types";
 
 function ShoppingContent() {
   const { state, updateState } = useAppState();
-  const [showPantryReference, setShowPantryReference] = useState(false);
 
   useEffect(() => {
     updateState((prev) => syncPantryState(prev));
@@ -27,11 +21,6 @@ function ShoppingContent() {
   if (!state) return null;
 
   const savedMeals = getSavedMeals(state);
-  const pantryRequirements = computePantryRequirements(
-    state.inventory,
-    savedMeals
-  );
-  const summary = getPantrySummary(pantryRequirements);
   const { shoppingList, profile } = state;
 
   const handlePantryUpdate = (updater: (prev: AppState) => AppState) => {
@@ -69,7 +58,7 @@ function ShoppingContent() {
                     onClick={handleResync}
                     className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface)]"
                   >
-                    Sync from Mealdex
+                    Sync from Mealdeck
                   </button>
                 )}
                 <Link
@@ -91,51 +80,12 @@ function ShoppingContent() {
             />
           </section>
 
-          {/* Secondary: pantry reference (collapsed by default) */}
-          {savedMeals.length > 0 && (
-            <section className="rounded-2xl border border-[#E8DDD0]/80 bg-[#FAF6F0]/60">
-              <button
-                type="button"
-                onClick={() => setShowPantryReference((v) => !v)}
-                className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-5"
-                aria-expanded={showPantryReference}
-              >
-                <div>
-                  <h2 className="text-sm font-semibold text-[#6B5E52]">
-                    Pantry vs Mealdex
-                  </h2>
-                  <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                    Reference only — shop from the list above
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
-                    {summary.inStock} stocked · {summary.low + summary.missing}{" "}
-                    need attention · {pantryRequirements.length} ingredients
-                  </p>
-                </div>
-                <span className="text-lg text-[#8A7B6D]" aria-hidden>
-                  {showPantryReference ? "−" : "+"}
-                </span>
-              </button>
-              {showPantryReference && (
-                <div className="border-t border-[#E8DDD0]/60 px-4 pb-4 pt-3 sm:px-5">
-                  <p className="mb-3 text-xs text-[var(--text-muted)]">
-                    Ingredients across {savedMeals.length} saved meal
-                    {savedMeals.length === 1 ? "" : "s"}. Low or missing items
-                    sync into your grocery list above.
-                  </p>
-                  <MealdexIngredientList items={pantryRequirements} />
-                </div>
-              )}
-            </section>
-          )}
-
-          {savedMeals.length === 0 && (
-            <section className="rounded-2xl border border-dashed border-[#E8DDD0] bg-[#FAF6F0]/40 p-6 text-center">
+          {savedMeals.length === 0 && (            <section className="rounded-2xl border border-dashed border-[#E8DDD0] bg-[#FAF6F0]/40 p-6 text-center">
               <p className="text-sm text-[var(--text-muted)]">
-                Save meals in Mealdex to auto-fill your grocery list.
+                Save meals in Mealdeck to auto-fill your grocery list.
               </p>
               <Link href="/mealdex" className="btn-primary mt-4 inline-flex">
-                Open Mealdex
+                Open Mealdeck
               </Link>
             </section>
           )}

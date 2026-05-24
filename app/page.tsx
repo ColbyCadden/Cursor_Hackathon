@@ -27,7 +27,7 @@ export default function HomePage() {
           PrepDeck for students
         </p>
         <h1 className="text-3xl font-bold tracking-tight text-[var(--text)] sm:text-4xl">
-          Swipe meals. Save to Mealdex. Shop smarter.
+          Swipe meals. Save to Mealdeck. Shop smarter.
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-[var(--text-muted)] sm:text-base">
           Sign up once, personalize your kitchen, then discover meal cards and
@@ -50,7 +50,7 @@ export default function HomePage() {
         </div>
 
         <ul className="mt-10 flex flex-wrap justify-center gap-3 text-xs text-[var(--text-muted)]">
-          {["Mealdex swipe", "Auto shop list", "Custom cards", "AI planner"].map(
+          {["Mealdeck swipe", "Auto shop list", "Custom cards", "AI planner"].map(
             (feature) => (
               <li
                 key={feature}

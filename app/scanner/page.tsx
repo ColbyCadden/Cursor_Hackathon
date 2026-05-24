@@ -17,7 +17,7 @@ function ScannerContent() {
       <div className="mx-auto w-full max-w-lg md:max-w-3xl">
         <PageHeader
           title="Barcode Scanner"
-          subtitle="Scan or enter items to add them to inventory — view and manage items in Pantry."
+          subtitle="Scan or enter items to add them to your pantry."
         />
 
         <SectionCard

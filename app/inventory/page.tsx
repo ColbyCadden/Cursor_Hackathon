@@ -19,7 +19,7 @@ function InventoryContent() {
     <AppShell profile={profile}>
       <div className="mx-auto w-full max-w-lg md:max-w-3xl">
         <PageHeader
-          title="Kitchen inventory"
+          title="Pantry"
           subtitle="Track what's in your fridge and pantry. The AI meal planner uses this list too."
         />
 
@@ -35,7 +35,7 @@ function InventoryContent() {
         </div>
 
         <SectionCard
-          title="Your inventory"
+          title="Your pantry"
           description="Add items manually or scan barcodes on the Scanner page."
           badge={`${inventory.length} items`}
         >

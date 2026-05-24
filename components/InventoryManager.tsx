@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { InventoryItemCard } from "./InventoryItemCard";
 import { createId } from "@/lib/id";
 import { DEFAULT_INVENTORY_PORTIONS } from "@/lib/inventoryPortions";
@@ -52,7 +52,7 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
       amount: item.amount,
       unit: item.unit,
       category: item.category,
-      portionsLeft: item.portionsLeft,
+      portionsLeft: item.portionsLeft ?? DEFAULT_INVENTORY_PORTIONS,
     });
     setShowForm(true);
   };
@@ -62,6 +62,15 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
     setEditingId(null);
     setForm(emptyForm);
   };
+
+  useEffect(() => {
+    if (!showForm) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeForm();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showForm]);
 
   const handleSave = () => {
     if (!form.name.trim()) return;
@@ -75,8 +84,8 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
             ? {
                 ...item,
                 name: form.name.trim(),
-                amount: form.amount,
-                unit: form.unit,
+                amount: form.amount.trim(),
+                unit: form.unit.trim(),
                 category: form.category,
                 portionsLeft,
               }
@@ -89,8 +98,8 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
         {
           id: createId("inv"),
           name: form.name.trim(),
-          amount: form.amount,
-          unit: form.unit,
+          amount: form.amount.trim(),
+          unit: form.unit.trim(),
           category: form.category,
           portionsLeft,
         },
@@ -100,7 +109,11 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
   };
 
   const handleDelete = (id: string) => {
+    if (!window.confirm("Remove this item from your pantry?")) {
+      return;
+    }
     onChange(inventory.filter((item) => item.id !== id));
+    if (editingId === id) closeForm();
   };
 
   return (
@@ -110,7 +123,7 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search inventory…"
+          placeholder="Search pantry…"
           className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--background)] px-4 py-2.5 text-sm outline-none focus:border-[var(--salmon)] sm:max-w-xs"
         />
         <button
@@ -123,97 +136,114 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
       </div>
 
       {showForm && (
-        <div className="mb-6 rounded-xl border border-[#E8DDD0] bg-[#FFF8F0] p-4">
-          <h3 className="mb-3 text-sm font-semibold text-[#3D3429]">
-            {editingId ? "Edit item" : "Add item"}
-          </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block sm:col-span-2">
-              <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
-                Food name
-              </span>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
-                Amount
-              </span>
-              <input
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
-                Unit
-              </span>
-              <input
-                value={form.unit}
-                onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                placeholder="g, cups, bag…"
-                className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
-                Category
-              </span>
-              <select
-                value={form.category}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    category: e.target.value as InventoryCategory,
-                  })
-                }
-                className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
+        <div className="fixed inset-0 z-[60] flex items-end justify-center p-4 sm:items-center">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-black/35"
+            onClick={closeForm}
+          />
+          <div
+            role="dialog"
+            aria-modal
+            aria-labelledby="inventory-form-title"
+            className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-[#E8DDD0] bg-[#FFF8F0] p-5 shadow-xl sm:p-6"
+          >
+            <h3
+              id="inventory-form-title"
+              className="mb-4 text-lg font-semibold text-[#3D3429]"
+            >
+              {editingId ? "Edit item" : "Add item"}
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block sm:col-span-2">
+                <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
+                  Food name
+                </span>
+                <input
+                  autoFocus
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
+                  Amount
+                </span>
+                <input
+                  value={form.amount}
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
+                  Unit
+                </span>
+                <input
+                  value={form.unit}
+                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                  placeholder="g, cups, bag…"
+                  className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
+                  Category
+                </span>
+                <select
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      category: e.target.value as InventoryCategory,
+                    })
+                  }
+                  className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
+                >
+                  {INVENTORY_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
+                  Meal portions left
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.portionsLeft}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      portionsLeft: Math.max(0, Number(e.target.value) || 0),
+                    })
+                  }
+                  className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="flex-1 rounded-xl bg-[#E8927C] px-4 py-2.5 text-sm font-semibold text-white"
               >
-                {INVENTORY_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-[#6B5E52]">
-                Meal portions left
-              </span>
-              <input
-                type="number"
-                min={0}
-                step={1}
-                value={form.portionsLeft}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    portionsLeft: Math.max(0, Number(e.target.value) || 0),
-                  })
-                }
-                className="w-full rounded-xl border border-[#E8DDD0] bg-white px-3 py-2 text-sm"
-              />
-            </label>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <button
-              type="button"
-              onClick={handleSave}
-              className="rounded-xl bg-[#E8927C] px-4 py-2 text-sm font-semibold text-white"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={closeForm}
-              className="rounded-xl border border-[#E8DDD0] px-4 py-2 text-sm text-[#6B5E52]"
-            >
-              Cancel
-            </button>
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={closeForm}
+                className="rounded-xl border border-[#E8DDD0] px-4 py-2.5 text-sm text-[#6B5E52]"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -224,7 +254,7 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
             🧊
           </p>
           <p className="empty-state-title">
-            {search ? "No matches" : "No inventory yet"}
+            {search ? "No matches" : "No pantry items yet"}
           </p>
           <p className="empty-state-text">
             {search

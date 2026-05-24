@@ -96,7 +96,7 @@ export function toggleShoppingItemBought(
   if (markingBought && !item.addedToInventory) {
     nextInventory = applyBoughtItemToInventory(inventory, item);
     nextList = markShoppingItemAdded(nextList, id);
-    toast = `${item.name} added to kitchen inventory.`;
+    toast = `${item.name} added to pantry.`;
   }
 
   return { shoppingList: nextList, inventory: nextInventory, toast };

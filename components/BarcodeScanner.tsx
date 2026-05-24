@@ -477,7 +477,7 @@ export function BarcodeScanner() {
     setPhase("collecting");
     setFeedback({
       type: "success",
-      message: `Added ${label} to inventory.`,
+      message: `Added ${label} to pantry.`,
     });
     setStatus("Point your camera at a barcode — it scans continuously.");
   };
@@ -516,7 +516,7 @@ export function BarcodeScanner() {
     setManualCategory("Other");
     setFeedback({
       type: "success",
-      message: `Added ${name} to inventory.`,
+      message: `Added ${name} to pantry.`,
     });
   };
 
@@ -554,7 +554,7 @@ export function BarcodeScanner() {
               href="/inventory"
               className="mt-2 inline-block text-sm font-semibold text-[var(--green-dark)] underline-offset-2 hover:underline"
             >
-              View Inventory
+              View Pantry
             </Link>
           )}
         </div>
@@ -900,7 +900,7 @@ export function BarcodeScanner() {
               disabled={!reviewItems.some((i) => i.name.trim())}
               className="rounded-xl bg-[var(--salmon)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[var(--salmon-dark)]"
             >
-              Add to inventory
+              Add to pantry
             </button>
             <button
               type="button"
@@ -917,7 +917,7 @@ export function BarcodeScanner() {
         <div className="mb-4">
           <p className="text-sm font-medium text-[var(--text)]">Add manually</p>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
-            Skip scanning — enter item details and add straight to inventory.
+            Skip scanning — enter item details and add straight to pantry.
           </p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -978,7 +978,7 @@ export function BarcodeScanner() {
           onClick={addManualItem}
           className="mt-4 w-full rounded-xl bg-[var(--salmon)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--salmon-dark)]"
         >
-          Add to inventory
+          Add to pantry
         </button>
       </div>
     </div>

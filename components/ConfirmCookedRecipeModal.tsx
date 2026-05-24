@@ -112,7 +112,7 @@ export function ConfirmCookedRecipeModal({
             Confirm cooked: {title}
           </h3>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
-            Edit amounts and choose what to subtract from inventory.
+            Edit amounts and choose what to subtract from pantry.
           </p>
 
           {rows.length === 0 ? (
@@ -143,7 +143,7 @@ export function ConfirmCookedRecipeModal({
                       </p>
                       {!row.inInventory && (
                         <p className="mt-0.5 text-xs text-amber-800">
-                          Not in inventory
+                          Not in pantry
                         </p>
                       )}
                       {row.inInventory && row.unitMismatch && (
@@ -160,7 +160,7 @@ export function ConfirmCookedRecipeModal({
                       )}
                       {row.inInventory && !row.unitMismatch && !row.autoConvert && (
                         <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                          Inventory: {row.inventoryAmount} {row.inventoryUnit}
+                          Pantry: {row.inventoryAmount} {row.inventoryUnit}
                         </p>
                       )}
                       <p className="mt-0.5 text-xs text-[var(--text-muted)]">
@@ -213,7 +213,7 @@ export function ConfirmCookedRecipeModal({
               disabled={rows.length === 0}
               className="min-h-[44px] flex-1 rounded-xl bg-[var(--salmon)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[var(--salmon-dark)]"
             >
-              Confirm and update inventory
+              Confirm and update pantry
             </button>
             <button
               type="button"
@@ -229,7 +229,7 @@ export function ConfirmCookedRecipeModal({
       {shortage && (
         <ConfirmModal
           open
-          title="Not enough in inventory"
+          title="Not enough in pantry"
           primaryLabel={`Use all available (${shortage.available} ${shortage.unit})`}
           secondaryLabel="Skip this ingredient"
           onPrimary={() => applyShortageChoice("all")}

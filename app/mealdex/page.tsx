@@ -38,7 +38,7 @@ function MealdexContent() {
   const confirmReset = () => {
     if (
       window.confirm(
-        "Reset all swipes and clear Mealdex? You can swipe the deck again.",
+        "Reset all swipes and clear Mealdeck? You can swipe the deck again.",
       )
     ) {
       updateState((prev) => resetMealSwipes(prev));
@@ -50,7 +50,7 @@ function MealdexContent() {
       <div className="mx-auto w-full max-w-3xl pb-24 md:pb-8">
         <div className="relative mb-4 flex flex-wrap items-start justify-between gap-3">
           <PageHeader
-            title="Mealdex"
+            title="Mealdeck"
             subtitle="Swipe to discover · saved cards below"
           />
           <p className="max-w-[9.5rem] text-right text-[10px] leading-snug text-[var(--text-muted)]">
@@ -173,7 +173,7 @@ function MealdexContent() {
                   }}
                   className="rounded-xl border border-[#E8A598] py-3 text-sm font-semibold text-[#D48476]"
                 >
-                  Remove from Mealdex
+                  Remove from Mealdeck
                 </button>
                 <button
                   type="button"

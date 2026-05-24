@@ -1,7 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const SIZES = { sm: 52, md: 80, lg: 160 } as const;
+const SIZES = { sm: 64, md: 104, lg: 176 } as const;
+
+const BRAND_TEXT = {
+  sm: "text-lg",
+  md: "text-2xl",
+  lg: "text-3xl",
+} as const;
+
+const BRAND_TAGLINE = {
+  sm: "text-xs",
+  md: "text-sm",
+  lg: "text-base",
+} as const;
 
 interface PrepDeckLogoProps {
   size?: keyof typeof SIZES;
@@ -51,11 +63,15 @@ export function PrepDeckBrand({
     <>
       <PrepDeckLogo size={size} title={false} className="shrink-0" />
       <div className="min-w-0">
-        <span className="block text-lg font-bold leading-tight tracking-tight text-[var(--text)]">
+        <span
+          className={`block font-bold leading-tight tracking-tight text-[var(--text)] ${BRAND_TEXT[size]}`}
+        >
           PrepDeck
         </span>
         {showTagline && (
-          <span className="block text-xs text-[var(--text-muted)]">
+          <span
+            className={`mt-0.5 block font-medium leading-snug text-[var(--text-muted)] ${BRAND_TAGLINE[size]}`}
+          >
             meals made easy
           </span>
         )}
@@ -63,7 +79,7 @@ export function PrepDeckBrand({
     </>
   );
 
-  const cls = `flex items-center gap-2.5 ${className}`;
+  const cls = `flex items-center gap-3 ${className}`;
 
   if (href) {
     return (
