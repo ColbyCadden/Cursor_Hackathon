@@ -2,9 +2,12 @@
 
 **Simple cooking for busy people.**
 PrepDeck
+# PrepDeck
 
-Live demo:
-https://cursor-hackathon-eight-iota.vercel.app
+Live Demo: https://cursor-hackathon-eight-iota.vercel.app
+
+GitHub Repo: https://github.com/ColbyCadden/Cursor_Hackathon
+
 
 What it does:
 PrepDeck is an AI-powered student meal prep app that uses profile, inventory, Meal Deck cards, and shopping list data to generate simple meal plans and recipes.
