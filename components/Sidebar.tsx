@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DemoResetButton } from "./DemoResetButton";
+import { NavIcon, type NavIconName } from "./NavIcon";
 import { PrepDeckBrand } from "./PrepDeckLogo";
 import type { UserProfile } from "@/lib/types";
 
-const navItems = [
-  { href: "/dashboard", label: "Home", icon: "🏠" },
-  { href: "/mealdex", label: "Mealdex", icon: "📚" },
-  { href: "/inventory", label: "Inventory", icon: "🧊" },
-  { href: "/shopping-list", label: "Shopping", icon: "🛒" },
-  { href: "/scanner", label: "Scanner", icon: "📷" },
-  { href: "/chat", label: "AI Chat", icon: "💬" },
+const navItems: { href: string; label: string; icon: NavIconName }[] = [
+  { href: "/dashboard", label: "Home", icon: "home" },
+  { href: "/mealdex", label: "Mealdex", icon: "mealdex" },
+  { href: "/inventory", label: "Inventory", icon: "pantry" },
+  { href: "/shopping-list", label: "Shopping list", icon: "shop" },
+  { href: "/scanner", label: "Scanner", icon: "scan" },
+  { href: "/chat", label: "AI Chat", icon: "chat" },
 ];
 
 interface SidebarProps {
@@ -53,8 +54,16 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
                   : "text-[var(--text-muted)] hover:bg-[var(--background)]"
               }`}
             >
-              <span className="text-lg" aria-hidden>
-                {item.icon}
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                  active ? "bg-[var(--salmon)]/30" : "bg-transparent"
+                }`}
+              >
+                <NavIcon
+                  name={item.icon}
+                  size={18}
+                  strokeWidth={active ? 2.25 : 1.75}
+                />
               </span>
               {item.label}
             </Link>

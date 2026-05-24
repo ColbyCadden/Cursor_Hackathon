@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Camera, ImageIcon } from "lucide-react";
+import { MealPhotoCamera } from "@/components/MealPhotoCamera";
 import type { RatingLevel } from "@/lib/types";
 import { StarRating } from "@/components/mealdex/StarRating";
 import { PriceLevel } from "@/components/mealdex/PriceLevel";
@@ -19,7 +21,25 @@ interface Props {
   onSubmit: (values: MealFormValues) => void;
 }
 
+function readImageAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("Not an image"));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("Could not read image"));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Could not read image"));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function MealCreateForm({ onSubmit }: Props) {
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [showCamera, setShowCamera] = useState(false);
   const [name, setName] = useState("");
   const [imageUri, setImageUri] = useState("");
   const [difficulty, setDifficulty] = useState<RatingLevel>(2);
@@ -27,10 +47,20 @@ export function MealCreateForm({ onSubmit }: Props) {
   const [highProtein, setHighProtein] = useState(false);
   const [highVegetables, setHighVegetables] = useState(false);
   const [ingredientsText, setIngredientsText] = useState("");
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setImageUri(URL.createObjectURL(file));
+  const hasUploadedPhoto =
+    imageUri.startsWith("data:") || imageUri.startsWith("blob:");
+
+  const handleImageFile = async (file: File | undefined) => {
+    if (!file) return;
+    setPhotoError(null);
+    try {
+      const dataUrl = await readImageAsDataUrl(file);
+      setImageUri(dataUrl);
+    } catch {
+      setPhotoError("Could not use that image. Try another photo.");
+    }
   };
 
   const submit = (e: React.FormEvent) => {
@@ -59,6 +89,8 @@ export function MealCreateForm({ onSubmit }: Props) {
     setHighProtein(false);
     setHighVegetables(false);
     setIngredientsText("");
+    setPhotoError(null);
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
   return (
@@ -76,19 +108,85 @@ export function MealCreateForm({ onSubmit }: Props) {
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-bold uppercase text-[#7A7268]">
-          Photo URL
+        <label className="mb-2 block text-xs font-bold uppercase text-[#7A7268]">
+          Meal photo
+        </label>
+
+        {imageUri && (
+          <div className="relative mb-3 aspect-[4/3] max-h-48 overflow-hidden rounded-xl border border-[#E8D5C4] bg-[#F5F0E8]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUri}
+              alt="Meal preview"
+              className="h-full w-full object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setImageUri("");
+                setPhotoError(null);
+                if (galleryInputRef.current) galleryInputRef.current.value = "";
+              }}
+              className="absolute right-2 top-2 rounded-lg bg-black/50 px-2 py-1 text-xs font-medium text-white"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setShowCamera(true)}
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#E8A598] bg-[#F5F0E8] px-4 py-2.5 text-sm font-semibold text-[#3D3832] hover:bg-[#F4E8DC]/80"
+          >
+            <Camera size={18} strokeWidth={1.75} aria-hidden />
+            Take photo
+          </button>
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#E8D5C4] bg-[#FFFBF7] px-4 py-2.5 text-sm font-semibold text-[#3D3832] hover:bg-[#F5F0E8]"
+          >
+            <ImageIcon size={18} strokeWidth={1.75} aria-hidden />
+            Choose photo
+          </button>
+        </div>
+
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          onChange={(e) => void handleImageFile(e.target.files?.[0])}
+        />
+
+        <MealPhotoCamera
+          open={showCamera}
+          onClose={() => setShowCamera(false)}
+          onCapture={(dataUrl) => {
+            setPhotoError(null);
+            setImageUri(dataUrl);
+          }}
+        />
+
+        {photoError && (
+          <p className="mt-2 text-xs text-[#B85C4A]">{photoError}</p>
+        )}
+
+        <label className="mb-1 mt-3 block text-xs font-medium text-[#7A7268]">
+          Or paste image URL
         </label>
         <input
-          value={imageUri.startsWith("blob:") ? "" : imageUri}
-          onChange={(e) => setImageUri(e.target.value)}
-          className="w-full rounded-xl border border-[#E8D5C4] bg-[#FFFBF7] px-3 py-3 text-[#3D3832]"
+          value={hasUploadedPhoto ? "" : imageUri}
+          onChange={(e) => {
+            setPhotoError(null);
+            setImageUri(e.target.value);
+          }}
+          disabled={hasUploadedPhoto}
+          className="w-full rounded-xl border border-[#E8D5C4] bg-[#FFFBF7] px-3 py-3 text-[#3D3832] disabled:opacity-50"
           placeholder="https://..."
         />
-        <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm font-semibold text-[#D48476]">
-          <input type="file" accept="image/*" className="sr-only" onChange={handleFile} />
-          📷 Pick from gallery
-        </label>
       </div>
 
       <div>

@@ -4,16 +4,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessageBubble } from "./ChatMessageBubble";
 import { ChatInput } from "./ChatInput";
 import { ChatContextSummary } from "./ChatContextSummary";
+import { ConfirmCookedRecipeModal } from "./ConfirmCookedRecipeModal";
 import { PromptChips } from "./PromptChips";
 import { Toast } from "./Toast";
 import { createId } from "@/lib/id";
 import { applyAIAction } from "@/lib/appStateActions";
-import { aiResponseToMealPlan } from "@/lib/ai/chatHelpers";
+import { aiResponseToMealPlan, shouldAutoSaveMealPlan } from "@/lib/ai/chatHelpers";
 import { generateAIResponse } from "@/lib/mockAI";
 import { applyInventoryUpdates, syncPantryState } from "@/lib/pantrySync";
 import { mergeSuggestedIntoShoppingList } from "@/lib/shoppingListHelpers";
+import {
+  buildCookingConfirmRows,
+  confirmCookedRecipe,
+  enrichRecipeWithInventory,
+} from "@/lib/cookingStateActions";
 import type { AIResponse } from "@/lib/ai/chatHelpers";
-import type { AppState, ChatAction, ChatMessage } from "@/lib/types";
+import type { AppState, ChatAction, ChatMessage, AdaptedRecipe } from "@/lib/types";
+import type { CookingConfirmRow, UsedIngredientConfirmation } from "@/lib/cookingStateActions";
 
 const EXAMPLE_PROMPTS = [
   "What's in my inventory?",
@@ -29,7 +36,10 @@ interface ChatInterfaceProps {
   onUpdate: (updater: (prev: AppState) => AppState) => void;
 }
 
-function buildAssistantMessage(response: AIResponse): ChatMessage {
+function buildAssistantMessage(response: AIResponse, inventory: AppState["inventory"]): ChatMessage {
+  const recipes = response.recipes?.map((r) =>
+    enrichRecipeWithInventory(r, inventory)
+  );
   return {
     id: createId("chat"),
     role: "assistant",
@@ -40,9 +50,12 @@ function buildAssistantMessage(response: AIResponse): ChatMessage {
     inventoryUpdates: response.inventoryUpdates,
     actions: response.actions,
     actionsApplied: [],
-    recipes: response.recipes,
+    recipes,
+    sharedIngredientsStrategy: response.sharedIngredientsStrategy,
+    beforeAfterComparison: response.beforeAfterComparison,
     warnings: response.warnings,
     needsUserChoice: response.needsUserChoice,
+    cookedRecipeKeys: [],
   };
 }
 
@@ -75,6 +88,12 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
   const [aiSource, setAiSource] = useState<
     "gemini" | "groq" | "mock" | "quota" | "unconfigured" | "local" | null
   >(null);
+  const [cookTarget, setCookTarget] = useState<{
+    messageId: string;
+    recipeIndex: number;
+    recipe: AdaptedRecipe;
+    rows: CookingConfirmRow[];
+  } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sendingRef = useRef(false);
   const lastSendRef = useRef<{ text: string; at: number } | null>(null);
@@ -140,10 +159,11 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
         const response = await generateAIResponse(trimmed, stateSnapshot);
         setAiSource(response.source ?? "mock");
 
-        const assistantMessage = buildAssistantMessage(response);
         const mealPlan = aiResponseToMealPlan(response);
+        const autoSavePlan = shouldAutoSaveMealPlan(response);
 
         onUpdate((prev) => {
+          const assistantMessage = buildAssistantMessage(response, prev.inventory);
           const nextMessages = appendChatMessages(
             prev.chatMessages,
             assistantMessage
@@ -151,7 +171,8 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
           return {
             ...prev,
             chatMessages: nextMessages,
-            generatedMealPlan: mealPlan ?? prev.generatedMealPlan ?? null,
+            generatedMealPlan:
+              autoSavePlan && mealPlan ? mealPlan : prev.generatedMealPlan ?? null,
           };
         });
       } finally {
@@ -270,6 +291,29 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
     );
   };
 
+  const handleConfirmCooked = useCallback(
+    (messageId: string, recipeIndex: number, recipe: AdaptedRecipe) => {
+      const rows = buildCookingConfirmRows(recipe, appState.inventory);
+      setCookTarget({ messageId, recipeIndex, recipe, rows });
+    },
+    [appState.inventory]
+  );
+
+  const handleConfirmCookSubmit = useCallback(
+    (used: UsedIngredientConfirmation[]) => {
+      if (!cookTarget) return;
+      const { messageId, recipeIndex, recipe } = cookTarget;
+
+      onUpdate((prev) =>
+        confirmCookedRecipe(prev, recipe, used, { messageId, recipeIndex })
+      );
+
+      setCookTarget(null);
+      setToast(`Inventory updated for ${recipe.displayTitle ?? recipe.title}.`);
+    },
+    [cookTarget, onUpdate]
+  );
+
   const handleClearChat = () => {
     if (
       appState.chatMessages.length > 0 &&
@@ -321,6 +365,7 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
               message={msg}
               onAddSuggestedItems={handleAddSuggestedItems}
               onApplyInventoryUpdates={handleApplyInventoryUpdates}
+              onConfirmCooked={handleConfirmCooked}
               onAction={handleAction}
               actionsDisabled={thinking}
             />
@@ -363,6 +408,15 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
           />
         </div>
       </div>
+
+      <ConfirmCookedRecipeModal
+        open={cookTarget !== null}
+        recipe={cookTarget?.recipe ?? null}
+        inventory={appState.inventory}
+        rows={cookTarget?.rows ?? []}
+        onConfirm={handleConfirmCookSubmit}
+        onCancel={() => setCookTarget(null)}
+      />
     </>
   );
 }

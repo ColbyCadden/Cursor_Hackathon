@@ -169,6 +169,9 @@ function migrateParsedState(parsed: LegacyAppState): AppState {
         actions: msg.actions ?? undefined,
         actionsApplied: msg.actionsApplied ?? [],
         recipes: msg.recipes ?? undefined,
+        cookedRecipeKeys: msg.cookedRecipeKeys ?? [],
+        sharedIngredientsStrategy: msg.sharedIngredientsStrategy ?? undefined,
+        beforeAfterComparison: msg.beforeAfterComparison ?? undefined,
         warnings: msg.warnings ?? undefined,
         needsUserChoice: msg.needsUserChoice ?? false,
       }))

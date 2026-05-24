@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import {
   decodeBarcodeFromPhoto,
   decodeBarcodeFromVideoFrame,
@@ -106,6 +107,14 @@ export function BarcodeScanner() {
   const [searching, setSearching] = useState(false);
   const [manualBarcode, setManualBarcode] = useState("");
   const [scannerReady, setScannerReady] = useState(false);
+  const [manualName, setManualName] = useState("");
+  const [manualAmount, setManualAmount] = useState("");
+  const [manualUnit, setManualUnit] = useState("");
+  const [manualCategory, setManualCategory] = useState<InventoryCategory>("Other");
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const syncSession = useCallback((items: SessionItem[]) => {
     sessionRef.current = items;
@@ -429,7 +438,10 @@ export function BarcodeScanner() {
 
   const addAllToInventory = () => {
     const valid = reviewItems.filter((item) => item.name.trim());
-    if (valid.length === 0 || !state) return;
+    if (valid.length === 0 || !state) {
+      setFeedback({ type: "error", message: "Enter a name for at least one item." });
+      return;
+    }
 
     updateState((prev) => {
       let nextInventory = prev.inventory;
@@ -454,11 +466,58 @@ export function BarcodeScanner() {
       return { ...prev, inventory: nextInventory };
     });
 
+    const label =
+      valid.length === 1
+        ? valid[0].name.trim()
+        : `${valid.length} items`;
+
     triggerScanFlash();
     syncSession([]);
     setReviewItems([]);
     setPhase("collecting");
-    setStatus("Added to kitchen inventory. Keep scanning to add more.");
+    setFeedback({
+      type: "success",
+      message: `Added ${label} to inventory.`,
+    });
+    setStatus("Point your camera at a barcode — it scans continuously.");
+  };
+
+  const addManualItem = () => {
+    if (!state) return;
+
+    const name = manualName.trim();
+    if (!name) {
+      setFeedback({ type: "error", message: "Enter an item name." });
+      return;
+    }
+
+    const scanned: ScannedInventoryItem = {
+      name,
+      amount: manualAmount.trim() || "1",
+      unit: manualUnit.trim() || "count",
+      category: manualCategory,
+      portionsLeft: DEFAULT_INVENTORY_PORTIONS,
+    };
+
+    updateState((prev) => {
+      let nextInventory = prev.inventory;
+      const result = addOrUpdateInventoryItem(nextInventory, scanned);
+      if (result.type === "added") {
+        nextInventory = result.inventory;
+      } else {
+        nextInventory = applyCreateSeparate(nextInventory, scanned);
+      }
+      return { ...prev, inventory: nextInventory };
+    });
+
+    setManualName("");
+    setManualAmount("");
+    setManualUnit("");
+    setManualCategory("Other");
+    setFeedback({
+      type: "success",
+      message: `Added ${name} to inventory.`,
+    });
   };
 
   const discardReview = () => {
@@ -466,15 +525,6 @@ export function BarcodeScanner() {
     setPhase("collecting");
     setStatus("Point your camera at a barcode — it scans continuously.");
   };
-
-  const removeFromInventory = (id: string) => {
-    updateState((prev) => ({
-      ...prev,
-      inventory: prev.inventory.filter((item) => item.id !== id),
-    }));
-  };
-
-  const inventory = state?.inventory ?? [];
 
   const handleModeChange = (mode: AddMode) => {
     if (mode !== "live") stopCamera();
@@ -490,6 +540,26 @@ export function BarcodeScanner() {
 
   return (
     <div className="space-y-6">
+      {feedback && (
+        <div
+          className={`rounded-xl border px-4 py-3 ${
+            feedback.type === "success"
+              ? "border-green-200 bg-green-50 text-green-800"
+              : "border-red-200 bg-red-50 text-red-800"
+          }`}
+        >
+          <p className="text-sm font-medium">{feedback.message}</p>
+          {feedback.type === "success" && (
+            <Link
+              href="/inventory"
+              className="mt-2 inline-block text-sm font-semibold text-[var(--green-dark)] underline-offset-2 hover:underline"
+            >
+              View Inventory
+            </Link>
+          )}
+        </div>
+      )}
+
       {scanFlash && (
         <div
           className="scan-success-outline pointer-events-none fixed inset-0 z-[100]"
@@ -830,7 +900,7 @@ export function BarcodeScanner() {
               disabled={!reviewItems.some((i) => i.name.trim())}
               className="rounded-xl bg-[var(--salmon)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 hover:bg-[var(--salmon-dark)]"
             >
-              Add all to inventory
+              Add to inventory
             </button>
             <button
               type="button"
@@ -843,51 +913,73 @@ export function BarcodeScanner() {
         </div>
       )}
 
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--text)]">Kitchen inventory</h3>
-            <p className="text-xs text-[var(--text-muted)]">Synced with Dashboard and Shopping List</p>
-          </div>
-          <span className="rounded-full bg-[var(--background)] px-3 py-1 text-xs font-medium text-[#8B6F5C]">
-            {inventory.length} {inventory.length === 1 ? "item" : "items"}
-          </span>
-        </div>
-
-        {inventory.length === 0 ? (
-          <p className="text-sm text-[var(--text-muted)]">
-            Live scan items into a session, review them, then add to your kitchen
-            inventory.
+      <div className="rounded-xl border border-[var(--card-border)] bg-[var(--surface)] p-4">
+        <div className="mb-4">
+          <p className="text-sm font-medium text-[var(--text)]">Add manually</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Skip scanning — enter item details and add straight to inventory.
           </p>
-        ) : (
-          <ul className="space-y-2">
-            {inventory.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-start justify-between gap-3 rounded-xl border border-[var(--card-border)] bg-[var(--surface)] px-4 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium text-[var(--text)]">{item.name}</p>
-                  {(item.amount || item.unit) && (
-                    <p className="mt-1 text-xs text-[var(--text-muted)]">
-                      {[item.amount, item.unit].filter(Boolean).join(" ")}
-                    </p>
-                  )}
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
-                    {item.category} · {item.portionsLeft} portion{item.portionsLeft === 1 ? "" : "s"} left
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeFromInventory(item.id)}
-                  className="shrink-0 rounded-lg border border-[var(--card-border)] px-2 py-1 text-xs text-[var(--text-muted)]"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block sm:col-span-2">
+            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+              Item name
+            </span>
+            <input
+              value={manualName}
+              onChange={(e) => setManualName(e.target.value)}
+              placeholder="e.g. Chicken breast"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+              Amount
+            </span>
+            <input
+              value={manualAmount}
+              onChange={(e) => setManualAmount(e.target.value)}
+              placeholder="e.g. 500"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+              Unit
+            </span>
+            <input
+              value={manualUnit}
+              onChange={(e) => setManualUnit(e.target.value)}
+              placeholder="e.g. g, count, pack"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+              Category
+            </span>
+            <select
+              value={manualCategory}
+              onChange={(e) =>
+                setManualCategory(e.target.value as InventoryCategory)
+              }
+              className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm"
+            >
+              {INVENTORY_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <button
+          type="button"
+          onClick={addManualItem}
+          className="mt-4 w-full rounded-xl bg-[var(--salmon)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--salmon-dark)]"
+        >
+          Add to inventory
+        </button>
       </div>
     </div>
   );

@@ -1,11 +1,18 @@
 import type { SavedMealSummary } from "@/lib/ai/mealSummaries";
+import {
+  normalizeIngredientAmountUnit,
+  sanitizeRecipeSteps,
+  sanitizeStepList,
+} from "@/lib/ai/recipeSanitize";
 import type {
   AdaptedRecipe,
+  BeforeAfterComparison,
   ChatAction,
   GeneratedMealPlan,
   InventoryCategory,
   InventoryItem,
   InventoryUpdate,
+  SharedIngredientsStrategy,
   ShoppingListItem,
   SuggestedShoppingItem,
   UserProfile,
@@ -22,6 +29,8 @@ export interface AIResponse {
   recipes?: AdaptedRecipe[];
   mealPlan?: GeneratedMealPlan;
   shoppingListUpdates?: SuggestedShoppingItem[];
+  sharedIngredientsStrategy?: SharedIngredientsStrategy;
+  beforeAfterComparison?: BeforeAfterComparison;
   warnings?: string[];
   needsUserChoice?: boolean;
 }
@@ -130,7 +139,112 @@ const VALID_ACTION_TYPES = new Set<string>([
   "pick_alternative_meal",
   "accept_meal_plan",
   "save_generated_recipe",
+  "accept_simplified_plan",
+  "keep_original_plan",
+  "request_another_simplification",
+  "approve_core_change",
+  "reject_core_change",
+  "replace_meal_for_simpler_ingredients",
+  "keep_meal_despite_extra_ingredients",
 ]);
+
+function parseStringArray(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const items = raw.map((s) => String(s).trim()).filter(Boolean);
+  return items.length ? items : undefined;
+}
+
+function parseSharedIngredientsStrategy(raw: unknown): SharedIngredientsStrategy | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const row = raw as Record<string, unknown>;
+
+  const reusedIngredients = Array.isArray(row.reusedIngredients)
+    ? row.reusedIngredients
+        .filter((item) => item && typeof item === "object")
+        .map((item) => {
+          const ing = item as Record<string, unknown>;
+          const usedInMeals = parseStringArray(ing.usedInMeals) ?? [];
+          if (!String(ing.name ?? "").trim()) return null;
+          return {
+            name: String(ing.name).trim(),
+            usedInMeals,
+            reason: ing.reason ? String(ing.reason) : undefined,
+          };
+        })
+        .filter(Boolean) as SharedIngredientsStrategy["reusedIngredients"]
+    : undefined;
+
+  const secondaryChanges = Array.isArray(row.secondaryChanges)
+    ? row.secondaryChanges
+        .filter((item) => item && typeof item === "object")
+        .map((item) => {
+          const change = item as Record<string, unknown>;
+          if (!String(change.original ?? "").trim() || !String(change.replacement ?? "").trim()) {
+            return null;
+          }
+          return {
+            original: String(change.original).trim(),
+            replacement: String(change.replacement).trim(),
+            mealsAffected: parseStringArray(change.mealsAffected) ?? [],
+            reason: change.reason ? String(change.reason) : undefined,
+          };
+        })
+        .filter(Boolean) as SharedIngredientsStrategy["secondaryChanges"]
+    : undefined;
+
+  const coreChanges = Array.isArray(row.coreChanges)
+    ? row.coreChanges
+        .filter((item) => item && typeof item === "object")
+        .map((item) => {
+          const change = item as Record<string, unknown>;
+          return {
+            mealTitle: change.mealTitle ? String(change.mealTitle) : undefined,
+            mealId: change.mealId ? String(change.mealId) : undefined,
+            originalCoreIngredient: change.originalCoreIngredient
+              ? String(change.originalCoreIngredient)
+              : undefined,
+            newCoreIngredient: change.newCoreIngredient
+              ? String(change.newCoreIngredient)
+              : undefined,
+            reason: change.reason ? String(change.reason) : undefined,
+          };
+        })
+    : undefined;
+
+  const strategy: SharedIngredientsStrategy = {
+    summary: row.summary ? String(row.summary).trim() : undefined,
+    reusedIngredients,
+    preservedVariety: parseStringArray(row.preservedVariety),
+    coreChanges,
+    secondaryChanges,
+  };
+
+  if (
+    !strategy.summary &&
+    !strategy.reusedIngredients?.length &&
+    !strategy.preservedVariety?.length &&
+    !strategy.coreChanges?.length &&
+    !strategy.secondaryChanges?.length
+  ) {
+    return undefined;
+  }
+
+  return strategy;
+}
+
+function parseBeforeAfterComparison(raw: unknown): BeforeAfterComparison | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const row = raw as Record<string, unknown>;
+  const comparison: BeforeAfterComparison = {
+    before: parseStringArray(row.before),
+    after: parseStringArray(row.after),
+    result: parseStringArray(row.result),
+  };
+  if (!comparison.before?.length && !comparison.after?.length && !comparison.result?.length) {
+    return undefined;
+  }
+  return comparison;
+}
 
 function parseSuggestedItems(raw: unknown): SuggestedShoppingItem[] | undefined {
   if (!Array.isArray(raw)) return undefined;
@@ -187,21 +301,62 @@ function parseActions(raw: unknown): ChatAction[] | undefined {
   return actions.length ? actions : undefined;
 }
 
+function parseRecipeIngredients(raw: unknown): AdaptedRecipe["ingredients"] {
+  if (!Array.isArray(raw)) return undefined;
+  const ingredients = raw
+    .filter((item) => item && typeof item === "object" && (item as { name?: string }).name?.trim())
+    .map((item) => {
+      const row = item as Record<string, unknown>;
+      const source = String(row.source ?? "unknown");
+      const validSource =
+        source === "inventory" ||
+        source === "shopping-list" ||
+        source === "missing" ||
+        source === "manual" ||
+        source === "unknown"
+          ? source
+          : "unknown";
+      return {
+        id: row.id ? String(row.id) : undefined,
+        name: String(row.name).trim(),
+        ...normalizeIngredientAmountUnit(
+          String(row.amount ?? "1").trim(),
+          String(row.unit ?? "").trim()
+        ),
+        source: validSource as NonNullable<AdaptedRecipe["ingredients"]>[number]["source"],
+        inventoryItemId: row.inventoryItemId ? String(row.inventoryItemId) : undefined,
+        availableAmount: row.availableAmount ? String(row.availableAmount) : undefined,
+        availableUnit: row.availableUnit ? String(row.availableUnit) : undefined,
+        usedAmount: row.usedAmount ? String(row.usedAmount) : undefined,
+        usedUnit: row.usedUnit ? String(row.usedUnit) : undefined,
+        isAvailableInInventory: row.isAvailableInInventory === true,
+        isSubstituted: row.isSubstituted === true,
+        originalIngredient: row.originalIngredient
+          ? String(row.originalIngredient)
+          : undefined,
+      };
+    });
+  return ingredients.length ? ingredients : undefined;
+}
+
 function parseRecipes(raw: unknown): AdaptedRecipe[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   const recipes = raw
     .filter((r) => r && typeof r === "object" && (r as AdaptedRecipe).title?.trim())
     .map((r) => {
       const recipe = r as AdaptedRecipe;
-      return {
+      const base = {
         title: recipe.title.trim(),
         basedOnMealCardId: recipe.basedOnMealCardId,
         servings: recipe.servings,
         tags: recipe.tags,
         usesInventory: recipe.usesInventory,
         missingIngredients: recipe.missingIngredients,
-        ingredients: recipe.ingredients,
-        steps: recipe.steps,
+        ingredients: parseRecipeIngredients(recipe.ingredients),
+      };
+      return {
+        ...base,
+        steps: sanitizeRecipeSteps(recipe.steps, base),
       };
     });
   return recipes.length ? recipes : undefined;
@@ -218,6 +373,7 @@ function parseMealPlan(raw: unknown): GeneratedMealPlan | undefined {
     servings: plan.servings,
     missingIngredients: plan.missingIngredients,
     userDecisions: plan.userDecisions,
+    sharedIngredientsStrategy: parseSharedIngredientsStrategy(plan.sharedIngredientsStrategy),
   };
 }
 
@@ -335,13 +491,20 @@ export function parseAIResponse(
     parseSuggestedItems(parsed.suggestedItems) ??
     parseSuggestedItems(parsed.shoppingListUpdates);
 
-  const mealPrepSteps = Array.isArray(parsed.mealPrepSteps)
+  const recipes = parseRecipes(parsed.recipes);
+  const mealPrepStepsRaw = Array.isArray(parsed.mealPrepSteps)
     ? parsed.mealPrepSteps.map((s) => String(s).trim()).filter(Boolean)
     : undefined;
+  const mealPrepSteps =
+    sanitizeStepList(mealPrepStepsRaw) ??
+    (recipes?.[0]?.steps ? recipes[0].steps : undefined);
 
-  const recipes = parseRecipes(parsed.recipes);
   const mealPlan = parseMealPlan(parsed.mealPlan);
   const actions = parseActions(parsed.actions);
+  const sharedIngredientsStrategy =
+    parseSharedIngredientsStrategy(parsed.sharedIngredientsStrategy) ??
+    mealPlan?.sharedIngredientsStrategy;
+  const beforeAfterComparison = parseBeforeAfterComparison(parsed.beforeAfterComparison);
 
   const warnings = Array.isArray(parsed.warnings)
     ? parsed.warnings.map((w) => String(w).trim()).filter(Boolean)
@@ -381,6 +544,8 @@ export function parseAIResponse(
     recipes,
     mealPlan,
     shoppingListUpdates: parseSuggestedItems(parsed.shoppingListUpdates),
+    sharedIngredientsStrategy,
+    beforeAfterComparison,
     warnings: wasTruncated
       ? [...(warnings ?? []), "AI response may be incomplete — recipe cards show what we recovered."]
       : warnings?.length
@@ -391,60 +556,145 @@ export function parseAIResponse(
 }
 
 export function buildSystemPrompt(): string {
-  return `You are PrepDeck, the planning brain for a student meal-prep app. You connect profile, inventory, saved meal cards, shopping list, and meal plans.
+  return `You are PrepDeck, the planning brain for a student meal-prep app. You connect profile, inventory, saved Meal Deck cards, shopping list, and meal plans.
 
-Your job is NOT random chat — you plan meals, adapt saved meal cards into recipes, find missing ingredients, and guide simple meal prep.
+Your job is NOT random chat — you plan meals, adapt saved Meal Deck cards into recipes, consolidate ingredients, find missing items, and guide simple meal prep.
 
-MEAL CARD RULES (critical):
-- Saved Mealdex cards are flexible templates, NOT fixed recipes.
-- Preserve the general title/concept and important tags (high protein, cheap, beginner friendly, vegetarian, etc.).
-- You MAY adapt vegetables, sauce, seasoning, amounts, and substitutions.
-- Do NOT silently change core identity (e.g. chicken bowl → pasta, high protein → low protein, cheap → expensive).
-- If a core ingredient is missing, explain the gap and offer action buttons — do not auto-substitute without user choice.
+MEAL DECK CARD RULES (critical):
+- Saved Mealdex/Meal Deck cards are flexible templates, NOT fixed recipes.
+- Preserve: general meal identity/title, important tags (high protein, cheap, quick, vegetarian, beginner-friendly), intended difficulty/time feel, and variety across the plan.
+- You MAY adapt: vegetables, sauces, seasonings, toppings, optional sides, small dairy additions, flexible supporting ingredients, exact amounts, cooking method if it still fits.
+- Be careful changing: main protein, main carb/base, defining ingredient, dietary identity, important tags.
+- If changing a core part gives a big benefit, suggest it but require user approval via action buttons — never auto-change core ingredients.
+- BAD: turning every meal into rice bowls to reuse rice. GOOD: keep rice bowl + wrap + breakfast bowl + pasta but reuse spinach, Greek yogurt, frozen peppers across meals.
 
-PROFILE RULES:
-- Never suggest avoided foods/allergies.
-- Respect skill level, time limit, simplicity preference, and available appliances.
+CORE vs SECONDARY INGREDIENTS:
+Core (preserve by default): main protein, main carb/base, defining ingredient, dietary identity ingredient, ingredient tied to card title.
+Examples: chicken in Chicken Rice Bowl, rice in Chicken Rice Bowl, pasta in Pasta with Meat Sauce, eggs in Egg Breakfast Wrap, Greek yogurt in High Protein Yogurt Bowl.
+Secondary (reuse/simplify aggressively): vegetables, sauces, seasonings, toppings, optional sides, cheese, yogurt sauces, herbs, oils, small pantry items.
+
+CONSOLIDATION PRIORITY (in order):
+1. Respect allergies, avoided foods, dietary restrictions, appliances, skill level.
+2. Preserve main Meal Deck card identity and variety across the plan.
+3. Use ingredients already in inventory first.
+4. Reuse common secondary ingredients across multiple recipes.
+5. Add flexible groceries only when needed.
+6. Avoid one-off ingredients (especially if simplicityPreference is "Very simple" or user wants few ingredients).
+7. Suggest replacing/removing a saved meal only if it causes too many unique ingredients — ask user first.
+
+SIMPLICITY PREFERENCE:
+- "Very simple" / few ingredients: strongly reuse secondary ingredients, avoid extra sauces/spices and one-off vegetables, prefer ingredients used in 2+ recipes, offer replace/remove meal buttons if a card needs too many unique items.
+- "Balanced": reuse when reasonable, keep variety, allow some unique ingredients.
+- "Flexible" / "Complex": allow more variety; still avoid waste.
+
+SHARED INGREDIENT STRATEGY:
+When building meal plans from saved cards, include sharedIngredientsStrategy explaining what was reused, which meals share ingredients, why it helps, and whether any core ingredients changed (coreChanges should be empty unless user approved).
+Include beforeAfterComparison when you simplify secondary ingredients across meals.
+
+SHOPPING LIST:
+- Do NOT silently add to shopping list or overwrite the user's list when suggesting a plan.
+- Put missing items in shoppingListUpdates and/or action payloads — apply only when user clicks accept_simplified_plan or add_to_shopping_list actions.
+- Include usedInRecipes on items reused across meals (e.g. "Used in 3 recipes").
+- Include reason and sourceMealId when suggesting shopping items.
 
 DIRECT QUESTIONS:
-- If user asks to list inventory, shopping list, or saved meals, copy the actual items from context into "message" as a readable bullet list. Never leave the list empty when context has items.
-
-SHOPPING LIST RULES:
-- Only list missing ingredients (not what they already have).
-- Do NOT silently add to shopping list unless user asked to update it.
-- For meal plans, show missing items and provide an "Add missing ingredients" action button.
-- Include reason and sourceMealId when suggesting shopping items.
+- If user asks to list inventory, shopping list, or saved meals, copy actual items from context into "message" as a readable bullet list.
 
 API USAGE:
 - Return compact JSON only (no markdown fences).
 - Put structured data FIRST, "message" LAST.
-- "message" must be 1-2 short sentences (under 40 words) — summary only.
-- Do NOT put ingredient lists, steps, or long explanations in "message"; use recipes[].steps and actions instead.
-- Limit to 2 recipes max, 3 steps per recipe, 2-3 actions max.
+- "message" must be 1-3 short sentences summarizing the plan and consolidation — under 60 words.
+- Do NOT put long ingredient lists in "message"; use recipes[].ingredients, sharedIngredientsStrategy, and beforeAfterComparison.
+- Limit to 4 recipes max for meal plans, 3 steps per recipe, 2-4 actions max.
 - Use actions for user decisions.
+
+RECIPE STEPS (required — never use placeholders):
+- Every recipe MUST include 2-3 real cooking steps with actions, ingredients, and rough times.
+- NEVER output "Step 1", "Step 2", or generic placeholders — models copy those literally and break the UI.
+- Good steps: "Slice bell pepper and carrot.", "Stir-fry vegetables with broccoli 6 minutes on medium-high.", "Season with soy sauce and serve."
+- Bad steps: "Step 1", "Step 2", "Cook the food."
+
+RECIPE INGREDIENTS (for confirm-cooked inventory tracking):
+- Each recipe MUST include ingredients[] with: name, amount, unit, source (inventory|shopping-list|missing|manual|unknown), inventoryItemId if matched from context.
+- Do NOT subtract inventory yourself.
 
 Respond with JSON only:
 {
-  "recipes": [{ "title": "Meal name", "basedOnMealCardId": "id", "servings": 4, "tags": ["high protein"], "usesInventory": ["rice"], "missingIngredients": ["chicken"], "steps": ["Step 1", "Step 2"] }],
-  "actions": [{ "label": "Add missing ingredients", "type": "add_multiple_to_shopping_list", "payload": { "items": [{ "name": "chicken breast", "amount": "500", "unit": "g", "category": "Protein", "required": true }] } }],
-  "needsUserChoice": false,
-  "message": "One or two short sentences summarizing the plan."
+  "recipes": [{
+    "title": "Meal name",
+    "basedOnMealCardId": "card_id",
+    "servings": 4,
+    "tags": ["high protein"],
+    "usesInventory": ["rice"],
+    "missingIngredients": ["chicken"],
+    "ingredients": [
+      { "name": "rice", "amount": "2", "unit": "cups", "source": "inventory", "inventoryItemId": "inv_rice" },
+      { "name": "spinach", "amount": "2", "unit": "cups", "source": "missing" }
+    ],
+    "steps": [
+      "Heat oil in a pan on medium-high.",
+      "Stir-fry rice and spinach 5 minutes until heated through.",
+      "Season with salt and pepper; portion into containers."
+    ]
+  }],
+  "mealPlan": { "recipes": [], "servings": 4, "selectedMealIds": [] },
+  "sharedIngredientsStrategy": {
+    "summary": "Reused spinach and Greek yogurt across meals while keeping rice bowl, wrap, breakfast bowl, and pasta.",
+    "reusedIngredients": [{ "name": "Spinach", "usedInMeals": ["Turkey Wrap", "Egg Bowl"], "reason": "Works across meal types" }],
+    "preservedVariety": ["Kept one rice bowl, one wrap, one breakfast bowl, and one pasta meal."],
+    "coreChanges": [],
+    "secondaryChanges": [{ "original": "lettuce", "replacement": "spinach", "mealsAffected": ["Turkey Wrap"], "reason": "Already used elsewhere" }]
+  },
+  "beforeAfterComparison": {
+    "before": ["Wrap uses lettuce", "Bowl uses mixed greens"],
+    "after": ["Both use spinach shared with pasta"],
+    "result": ["Fewer one-off produce items", "Smaller shopping list"]
+  },
+  "shoppingListUpdates": [{ "name": "spinach", "amount": "1", "unit": "bag", "category": "Produce", "required": true, "usedInRecipes": ["Turkey Wrap", "Egg Bowl", "Pasta"] }],
+  "actions": [
+    { "label": "Use simplified plan", "type": "accept_simplified_plan", "payload": { "mealPlan": {}, "sharedIngredientsStrategy": {}, "shoppingListUpdates": [] } },
+    { "label": "Keep original ingredients", "type": "keep_original_plan", "payload": { "originalMealPlan": {} } }
+  ],
+  "needsUserChoice": true,
+  "message": "Short summary of plan and ingredient reuse."
 }
 
-Action types: add_to_shopping_list, add_multiple_to_shopping_list, use_substitute, remove_optional_ingredient, request_ai_revision, pick_alternative_meal, accept_meal_plan, save_generated_recipe.
+Action types: add_to_shopping_list, add_multiple_to_shopping_list, use_substitute, remove_optional_ingredient, request_ai_revision, pick_alternative_meal, accept_meal_plan, save_generated_recipe, accept_simplified_plan, keep_original_plan, request_another_simplification, approve_core_change, reject_core_change, replace_meal_for_simpler_ingredients, keep_meal_despite_extra_ingredients.
 
-When user must choose (missing core ingredient, substitution), set needsUserChoice true and include 2-3 action buttons.
+When suggesting consolidated plans, set needsUserChoice true with accept_simplified_plan and keep_original_plan buttons.
+When user must approve a core ingredient change, use approve_core_change and reject_core_change.
 category must be one of: Protein, Carbs, Produce, Fruit, Dairy, Snacks, Sauces/Spices, Frozen, Other.`;
 }
 
 export function aiResponseToMealPlan(response: AIResponse): GeneratedMealPlan | null {
-  if (response.mealPlan?.recipes?.length) return response.mealPlan;
+  if (response.mealPlan?.recipes?.length) {
+    return {
+      ...response.mealPlan,
+      sharedIngredientsStrategy:
+        response.sharedIngredientsStrategy ?? response.mealPlan.sharedIngredientsStrategy,
+    };
+  }
   if (response.recipes?.length) {
     return {
       recipes: response.recipes,
       missingIngredients: response.recipes.flatMap((r) => r.missingIngredients ?? []),
+      sharedIngredientsStrategy: response.sharedIngredientsStrategy,
       updatedAt: new Date().toISOString(),
     };
   }
   return null;
+}
+
+/** Plans with consolidation choices should not auto-save until user accepts. */
+export function shouldAutoSaveMealPlan(response: AIResponse): boolean {
+  if (response.needsUserChoice) return false;
+  if (response.sharedIngredientsStrategy) return false;
+  const pendingPlanActions = new Set([
+    "accept_simplified_plan",
+    "keep_original_plan",
+    "approve_core_change",
+    "reject_core_change",
+  ]);
+  if (response.actions?.some((a) => pendingPlanActions.has(a.type))) return false;
+  return Boolean(response.mealPlan?.recipes?.length || response.recipes?.length);
 }

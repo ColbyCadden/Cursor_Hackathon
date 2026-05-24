@@ -1,14 +1,27 @@
+import { getDefaultForIngredient } from "./ingredientDefaults";
+import { findInventoryMatch, ingredientsMatch } from "./inventoryMatching";
 import { getSavedMeals } from "./meal/mealHelpers";
 import { buildMealdexShoppingList } from "./meal/shoppingList";
 import { mealToSummary } from "./ai/mealSummaries";
 import { tryLocalChatReply } from "./localChatReplies";
 import type { AIResponse } from "./ai/chatHelpers";
-import type { AppState, SuggestedShoppingItem } from "./types";
+import type {
+  AdaptedRecipe,
+  AdaptedRecipeIngredient,
+  AppState,
+  BeforeAfterComparison,
+  GeneratedMealPlan,
+  InventoryItem,
+  InventoryCategory,
+  SharedIngredientsStrategy,
+  SuggestedShoppingItem,
+} from "./types";
 
 export type { AIResponse } from "./ai/chatHelpers";
 
 type Intent =
   | "meal_prep"
+  | "mealdex_plan"
   | "inventory"
   | "fewer_ingredients"
   | "simpler"
@@ -22,6 +35,12 @@ function normalize(text: string): string {
 
 function detectIntent(message: string): Intent {
   const m = normalize(message);
+  if (
+    /meal deck|mealdex|saved cards|saved meal|meal library/.test(m) &&
+    /make|plan|recipe|build|from|using/.test(m)
+  ) {
+    return "mealdex_plan";
+  }
   if (/meal prep guide|prep guide|how (do i|to) prep|prep order/.test(m)) {
     return "prep_guide";
   }
@@ -178,12 +197,277 @@ function defaultPrepSteps(profile: AppState["profile"]): string[] {
   ];
 }
 
+function parseInventoryAmount(amount: string): number {
+  const n = parseFloat(String(amount).replace(/[^\d.]/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+function buildDemoRecipeIngredients(
+  inventory: InventoryItem[],
+  usesInventory: string[],
+  missingIngredients: string[]
+): AdaptedRecipeIngredient[] {
+  const rows: AdaptedRecipeIngredient[] = [];
+
+  for (const name of usesInventory.slice(0, 4)) {
+    const match =
+      findInventoryMatch(inventory, name) ??
+      inventory.find((i) => ingredientsMatch(i.name, name));
+    if (match) {
+      const available = parseInventoryAmount(match.amount);
+      rows.push({
+        name: match.name,
+        amount: String(Math.max(1, Math.round(available / 2))),
+        unit: match.unit,
+        source: "inventory",
+        inventoryItemId: match.id,
+      });
+    } else {
+      const defaults = getDefaultForIngredient(name);
+      rows.push({
+        name,
+        amount: defaults.amount,
+        unit: defaults.unit,
+        source: "inventory",
+      });
+    }
+  }
+
+  for (const name of missingIngredients.slice(0, 2)) {
+    const defaults = getDefaultForIngredient(name);
+    rows.push({
+      name,
+      amount: defaults.amount,
+      unit: defaults.unit,
+      source: "missing",
+    });
+  }
+
+  return rows;
+}
+
+function buildSharedStrategyForSavedMeals(
+  mealNames: string[]
+): SharedIngredientsStrategy {
+  const names = mealNames.slice(0, 4);
+  return {
+    summary:
+      "I reused Greek yogurt, frozen broccoli, and rice from your pantry across multiple meals to keep the shopping list smaller while preserving meal variety.",
+    reusedIngredients: [
+      {
+        name: "Greek yogurt",
+        usedInMeals: names.filter((n) =>
+          /yogurt|burrito|wrap|bowl/i.test(n)
+        ).slice(0, 2),
+        reason: "Works as a high-protein sauce/base in different meal types.",
+      },
+      {
+        name: "Frozen broccoli",
+        usedInMeals: names.filter((n) => /salmon|rice|tuna|poke|bowl/i.test(n)).slice(0, 2),
+        reason: "Easy student-friendly veg that works in bowls.",
+      },
+      {
+        name: "Rice",
+        usedInMeals: names.filter((n) => /salmon|rice|tuna|poke|burrito/i.test(n)).slice(0, 2),
+        reason: "Shared carb base from your inventory.",
+      },
+    ].filter((item) => item.usedInMeals.length > 0),
+    preservedVariety: [
+      names.length >= 4
+        ? `Kept ${names.slice(0, 4).join(", ")} — different meal types, not all the same format.`
+        : `Kept your saved meal ideas: ${names.join(", ")}.`,
+    ],
+    coreChanges: [],
+    secondaryChanges: [
+      {
+        original: "mixed greens",
+        replacement: "frozen broccoli",
+        mealsAffected: names.filter((n) => /tuna|poke/i.test(n)).slice(0, 1),
+        reason: "Broccoli is already in your inventory and used in other bowls.",
+      },
+      {
+        original: "sour cream",
+        replacement: "Greek yogurt",
+        mealsAffected: names.filter((n) => /burrito/i.test(n)).slice(0, 1),
+        reason: "Greek yogurt is already in your inventory and adds protein.",
+      },
+    ],
+  };
+}
+
+function buildBeforeAfterForSavedMeals(mealNames: string[]): BeforeAfterComparison {
+  const [a, b, c, d] = mealNames;
+  return {
+    before: [
+      a ? `${a} uses separate vegetables` : "Each meal uses different vegetables",
+      b ? `${b} uses sour cream or ranch` : "Wrap uses its own sauce",
+      c ? `${c} uses granola or berries separately` : "Breakfast bowl uses unique toppings",
+      d ? `${d} uses its own produce mix` : "Pasta/bowl uses separate produce",
+    ].filter(Boolean),
+    after: [
+      "Greek yogurt shared as sauce/base in wrap and breakfast bowl",
+      "Frozen broccoli shared in rice/salmon and poke bowls",
+      "Rice from inventory shared where it fits",
+    ],
+    result: [
+      "Fewer one-off ingredients",
+      "Smaller shopping list",
+      "Meal variety preserved across your saved cards",
+    ],
+  };
+}
+
+function buildRecipesFromSavedMeals(state: AppState): AdaptedRecipe[] {
+  const savedMeals = getSavedMeals(state).slice(0, 4);
+  return savedMeals.map((meal) => {
+    const usesInventory = state.inventory
+      .filter((i) =>
+        meal.ingredients.some((ing) =>
+          ingredientsMatch(ing, i.name)
+        )
+      )
+      .map((i) => i.name);
+    const invNames = state.inventory.slice(0, 3).map((i) => i.name);
+    const combinedUses = [...new Set([...usesInventory, ...invNames])].slice(0, 4);
+    const missingIngredients = ["salmon", "tuna", "black beans"]
+      .filter((k) => meal.name.toLowerCase().includes(k.split(" ")[0]))
+      .filter((k) => !hasIngredient(state.inventory, k))
+      .slice(0, 1);
+    if (!missingIngredients.length && meal.name.toLowerCase().includes("salmon")) {
+      missingIngredients.push("salmon fillet");
+    }
+
+    return {
+      title: meal.name,
+      basedOnMealCardId: meal.id,
+      tags: meal.highProtein ? ["high protein"] : [],
+      usesInventory: combinedUses,
+      missingIngredients,
+      ingredients: buildDemoRecipeIngredients(
+        state.inventory,
+        combinedUses,
+        missingIngredients
+      ),
+      steps: defaultPrepSteps(state.profile).slice(0, 3),
+    };
+  });
+}
+
+function buildConsolidatedShoppingUpdates(
+  recipes: { title: string }[]
+): SuggestedShoppingItem[] {
+  const recipeTitles = recipes.map((r) => r.title);
+  return [
+    {
+      name: "Spinach",
+      amount: "1",
+      unit: "bag",
+      category: "Produce" as InventoryCategory,
+      required: true,
+      reason: "Shared vegetable across multiple meals",
+      usedInRecipes: recipeTitles.filter((t) => /wrap|burrito|bowl|pasta/i.test(t)).slice(0, 3),
+      source: "ai" as const,
+    },
+    {
+      name: "Salmon fillet",
+      amount: "2",
+      unit: "fillets",
+      category: "Protein" as InventoryCategory,
+      required: true,
+      reason: "Core protein for salmon bowl",
+      usedInRecipes: recipeTitles.filter((t) => /salmon/i.test(t)),
+      source: "ai" as const,
+    },
+  ].filter((item) => item.usedInRecipes?.length) as SuggestedShoppingItem[];
+}
+
+function respondMealdexPlan(message: string, state: AppState): AIResponse {
+  const savedMeals = getSavedMeals(state);
+  const count = extractMealCount(message);
+  const mealNames = savedMeals.map((m) => m.name);
+
+  if (!savedMeals.length) {
+    return {
+      text: `${profileIntro(state.profile)}
+
+You haven't saved any Meal Deck cards yet. Swipe right on Discover, then ask me to build a plan from your saved cards.`,
+      needsUserChoice: false,
+    };
+  }
+
+  const recipes = buildRecipesFromSavedMeals(state);
+  const sharedIngredientsStrategy = buildSharedStrategyForSavedMeals(mealNames);
+  const beforeAfterComparison = buildBeforeAfterForSavedMeals(mealNames);
+  const shoppingListUpdates = buildConsolidatedShoppingUpdates(recipes);
+  const mealPlan: GeneratedMealPlan = {
+    selectedMealIds: savedMeals.slice(0, 4).map((m) => m.id),
+    recipes,
+    servings: count,
+    missingIngredients: recipes.flatMap((r) => r.missingIngredients ?? []),
+    sharedIngredientsStrategy,
+  };
+
+  const text = `${profileIntro(state.profile)}
+
+I built a ${Math.min(recipes.length, count)}-meal plan from your Meal Deck that keeps meal variety but reuses secondary ingredients. I kept ${mealNames.slice(0, 4).join(", ")} as distinct meals — not all the same format — while sharing Greek yogurt, frozen broccoli, and rice where they fit.`;
+
+  return {
+    text,
+    recipes,
+    mealPlan,
+    sharedIngredientsStrategy,
+    beforeAfterComparison,
+    shoppingListUpdates,
+    mealPrepSteps: defaultPrepSteps(state.profile).slice(0, 4),
+    actions: [
+      {
+        label: "Use simplified plan",
+        type: "accept_simplified_plan",
+        payload: {
+          mealPlan,
+          sharedIngredientsStrategy,
+          shoppingListUpdates,
+        },
+      },
+      {
+        label: "Keep original ingredients",
+        type: "keep_original_plan",
+        payload: {
+          originalMealPlan: {
+            ...mealPlan,
+            sharedIngredientsStrategy: undefined,
+            userDecisions: ["Kept original per-meal ingredients"],
+          },
+        },
+      },
+      {
+        label: "Show another option",
+        type: "request_another_simplification",
+        payload: {
+          instruction:
+            "Suggest a different ingredient consolidation for my Meal Deck plan that still preserves meal variety.",
+        },
+      },
+    ],
+    needsUserChoice: true,
+  };
+}
+
 function respondMealPrep(message: string, state: AppState): AIResponse {
+  const savedMeals = getSavedMeals(state);
+  const simplicity = state.profile.simplicityPreference?.toLowerCase() ?? "";
+  if (
+    savedMeals.length >= 2 &&
+    (/very simple|minimal|few ingredients|fewer ingredients/.test(simplicity) ||
+      /from my|saved|meal deck|mealdex|cards/.test(normalize(message)))
+  ) {
+    return respondMealdexPlan(message, state);
+  }
+
   const count = extractMealCount(message);
   const { plan, reuse } = buildMealIdeas(state);
   const intro = profileIntro(state.profile);
   const saved = savedMealNames(state);
-  const savedMeals = getSavedMeals(state);
 
   let total = 0;
   const scaled = plan.map((p) => {
@@ -220,14 +504,23 @@ You'll get about ${count} portions without extra spices or specialty items.`;
     text,
     mealPrepSteps: defaultPrepSteps(state.profile),
     suggestedItems: defaultSuggestedItems(state, count),
-    recipes: savedMeals.slice(0, 2).map((meal) => ({
-      title: meal.name,
-      basedOnMealCardId: meal.id,
-      tags: meal.highProtein ? ["high protein"] : [],
-      usesInventory: state.inventory.slice(0, 3).map((i) => i.name),
-      missingIngredients: ["chicken breast"],
-      steps: defaultPrepSteps(state.profile).slice(0, 3),
-    })),
+    recipes: savedMeals.slice(0, 2).map((meal) => {
+      const usesInventory = state.inventory.slice(0, 3).map((i) => i.name);
+      const missingIngredients = ["chicken breast"];
+      return {
+        title: meal.name,
+        basedOnMealCardId: meal.id,
+        tags: meal.highProtein ? ["high protein"] : [],
+        usesInventory,
+        missingIngredients,
+        ingredients: buildDemoRecipeIngredients(
+          state.inventory,
+          usesInventory,
+          missingIngredients
+        ),
+        steps: defaultPrepSteps(state.profile).slice(0, 3),
+      };
+    }),
     actions: [
       {
         label: "Add missing ingredients to shopping list",
@@ -473,6 +766,8 @@ async function generateMockAIResponse(
   const intent = detectIntent(userMessage);
 
   switch (intent) {
+    case "mealdex_plan":
+      return respondMealdexPlan(userMessage, appState);
     case "meal_prep":
       return respondMealPrep(userMessage, appState);
     case "inventory":

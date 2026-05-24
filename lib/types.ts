@@ -216,6 +216,41 @@ export interface IngredientSubstitution {
   note?: string;
 }
 
+export interface ReusedIngredient {
+  name: string;
+  usedInMeals: string[];
+  reason?: string;
+}
+
+export interface SecondaryIngredientChange {
+  original: string;
+  replacement: string;
+  mealsAffected: string[];
+  reason?: string;
+}
+
+export interface CoreIngredientChange {
+  mealTitle?: string;
+  mealId?: string;
+  originalCoreIngredient?: string;
+  newCoreIngredient?: string;
+  reason?: string;
+}
+
+export interface SharedIngredientsStrategy {
+  summary?: string;
+  reusedIngredients?: ReusedIngredient[];
+  preservedVariety?: string[];
+  coreChanges?: CoreIngredientChange[];
+  secondaryChanges?: SecondaryIngredientChange[];
+}
+
+export interface BeforeAfterComparison {
+  before?: string[];
+  after?: string[];
+  result?: string[];
+}
+
 export type AIActionType =
   | "add_to_shopping_list"
   | "add_multiple_to_shopping_list"
@@ -224,7 +259,14 @@ export type AIActionType =
   | "request_ai_revision"
   | "pick_alternative_meal"
   | "accept_meal_plan"
-  | "save_generated_recipe";
+  | "save_generated_recipe"
+  | "accept_simplified_plan"
+  | "keep_original_plan"
+  | "request_another_simplification"
+  | "approve_core_change"
+  | "reject_core_change"
+  | "replace_meal_for_simpler_ingredients"
+  | "keep_meal_despite_extra_ingredients";
 
 export interface ChatAction {
   label: string;
@@ -233,13 +275,23 @@ export interface ChatAction {
 }
 
 export interface AdaptedRecipeIngredient {
+  id?: string;
   name: string;
   amount: string;
   unit: string;
-  source?: "inventory" | "shopping-list" | "missing";
+  source?: "inventory" | "shopping-list" | "missing" | "manual" | "unknown";
+  inventoryItemId?: string;
+  availableAmount?: string;
+  availableUnit?: string;
+  usedAmount?: string;
+  usedUnit?: string;
+  isAvailableInInventory?: boolean;
+  isSubstituted?: boolean;
+  originalIngredient?: string;
 }
 
 export interface AdaptedRecipe {
+  id?: string;
   title: string;
   /** Original title before core-ingredient substitution */
   originalTitle?: string;
@@ -254,6 +306,8 @@ export interface AdaptedRecipe {
   steps?: string[];
   substitutions?: IngredientSubstitution[];
   ingredientNotes?: string[];
+  cooked?: boolean;
+  cookedAt?: string;
 }
 
 export interface GeneratedMealPlan {
@@ -262,6 +316,7 @@ export interface GeneratedMealPlan {
   servings?: number;
   missingIngredients?: string[];
   userDecisions?: string[];
+  sharedIngredientsStrategy?: SharedIngredientsStrategy;
   updatedAt?: string;
 }
 
@@ -282,6 +337,10 @@ export interface ChatMessage {
   /** Indices of actions the user already clicked */
   actionsApplied?: number[];
   recipes?: AdaptedRecipe[];
+  /** Recipe keys (messageId:index:title) confirmed as cooked */
+  cookedRecipeKeys?: string[];
+  sharedIngredientsStrategy?: SharedIngredientsStrategy;
+  beforeAfterComparison?: BeforeAfterComparison;
   warnings?: string[];
   needsUserChoice?: boolean;
 }
