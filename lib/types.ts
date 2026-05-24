@@ -2,7 +2,15 @@ export type CookingSkill = "Beginner" | "Intermediate" | "Advanced";
 
 export interface UserProfile {
   name: string;
+  email?: string;
   studentType: string;
+  /** Calum signup fields — source of truth for personalization */
+  cooking_equipment?: string[];
+  eating_habits?: string;
+  cooking_time_per_week?: string;
+  cooking_skill_level?: string;
+  ingredient_preference?: string;
+  /** Legacy fields kept for meal/chat features */
   appliances: string[];
   avoidedFoods: string[];
   eatingGoals: string[];

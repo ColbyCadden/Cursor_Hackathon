@@ -5,14 +5,14 @@ import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
 import { OverviewCard } from "@/components/OverviewCard";
 import { SectionCard } from "@/components/SectionCard";
-import { ProfileQuiz } from "@/components/ProfileQuiz";
+import { PersonalizationSummary } from "@/components/PersonalizationSummary";
 import { InventoryManager } from "@/components/InventoryManager";
 import { BarcodeScannerPanel } from "@/components/BarcodeScannerPanel";
 import { MealSwipeDeck } from "@/components/MealSwipeDeck";
 import { MealLibrary } from "@/components/MealLibrary";
 import { Toast } from "@/components/Toast";
 import { useAppState } from "@/lib/useAppState";
-import type { UserProfile } from "@/lib/types";
+import { buildPersonalizedExperience } from "@/lib/signupProfile";
 
 function DashboardContent() {
   const { state, updateState } = useAppState();
@@ -23,6 +23,7 @@ function DashboardContent() {
   const { profile, inventory, mealLibrary, shoppingList, swipeDeck, swipeIndex } =
     state;
   const requiredShopping = shoppingList.filter((s) => s.required && !s.bought);
+  const experience = buildPersonalizedExperience(profile);
 
   const showToast = (message: string) => setToast(message);
 
@@ -33,21 +34,16 @@ function DashboardContent() {
       <div className="mx-auto w-full max-w-5xl">
         <header className="mb-6 sm:mb-8">
           <h1 className="text-2xl font-bold text-[#3D3429] md:text-3xl">
-            Welcome back, {profile.name}
+            {experience.greeting}
           </h1>
-          <p className="mt-2 text-[#8A7B6D]">
-            Plan simple meals around what you have, what you like, and how much
-            time you&apos;ve got tonight.
-          </p>
+          <p className="mt-2 text-[#8A7B6D]">{experience.subtitle}</p>
         </header>
 
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <OverviewCard
-            title="Profile status"
-            value={profile.profileComplete ? "Complete" : "Incomplete"}
-            subtitle={
-              profile.profileComplete ? "Ready for meal ideas" : "Take the quiz"
-            }
+            title="Profile"
+            value="Personalized"
+            subtitle="Based on your sign-up answers"
             accent="honey"
           />
           <OverviewCard
@@ -72,16 +68,11 @@ function DashboardContent() {
 
         <div className="space-y-6">
           <SectionCard
-            title="Profile Setup"
-            description="Tell PrepDeck how you cook so meal ideas fit your life."
-            badge={profile.profileComplete ? "Complete" : "Quiz"}
+            title="Your profile"
+            description="The preferences you set when you signed up — edit anytime."
+            badge="Personalized"
           >
-            <ProfileQuiz
-              profile={profile}
-              onSave={(updated: UserProfile) =>
-                updateState((prev) => ({ ...prev, profile: updated }))
-              }
-            />
+            <PersonalizationSummary profile={profile} />
           </SectionCard>
 
           <div className="grid gap-6 lg:grid-cols-2">

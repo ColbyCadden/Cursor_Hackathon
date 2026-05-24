@@ -6,6 +6,7 @@ import type { UserProfile } from "@/lib/types";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "🏠" },
+  { href: "/profile", label: "Profile", icon: "👤" },
   { href: "/chat", label: "AI Chat", icon: "💬" },
   { href: "/shopping-list", label: "Shopping List", icon: "🛒" },
 ];

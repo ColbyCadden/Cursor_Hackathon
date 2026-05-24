@@ -1,6 +1,9 @@
 import { createInitialAppState } from "./demoData";
 import { SWIPE_DECK_MEALS } from "./mealDeckData";
 import { migrateShoppingCategory } from "./shoppingCategories";
+import { authenticateUser } from "./auth";
+import { clearPendingSignup } from "./signupSession";
+import { registeredUserToProfile } from "./signupProfile";
 import type { AppState, LegacyAppState, ShoppingListItem, UserProfile } from "./types";
 
 const STORAGE_KEY = "prepdeck-app-state";
@@ -101,9 +104,37 @@ export function loginDemoUser(): AppState {
   return state;
 }
 
+export function loginWithCredentials(
+  email: string,
+  password: string
+): { ok: true; state: AppState } | { ok: false; error: string } {
+  const user = authenticateUser(email, password);
+  if (!user) {
+    return { ok: false, error: "Invalid email or password." };
+  }
+
+  const current = getAppState();
+  const profile = registeredUserToProfile(user);
+  const state: AppState = {
+    ...current,
+    isLoggedIn: true,
+    profile,
+  };
+  saveAppState(state);
+  return { ok: true, state };
+}
+
 export function logoutUser(): AppState {
   const state = getAppState();
   state.isLoggedIn = false;
   saveAppState(state);
   return state;
+}
+
+/** Wipes all saved accounts and app data — useful for testing signup from scratch. */
+export function resetAllAppData(): void {
+  if (!isBrowser()) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem("prepdeck-registered-users");
+  clearPendingSignup();
 }
