@@ -14,7 +14,6 @@ import {
   computePantryRequirements,
   getPantrySummary,
 } from "@/lib/pantrySync";
-import { buildPersonalizedExperience } from "@/lib/signupProfile";
 
 function DashboardContent() {
   const { state, updateState } = useAppState();
@@ -27,14 +26,13 @@ function DashboardContent() {
   const deckLeft = getDeckMeals(state).length;
   const pantryReqs = computePantryRequirements(inventory, savedMeals);
   const pantry = getPantrySummary(pantryReqs);
-  const experience = buildPersonalizedExperience(profile);
 
   return (
     <AppShell profile={profile}>
-      <div className="mx-auto w-full max-w-lg md:max-w-6xl">
-        <PageHeader title={experience.greeting} subtitle={experience.subtitle} />
+      <div className="w-full max-w-lg md:max-w-none">
+        <PageHeader title={`Hey ${profile.name},`} />
 
-        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:gap-5">
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           <OverviewCard
             title="Mealdeck"
             value={savedMeals.length}
@@ -65,7 +63,7 @@ function DashboardContent() {
           />
         </div>
 
-        <div id="profile" className="scroll-mt-24 md:mx-auto md:max-w-3xl">
+        <div id="profile" className="scroll-mt-24">
           <SectionCard
             title="Your profile"
             description={`Signed in as ${profile.name}${profile.email ? ` · ${profile.email}` : ""}`}

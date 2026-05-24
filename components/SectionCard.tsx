@@ -4,6 +4,7 @@ interface SectionCardProps {
   title: string;
   description?: string;
   badge?: string;
+  action?: ReactNode;
   children: ReactNode;
   className?: string;
 }
@@ -12,6 +13,7 @@ export function SectionCard({
   title,
   description,
   badge,
+  action,
   children,
   className = "",
 }: SectionCardProps) {
@@ -26,11 +28,12 @@ export function SectionCard({
             <p className="mt-1 text-sm text-[var(--text-muted)]">{description}</p>
           )}
         </div>
-        {badge && (
-          <span className="rounded-full bg-[var(--background)] px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
-            {badge}
-          </span>
-        )}
+        {action ??
+          (badge && (
+            <span className="rounded-full bg-[var(--background)] px-3 py-1 text-xs font-medium text-[var(--text-muted)]">
+              {badge}
+            </span>
+          ))}
       </div>
       {children}
     </section>

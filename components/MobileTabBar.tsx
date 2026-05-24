@@ -10,7 +10,6 @@ const tabs: { href: string; label: string; icon: NavIconName }[] = [
   { href: "/shopping-list", label: "Shop", icon: "shop" },
   { href: "/chat", label: "Chef", icon: "chat" },
   { href: "/scanner", label: "Scan", icon: "scan" },
-  { href: "/dashboard", label: "Home", icon: "home" },
 ];
 
 export function MobileTabBar() {
@@ -25,7 +24,6 @@ export function MobileTabBar() {
         {tabs.map((tab) => {
           const active =
             pathname === tab.href ||
-            (tab.href === "/dashboard" && pathname === "/profile") ||
             (tab.href === "/mealdex" &&
               (pathname === "/discover" || pathname === "/create"));
           return (

@@ -206,25 +206,6 @@ export function saveAppState(state: AppState): void {
   window.dispatchEvent(new Event("prepdeck-state-changed"));
 }
 
-export function resetDemoData(): AppState {
-  const state = createInitialAppState();
-  const current = getAppState();
-  state.isLoggedIn = current.isLoggedIn;
-  saveAppState(state);
-  return state;
-}
-
-export function loginDemoUser(): AppState {
-  const initial = createInitialAppState();
-  const state: AppState = {
-    ...initial,
-    isLoggedIn: true,
-    profile: initial.profile,
-  };
-  saveAppState(state);
-  return state;
-}
-
 export function loginWithCredentials(
   email: string,
   password: string

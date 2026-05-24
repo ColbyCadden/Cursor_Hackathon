@@ -8,16 +8,19 @@ import {
   normalizeBarcode,
 } from "@/lib/barcodeCapture";
 import { lookupBarcodes, type BarcodeProductInfo } from "@/lib/barcodeLookup";
-import {
-  addOrUpdateInventoryItem,
-  applyCreateSeparate,
-} from "@/lib/inventoryBarcode";
 import { DEFAULT_INVENTORY_PORTIONS } from "@/lib/inventoryPortions";
 import { createId } from "@/lib/id";
 import { searchProducts, type ProductSearchResult } from "@/lib/productSearch";
+import {
+  addInventoryItemFromScanner,
+  confirmShoppingListMatch,
+  type ShoppingListMatch,
+  syncScannerItemWithShoppingList,
+} from "@/lib/scannerShoppingSync";
 import type { InventoryCategory, ScannedInventoryItem } from "@/lib/types";
 import { INVENTORY_CATEGORIES } from "@/lib/types";
 import { useAppState } from "@/lib/useAppState";
+import { ScannerShoppingMatchModal } from "./ScannerShoppingMatchModal";
 
 interface SessionItem {
   id: string;
@@ -37,6 +40,12 @@ interface ReviewItem {
 
 type Phase = "idle" | "collecting" | "looking-up" | "review";
 type AddMode = "live" | "photo" | "search";
+
+interface PendingShoppingMatch {
+  scanned: ScannedInventoryItem;
+  match: ShoppingListMatch;
+  reason: "similar" | "unit_mismatch" | "amount_unclear";
+}
 
 type FileScanner = {
   scanFileV2: (
@@ -115,6 +124,83 @@ export function BarcodeScanner() {
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [pendingMatches, setPendingMatches] = useState<PendingShoppingMatch[]>(
+    []
+  );
+
+  const pendingMatch = pendingMatches[0] ?? null;
+
+  const buildPantryMessage = (items: ScannedInventoryItem[]) => {
+    const label =
+      items.length === 1 ? items[0].name.trim() : `${items.length} items`;
+    return `Added ${label} to pantry.`;
+  };
+
+  const commitScannedItems = (items: ScannedInventoryItem[]) => {
+    if (items.length === 0 || !state) return;
+
+    const syncMessages: string[] = [];
+    const needsConfirmation: PendingShoppingMatch[] = [];
+
+    updateState((prev) => {
+      let next = prev;
+      for (const scanned of items) {
+        next = addInventoryItemFromScanner(next, scanned);
+        const sync = syncScannerItemWithShoppingList(next, scanned);
+        if (sync.status === "applied") {
+          next = sync.state;
+          syncMessages.push(...sync.messages);
+        } else if (sync.status === "needs_confirmation") {
+          needsConfirmation.push({
+            scanned,
+            match: sync.match,
+            reason: sync.reason,
+          });
+        }
+      }
+      return next;
+    });
+
+    if (needsConfirmation.length > 0) {
+      setPendingMatches((current) => [...current, ...needsConfirmation]);
+    }
+
+    const message = [buildPantryMessage(items), ...syncMessages]
+      .filter(Boolean)
+      .join(" ");
+
+    triggerScanFlash();
+    setFeedback({ type: "success", message });
+  };
+
+  const resolvePendingMatch = (
+    decision: "remove" | "keep" | "adjust",
+    adjustRemaining?: { amount: string; unit: string }
+  ) => {
+    if (!pendingMatch) return;
+
+    let syncMessages: string[] = [];
+    updateState((prev) => {
+      const result = confirmShoppingListMatch(
+        prev,
+        pendingMatch.scanned,
+        pendingMatch.match.item.id,
+        decision,
+        adjustRemaining
+      );
+      syncMessages = result.messages;
+      return result.state;
+    });
+
+    setPendingMatches((current) => current.slice(1));
+
+    if (syncMessages.length > 0) {
+      setFeedback({
+        type: "success",
+        message: syncMessages.join(" "),
+      });
+    }
+  };
 
   const syncSession = useCallback((items: SessionItem[]) => {
     sessionRef.current = items;
@@ -443,42 +529,18 @@ export function BarcodeScanner() {
       return;
     }
 
-    updateState((prev) => {
-      let nextInventory = prev.inventory;
+    const scannedItems = valid.map((item) => ({
+      name: item.name.trim(),
+      amount: item.amount.trim(),
+      unit: item.unit.trim(),
+      category: item.category,
+      portionsLeft: DEFAULT_INVENTORY_PORTIONS,
+    }));
 
-      for (const item of valid) {
-        const scanned: ScannedInventoryItem = {
-          name: item.name.trim(),
-          amount: item.amount.trim(),
-          unit: item.unit.trim(),
-          category: item.category,
-          portionsLeft: DEFAULT_INVENTORY_PORTIONS,
-        };
-
-        const result = addOrUpdateInventoryItem(nextInventory, scanned);
-        if (result.type === "added") {
-          nextInventory = result.inventory;
-        } else {
-          nextInventory = applyCreateSeparate(nextInventory, scanned);
-        }
-      }
-
-      return { ...prev, inventory: nextInventory };
-    });
-
-    const label =
-      valid.length === 1
-        ? valid[0].name.trim()
-        : `${valid.length} items`;
-
-    triggerScanFlash();
+    commitScannedItems(scannedItems);
     syncSession([]);
     setReviewItems([]);
     setPhase("collecting");
-    setFeedback({
-      type: "success",
-      message: `Added ${label} to pantry.`,
-    });
     setStatus("Point your camera at a barcode — it scans continuously.");
   };
 
@@ -499,25 +561,12 @@ export function BarcodeScanner() {
       portionsLeft: DEFAULT_INVENTORY_PORTIONS,
     };
 
-    updateState((prev) => {
-      let nextInventory = prev.inventory;
-      const result = addOrUpdateInventoryItem(nextInventory, scanned);
-      if (result.type === "added") {
-        nextInventory = result.inventory;
-      } else {
-        nextInventory = applyCreateSeparate(nextInventory, scanned);
-      }
-      return { ...prev, inventory: nextInventory };
-    });
+    commitScannedItems([scanned]);
 
     setManualName("");
     setManualAmount("");
     setManualUnit("");
     setManualCategory("Other");
-    setFeedback({
-      type: "success",
-      message: `Added ${name} to pantry.`,
-    });
   };
 
   const discardReview = () => {
@@ -540,6 +589,18 @@ export function BarcodeScanner() {
 
   return (
     <div className="space-y-6">
+      {pendingMatch && (
+        <ScannerShoppingMatchModal
+          open
+          scanned={pendingMatch.scanned}
+          shoppingItem={pendingMatch.match.item}
+          reason={pendingMatch.reason}
+          onRemove={() => resolvePendingMatch("remove")}
+          onKeep={() => resolvePendingMatch("keep")}
+          onAdjust={(remaining) => resolvePendingMatch("adjust", remaining)}
+        />
+      )}
+
       {feedback && (
         <div
           className={`rounded-xl border px-4 py-3 ${

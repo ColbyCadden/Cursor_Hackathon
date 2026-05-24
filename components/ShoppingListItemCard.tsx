@@ -54,71 +54,69 @@ export function ShoppingListItemCard({
         }`}
       >
         <div className="flex items-start gap-2">
-          <button
-            type="button"
-            onClick={() => onTap(item)}
-            className={`min-w-0 flex-1 rounded-lg p-2 text-left transition-colors ${
-              inCart ? "" : "hover:bg-white/60 active:bg-white"
-            }`}
-            aria-label={`${inCart ? "Edit cart amount for" : "Add to cart"} ${item.name}`}
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`text-sm font-medium text-[#3D3429] ${
-                  inCart ? "text-[#8A7B6D]" : ""
-                }`}
-              >
-                {item.name}
-              </span>
-              {!item.required && (
-                <span className="rounded-full bg-[#F4E8DC] px-2 py-0.5 text-xs text-[#8A7B6D]">
-                  Optional
+          <div className="min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => onTap(item)}
+              className={`w-full rounded-lg p-2 text-left transition-colors ${
+                inCart ? "" : "hover:bg-white/60 active:bg-white"
+              }`}
+              aria-label={`${inCart ? "Edit cart amount for" : "Add to cart"} ${item.name}`}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`text-sm font-medium text-[#3D3429] ${
+                    inCart ? "text-[#8A7B6D]" : ""
+                  }`}
+                >
+                  {item.name}
                 </span>
-              )}
-              {inCart && (
-                <span className="rounded-full bg-[#E8E8E8] px-2 py-0.5 text-xs text-[#6B5E52]">
-                  In cart
-                </span>
-              )}
-              {item.source === "mealdex" && (
-                <span className="rounded-full bg-[#E3F2FD] px-2 py-0.5 text-xs text-[#1565C0]">
-                  auto
-                </span>
-              )}
-            </div>
-            <p className="mt-1 text-xs font-medium text-[#6B5E52]">
-              Buy: {inCart && item.boughtAmount ? `${item.boughtAmount} ${item.boughtUnit}` : buyLabel}
-            </p>
-            {!inCart && (
-              <p className="mt-0.5 text-[10px] text-[#E8927C]">Tap to add to cart →</p>
-            )}
-            <p className="mt-0.5 text-xs text-[#8A7B6D]">Needed: {neededLabel}</p>
-            {item.grocerySection && (
-              <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[#B0A090]">
-                {item.grocerySection}
+                {!item.required && (
+                  <span className="rounded-full bg-[#F4E8DC] px-2 py-0.5 text-xs text-[#8A7B6D]">
+                    Optional
+                  </span>
+                )}
+                {inCart && (
+                  <span className="rounded-full bg-[#E8E8E8] px-2 py-0.5 text-xs text-[#6B5E52]">
+                    In cart
+                  </span>
+                )}
+                {item.source === "mealdex" && (
+                  <span className="rounded-full bg-[#E3F2FD] px-2 py-0.5 text-xs text-[#1565C0]">
+                    auto
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs font-medium text-[#6B5E52]">
+                Buy: {inCart && item.boughtAmount ? `${item.boughtAmount} ${item.boughtUnit}` : buyLabel}
               </p>
-            )}
-            {usedInLabel && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  if (usedIn.length >= 3) {
-                    e.stopPropagation();
-                    setExpandedRecipes((v) => !v);
-                  }
-                }}
-                className={`mt-1 block text-xs text-[#8A7B6D] ${
-                  usedIn.length >= 3 ? "underline-offset-2 hover:underline" : ""
-                }`}
-              >
-                {usedInLabel}
-                {usedIn.length >= 3 && !expandedRecipes ? " · tap to expand" : ""}
-              </button>
-            )}
-            {item.reason && !usedIn.length && (
-              <p className="mt-1 text-xs italic text-[#8A7B6D]">{item.reason}</p>
-            )}
-          </button>
+              {!inCart && (
+                <p className="mt-0.5 text-[10px] text-[#E8927C]">Tap to add to cart →</p>
+              )}
+              <p className="mt-0.5 text-xs text-[#8A7B6D]">Needed: {neededLabel}</p>
+              {item.grocerySection && (
+                <p className="mt-0.5 text-[10px] uppercase tracking-wide text-[#B0A090]">
+                  {item.grocerySection}
+                </p>
+              )}
+              {item.reason && !usedIn.length && (
+                <p className="mt-1 text-xs italic text-[#8A7B6D]">{item.reason}</p>
+              )}
+            </button>
+            {usedInLabel &&
+              (usedIn.length >= 3 ? (
+                <button
+                  type="button"
+                  onClick={() => setExpandedRecipes((v) => !v)}
+                  className="mx-2 mb-1 block text-xs text-[#8A7B6D] underline-offset-2 hover:underline"
+                >
+                  {usedInLabel}
+                  {!expandedRecipes ? " · tap to expand" : ""}
+                </button>
+              ) : (
+                <p className="mx-2 mb-1 text-xs text-[#8A7B6D]">{usedInLabel}</p>
+              ))}
+          </div>
           <button
             type="button"
             onClick={() => onDelete(item.id)}

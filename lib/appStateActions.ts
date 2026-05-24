@@ -486,3 +486,11 @@ export {
   requestIngredientSubstitutionContext,
   unmarkShoppingItemInCart,
 } from "./shoppingStateActions";
+
+export {
+  addInventoryItemFromScanner,
+  confirmShoppingListMatch,
+  findMatchingShoppingListItem,
+  reduceShoppingListItemAmount,
+  syncScannerItemWithShoppingList,
+} from "./scannerShoppingSync";

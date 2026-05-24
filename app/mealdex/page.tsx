@@ -20,6 +20,7 @@ import {
   swipeRight,
 } from "@/lib/meal/mealHelpers";
 import { prepMeal } from "@/lib/pantrySync";
+import { buildPersonalizedExperience } from "@/lib/signupProfile";
 import type { Meal } from "@/lib/types";
 
 function MealdexContent() {
@@ -34,6 +35,7 @@ function MealdexContent() {
   const swiped = new Set(state.swipedMealIds);
   const unswipedCount = state.meals.filter((m) => !swiped.has(m.id)).length;
   const filteredOut = unswipedCount > 0 && deck.length === 0;
+  const experience = buildPersonalizedExperience(state.profile);
 
   const confirmReset = () => {
     if (
@@ -48,25 +50,25 @@ function MealdexContent() {
   return (
     <AppShell profile={state.profile}>
       <div className="mx-auto w-full max-w-3xl pb-24 md:pb-8">
-        <div className="relative mb-4 flex flex-wrap items-start justify-between gap-3">
-          <PageHeader
-            title="Mealdeck"
-            subtitle="Swipe to discover · saved cards below"
-          />
-          <p className="max-w-[9.5rem] text-right text-[10px] leading-snug text-[var(--text-muted)]">
-            Available meals align with your cooking preferences
-          </p>
-        </div>
+        <PageHeader title={experience.greeting} subtitle={experience.subtitle} />
 
         <SectionCard
           title="Discover"
           description={`Swipe right to save · ${deck.length} left in deck`}
-          badge="Swipe"
+          action={
+            <button
+              type="button"
+              onClick={confirmReset}
+              className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)]"
+            >
+              Reset Deck
+            </button>
+          }
         >
           {filteredOut && (
             <p className="mb-4 text-sm text-[var(--text-muted)]">
               Nothing matches your diet or equipment right now. Update your{" "}
-              <Link href="/dashboard#profile" className="font-semibold text-[var(--green-dark)] underline">
+              <Link href="/dashboard" className="font-semibold text-[var(--green-dark)] underline">
                 profile
               </Link>
               .
@@ -97,18 +99,9 @@ function MealdexContent() {
         </SectionCard>
 
         <div className="mt-8">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-bold text-[var(--text)]">
-              Your collection ({saved.length})
-            </h2>
-            <button
-              type="button"
-              onClick={confirmReset}
-              className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)]"
-            >
-              Reset swipes
-            </button>
-          </div>
+          <h2 className="mb-3 text-lg font-bold text-[var(--text)]">
+            Your collection ({saved.length})
+          </h2>
 
           {saved.length === 0 ? (
             <div className="empty-state py-10">

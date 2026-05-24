@@ -51,7 +51,7 @@ export function AppShell({ children, profile }: AppShellProps) {
         />
       </div>
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col md:ml-64">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--card-border)] bg-[var(--surface)]/95 px-3 py-3 backdrop-blur sm:px-4 md:hidden">
           <button
             type="button"

@@ -94,7 +94,7 @@ export function buildPersonalizedExperience(profile: UserProfile) {
       : equipmentSummary || "Not set";
 
   return {
-    greeting: `Hey ${profile.name}, your PrepDeck is ready`,
+    greeting: `Hey ${profile.name},`,
     subtitle:
       "Swipe meals, track your pantry, and build smarter shopping lists — PrepDeck keeps your kitchen organized in one place.",
     stats: {

@@ -5,7 +5,6 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getAppState,
-  loginDemoUser,
   loginWithCredentials,
 } from "@/lib/storage";
 import { profileHasSignupData } from "@/lib/signupProfile";
@@ -37,11 +36,6 @@ export default function LoginPage() {
     router.push("/mealdex");
   };
 
-  const handleDemo = () => {
-    loginDemoUser();
-    router.push("/mealdex");
-  };
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-[var(--background)] px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
@@ -55,30 +49,6 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-[var(--text-muted)]">
             Simple cooking for busy students.
           </p>
-        </div>
-
-        <div className="demo-note mb-4 text-center">
-          Prototype login — no real backend yet. Use demo mode for the fastest
-          hackathon walkthrough.
-        </div>
-
-        <button
-          type="button"
-          onClick={handleDemo}
-          className="btn-primary mb-4 w-full min-h-[52px] text-base shadow-sm"
-        >
-          Continue as demo user →
-        </button>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[var(--card-border)]" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[var(--background)] px-3 text-[var(--text-muted)]">
-              or sign in
-            </span>
-          </div>
         </div>
 
         <form
@@ -132,7 +102,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="btn-secondary mt-6 w-full min-h-[48px]"
+            className="btn-primary mt-6 w-full min-h-[48px]"
           >
             Log in with email
           </button>

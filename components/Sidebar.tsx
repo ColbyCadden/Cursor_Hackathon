@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DemoResetButton } from "./DemoResetButton";
 import { NavIcon, type NavIconName } from "./NavIcon";
 import { PrepDeckBrand } from "./PrepDeckLogo";
 import type { UserProfile } from "@/lib/types";
 
 const navItems: { href: string; label: string; icon: NavIconName }[] = [
-  { href: "/dashboard", label: "Home", icon: "home" },
   { href: "/mealdex", label: "Mealdeck", icon: "mealdex" },
   { href: "/inventory", label: "Pantry", icon: "pantry" },
   { href: "/shopping-list", label: "Shopping list", icon: "shop" },
@@ -40,7 +38,6 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
         {navItems.map((item) => {
           const active =
             pathname === item.href ||
-            (item.href === "/dashboard" && pathname === "/profile") ||
             (item.href === "/mealdex" &&
               (pathname === "/discover" || pathname === "/create"));
           return (
@@ -72,22 +69,24 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
       </nav>
 
       <div className="border-t border-[var(--card-border)] p-4">
-        <div className="mb-3 rounded-xl bg-[var(--background)] p-3 shadow-sm">
+        <div
+          className={`mb-3 rounded-xl border p-3 shadow-sm bg-[#f5d9a8]/40 border-[#e8c47a]/50 ${
+            pathname === "/dashboard" ? "ring-1 ring-[#e8c47a]/70" : ""
+          }`}
+        >
           <p className="text-sm font-semibold text-[var(--text)]">{profile.name}</p>
           <p className="text-xs text-[var(--text-muted)]">{profile.cookingSkill} cook</p>
           <Link
-            href="/dashboard#profile"
+            href="/dashboard"
             onClick={onClose}
-            className="mt-2 inline-block text-xs font-medium text-[var(--green-dark)] hover:underline"
+            className={`mt-2 inline-block text-xs font-medium hover:underline ${
+              pathname === "/dashboard"
+                ? "font-semibold text-[var(--text)]"
+                : "text-[var(--green-dark)]"
+            }`}
           >
-            Edit profile
+            View profile
           </Link>
-        </div>
-        <div className="mb-2 rounded-xl border border-dashed border-[var(--card-border)] bg-[var(--background)] p-2">
-          <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-            Demo tools
-          </p>
-          <DemoResetButton />
         </div>
         <button
           type="button"
