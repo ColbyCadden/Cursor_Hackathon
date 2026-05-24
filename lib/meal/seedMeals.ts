@@ -301,7 +301,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-quesadilla",
     name: "Cheese Quesadilla",
-    imageUri: UNSPLASH("photo-1567620905732-2d1ec7ab7445"),
+    imageUri: LOCAL("cheese-quesadilla.png"),
     difficulty: 1,
     price: 2,
     highProtein: true,
@@ -403,7 +403,7 @@ export const SEED_MEALS: Meal[] = [
   {
     id: "seed-chicken-biryani",
     name: "Chicken Biryani",
-    imageUri: UNSPLASH("photo-1559528896-c5310744cce8"),
+    imageUri: LOCAL("chicken-biryani.png"),
     difficulty: 3,
     price: 3,
     highProtein: true,
