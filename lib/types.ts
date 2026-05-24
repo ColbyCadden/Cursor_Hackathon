@@ -71,6 +71,12 @@ export interface Meal {
   highProtein: boolean;
   highVegetables: boolean;
   ingredients: string[];
+  /** Equipment keys from signupConstants — empty means no special gear needed */
+  requiredEquipment?: string[];
+  /** True when the recipe includes meat, poultry, or fish */
+  containsMeat?: boolean;
+  /** Rough active cooking time for soft ranking */
+  estimatedMinutes?: number;
   isCustom?: boolean;
 }
 

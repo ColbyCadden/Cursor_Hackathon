@@ -1,4 +1,5 @@
 import { createInitialAppState } from "./demoData";
+import { enrichMeal, normalizeIngredientPreference } from "./meal/mealPersonalization";
 import { SEED_MEALS } from "./meal/seedMeals";
 import { authenticateUser } from "./auth";
 import { clearPendingSignup } from "./signupSession";
@@ -22,10 +23,19 @@ function isBrowser(): boolean {
 
 function migrateProfile(profile: Partial<UserProfile>): UserProfile {
   const base = createInitialAppState().profile;
-  return {
+  const merged = {
     ...base,
     ...profile,
     profileComplete: profile.profileComplete ?? false,
+  };
+  return {
+    ...merged,
+    ingredient_preference: normalizeIngredientPreference(
+      merged.ingredient_preference,
+    ),
+    cooking_equipment: (merged.cooking_equipment ?? []).filter(
+      (key) => key !== "grill",
+    ),
   };
 }
 
@@ -65,10 +75,8 @@ function migrateMeals(parsed: LegacyAppState): Meal[] {
   const seedById = new Map(SEED_MEALS.map((m) => [m.id, m]));
   return meals.map((meal) => {
     const seed = seedById.get(meal.id);
-    if (seed) {
-      return { ...meal, imageUri: seed.imageUri };
-    }
-    return meal;
+    const withImage = seed ? { ...meal, imageUri: seed.imageUri } : meal;
+    return enrichMeal(withImage, seed);
   });
 }
 
