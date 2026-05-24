@@ -1,4 +1,5 @@
 import { deriveIngredientTags } from "./ingredientAliases";
+import { categoryToGrocerySection } from "./grocerySections";
 import { getDefaultForIngredient } from "./ingredientDefaults";
 import { createId } from "./id";
 import {
@@ -7,6 +8,8 @@ import {
   normalizeIngredientName,
 } from "./inventoryMatching";
 import { buildMealdexShoppingList } from "./meal/shoppingList";
+import { suggestBuyAmounts } from "./grocerySections";
+import { normalizeShoppingItem } from "./shoppingItemUtils";
 import type {
   AppState,
   InventoryItem,
@@ -123,29 +126,50 @@ export function syncShoppingListForPantry(
     );
 
     if (idx === -1) {
-      list.push({
-        id: createId("shop"),
-        name: req.name,
-        amount: req.amountNeeded,
-        unit: req.unit,
-        category: req.category,
-        required: true,
-        bought: false,
-        addedToInventory: false,
-        source: "mealdex",
-      });
+      const buy = suggestBuyAmounts(req.name, req.amountNeeded, req.unit);
+      list.push(
+        normalizeShoppingItem({
+          id: createId("shop"),
+          name: req.name,
+          amount: req.amountNeeded,
+          unit: req.unit,
+          amountNeeded: req.amountNeeded,
+          unitNeeded: req.unit,
+          buyAmount: buy.buyAmount,
+          buyUnit: buy.buyUnit,
+          equivalentAmount: buy.equivalentAmount,
+          equivalentUnit: buy.equivalentUnit,
+          category: req.category,
+          grocerySection: categoryToGrocerySection(req.category),
+          required: true,
+          bought: false,
+          addedToInventory: false,
+          inCart: false,
+          source: "mealdex",
+          usedInRecipes: req.mealNames,
+        })
+      );
       continue;
     }
 
     const existing = list[idx];
     if (existing.source === "mealdex" || existing.source === undefined) {
-      list[idx] = {
+      const buy = suggestBuyAmounts(req.name, req.amountNeeded, req.unit);
+      list[idx] = normalizeShoppingItem({
         ...existing,
         amount: req.amountNeeded,
         unit: req.unit,
+        amountNeeded: req.amountNeeded,
+        unitNeeded: req.unit,
+        buyAmount: buy.buyAmount,
+        buyUnit: buy.buyUnit,
+        equivalentAmount: buy.equivalentAmount,
+        equivalentUnit: buy.equivalentUnit,
         category: req.category,
+        grocerySection: categoryToGrocerySection(req.category),
         source: existing.source ?? "mealdex",
-      };
+        usedInRecipes: req.mealNames,
+      });
     }
   }
 

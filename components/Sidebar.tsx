@@ -13,7 +13,6 @@ const navItems = [
   { href: "/shopping-list", label: "Shopping", icon: "🛒" },
   { href: "/scanner", label: "Scanner", icon: "📷" },
   { href: "/chat", label: "AI Chat", icon: "💬" },
-  { href: "/profile", label: "Profile", icon: "👤" },
 ];
 
 interface SidebarProps {
@@ -40,6 +39,7 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
         {navItems.map((item) => {
           const active =
             pathname === item.href ||
+            (item.href === "/dashboard" && pathname === "/profile") ||
             (item.href === "/mealdex" &&
               (pathname === "/discover" || pathname === "/create"));
           return (
@@ -66,6 +66,13 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
         <div className="mb-3 rounded-xl bg-[var(--background)] p-3 shadow-sm">
           <p className="text-sm font-semibold text-[var(--text)]">{profile.name}</p>
           <p className="text-xs text-[var(--text-muted)]">{profile.cookingSkill} cook</p>
+          <Link
+            href="/dashboard#profile"
+            onClick={onClose}
+            className="mt-2 inline-block text-xs font-medium text-[var(--green-dark)] hover:underline"
+          >
+            Edit profile
+          </Link>
         </div>
         <div className="mb-2 rounded-xl border border-dashed border-[var(--card-border)] bg-[var(--background)] p-2">
           <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">

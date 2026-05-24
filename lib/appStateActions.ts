@@ -86,10 +86,23 @@ export function applyAIAction(state: AppState, action: ChatAction): ActionResult
         name: String(payload.name ?? ""),
         amount: String(payload.amount ?? "1"),
         unit: String(payload.unit ?? ""),
+        amountNeeded: payload.amountNeeded
+          ? String(payload.amountNeeded)
+          : String(payload.amount ?? "1"),
+        unitNeeded: payload.unitNeeded
+          ? String(payload.unitNeeded)
+          : String(payload.unit ?? ""),
         category: (payload.category as ShoppingCategory) ?? "Other",
         required: payload.required !== false,
         reason: payload.reason ? String(payload.reason) : undefined,
         sourceMealId: payload.sourceMealId ? String(payload.sourceMealId) : undefined,
+        sourceMealIds: Array.isArray(payload.sourceMealIds)
+          ? payload.sourceMealIds.map(String)
+          : undefined,
+        usedInRecipes: Array.isArray(payload.usedInRecipes)
+          ? payload.usedInRecipes.map(String)
+          : undefined,
+        source: "ai",
       });
       const name = String(payload.name ?? "item");
       return {
@@ -110,10 +123,23 @@ export function applyAIAction(state: AppState, action: ChatAction): ActionResult
             name: String(row.name ?? ""),
             amount: String(row.amount ?? "1"),
             unit: String(row.unit ?? ""),
+            amountNeeded: row.amountNeeded
+              ? String(row.amountNeeded)
+              : String(row.amount ?? "1"),
+            unitNeeded: row.unitNeeded
+              ? String(row.unitNeeded)
+              : String(row.unit ?? ""),
             category: (row.category as ShoppingCategory) ?? "Other",
             required: row.required !== false,
             reason: row.reason ? String(row.reason) : undefined,
             sourceMealId: row.sourceMealId ? String(row.sourceMealId) : undefined,
+            sourceMealIds: Array.isArray(row.sourceMealIds)
+              ? row.sourceMealIds.map(String)
+              : undefined,
+            usedInRecipes: Array.isArray(row.usedInRecipes)
+              ? row.usedInRecipes.map(String)
+              : undefined,
+            source: "ai" as const,
           };
         })
       );
@@ -209,3 +235,16 @@ export function setGeneratedMealPlan(
 ): AppState {
   return { ...state, generatedMealPlan: plan };
 }
+
+export {
+  addCartToInventory,
+  applyIngredientSubstitution,
+  createInventoryItemFromCart,
+  getCartItems,
+  markShoppingItemInCart,
+  mergeInventoryItem,
+  removeAffectedMealsFromCurrentPlan,
+  removeShoppingListItem,
+  requestIngredientSubstitutionContext,
+  unmarkShoppingItemInCart,
+} from "./shoppingStateActions";

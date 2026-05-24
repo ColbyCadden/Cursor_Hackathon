@@ -24,6 +24,7 @@ export function MobileTabBar() {
         {tabs.map((tab) => {
           const active =
             pathname === tab.href ||
+            (tab.href === "/dashboard" && pathname === "/profile") ||
             (tab.href === "/mealdex" &&
               (pathname === "/discover" || pathname === "/create"));
           return (

@@ -142,12 +142,25 @@ function parseSuggestedItems(raw: unknown): SuggestedShoppingItem[] | undefined 
         name: String(row.name).trim(),
         amount: String(row.amount ?? "1").trim(),
         unit: String(row.unit ?? "").trim(),
+        amountNeeded: row.amountNeeded
+          ? String(row.amountNeeded).trim()
+          : String(row.amount ?? "1").trim(),
+        unitNeeded: row.unitNeeded
+          ? String(row.unitNeeded).trim()
+          : String(row.unit ?? "").trim(),
         category: VALID_CATEGORIES.has(String(row.category))
           ? (String(row.category) as InventoryCategory)
           : "Other",
         required: row.required !== false,
         reason: row.reason ? String(row.reason) : undefined,
         sourceMealId: row.sourceMealId ? String(row.sourceMealId) : undefined,
+        sourceMealIds: Array.isArray(row.sourceMealIds)
+          ? row.sourceMealIds.map(String)
+          : undefined,
+        usedInRecipes: Array.isArray(row.usedInRecipes)
+          ? row.usedInRecipes.map(String)
+          : undefined,
+        source: "ai" as const,
       };
     });
   return items.length ? items : undefined;

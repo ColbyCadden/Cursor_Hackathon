@@ -113,19 +113,69 @@ export type ShoppingCategory = InventoryCategory;
 
 export const SHOPPING_CATEGORIES: ShoppingCategory[] = [...INVENTORY_CATEGORIES];
 
+/** Grocery store aisle grouping for shopping mode */
+export type GrocerySection =
+  | "Produce"
+  | "Meat & Seafood"
+  | "Dairy & Eggs"
+  | "Grains & Bread"
+  | "Pantry"
+  | "Frozen"
+  | "Spices & Sauces"
+  | "Snacks"
+  | "Other";
+
+export const GROCERY_SECTIONS: GrocerySection[] = [
+  "Produce",
+  "Meat & Seafood",
+  "Dairy & Eggs",
+  "Grains & Bread",
+  "Pantry",
+  "Frozen",
+  "Spices & Sauces",
+  "Snacks",
+  "Other",
+];
+
 export interface ShoppingListItem {
   id: string;
   name: string;
+  /** Legacy — prefer amountNeeded */
   amount: string;
+  /** Legacy — prefer unitNeeded */
   unit: string;
   category: ShoppingCategory;
+  /** Store aisle for shopping mode UI */
+  grocerySection?: GrocerySection;
   required: boolean;
+  optional?: boolean;
+  reason?: string;
+  amountNeeded?: string;
+  unitNeeded?: string;
+  buyAmount?: string;
+  buyUnit?: string;
+  equivalentAmount?: string;
+  equivalentUnit?: string;
+  usedInRecipes?: string[];
+  sourceMealIds?: string[];
+  /** Waiting in cart for final "Add to inventory" confirmation */
+  inCart?: boolean;
+  boughtAmount?: string;
+  boughtUnit?: string;
+  boughtEquivalentAmount?: string;
+  boughtEquivalentUnit?: string;
   bought: boolean;
   addedToInventory: boolean;
   /** Where this item came from — mealdex items are auto-synced from saved meals */
   source?: "manual" | "mealdex" | "ai";
-  reason?: string;
   sourceMealId?: string;
+}
+
+export interface CartBoughtData {
+  boughtAmount: string;
+  boughtUnit: string;
+  boughtEquivalentAmount?: string;
+  boughtEquivalentUnit?: string;
 }
 
 /** AI or manual deduction of pantry stock after meal prep */
@@ -139,12 +189,31 @@ export type ChatRole = "user" | "assistant";
 
 export interface SuggestedShoppingItem {
   name: string;
+  /** Legacy — prefer amountNeeded */
   amount: string;
+  /** Legacy — prefer unitNeeded */
   unit: string;
   category: ShoppingCategory;
+  grocerySection?: GrocerySection;
   required: boolean;
   reason?: string;
+  amountNeeded?: string;
+  unitNeeded?: string;
+  buyAmount?: string;
+  buyUnit?: string;
+  equivalentAmount?: string;
+  equivalentUnit?: string;
+  usedInRecipes?: string[];
+  sourceMealIds?: string[];
   sourceMealId?: string;
+  source?: "manual" | "mealdex" | "ai";
+}
+
+export interface IngredientSubstitution {
+  original: string;
+  substitute: string;
+  core: boolean;
+  note?: string;
 }
 
 export type AIActionType =
@@ -172,6 +241,10 @@ export interface AdaptedRecipeIngredient {
 
 export interface AdaptedRecipe {
   title: string;
+  /** Original title before core-ingredient substitution */
+  originalTitle?: string;
+  /** Display title — may include substitution note */
+  displayTitle?: string;
   basedOnMealCardId?: string;
   servings?: number;
   tags?: string[];
@@ -179,6 +252,8 @@ export interface AdaptedRecipe {
   missingIngredients?: string[];
   ingredients?: AdaptedRecipeIngredient[];
   steps?: string[];
+  substitutions?: IngredientSubstitution[];
+  ingredientNotes?: string[];
 }
 
 export interface GeneratedMealPlan {

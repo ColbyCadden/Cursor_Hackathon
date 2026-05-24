@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import type { UserProfile } from "@/lib/types";
 import { buildPersonalizedExperience } from "@/lib/signupProfile";
 
@@ -26,12 +25,12 @@ export function PersonalizationSummary({ profile }: PersonalizationSummaryProps)
         selected
       </div>
 
-      <Link
-        href="/profile"
+      <a
+        href="#profile"
         className="inline-flex rounded-xl border border-[#E8DDD0] bg-white px-5 py-2.5 text-sm font-medium text-[#6B5E52] transition hover:bg-[#F4E8DC]/60"
       >
-        Edit profile
-      </Link>
+        Edit profile settings
+      </a>
     </div>
   );
 }

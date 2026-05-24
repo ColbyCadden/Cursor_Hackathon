@@ -7,13 +7,18 @@ import {
 } from "./inventoryBarcode";
 import { DEFAULT_INVENTORY_PORTIONS } from "./inventoryPortions";
 import { shoppingCategoryToInventory } from "./shoppingCategories";
+import { getBuyAmount, getBuyUnit } from "./shoppingItemUtils";
 import type { InventoryItem, ScannedInventoryItem, ShoppingListItem } from "./types";
 
 export function shoppingItemToScanned(item: ShoppingListItem): ScannedInventoryItem {
+  const amount =
+    item.boughtAmount ?? (item.inCart ? getBuyAmount(item) : item.amount);
+  const unit =
+    item.boughtUnit ?? (item.inCart ? getBuyUnit(item) : item.unit);
   return {
     name: item.name,
-    amount: item.amount,
-    unit: item.unit,
+    amount,
+    unit,
     category: shoppingCategoryToInventory(item.category),
     portionsLeft: DEFAULT_INVENTORY_PORTIONS,
   };
