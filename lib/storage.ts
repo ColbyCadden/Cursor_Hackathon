@@ -14,6 +14,8 @@ import type {
 
 const STORAGE_KEY = "prepdeck-app-state";
 
+export { STORAGE_KEY };
+
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
@@ -139,6 +141,7 @@ export function getAppState(): AppState {
 export function saveAppState(state: AppState): void {
   if (!isBrowser()) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  window.dispatchEvent(new Event("prepdeck-state-changed"));
 }
 
 export function resetDemoData(): AppState {

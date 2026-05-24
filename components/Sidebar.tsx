@@ -9,6 +9,7 @@ const navItems = [
   { href: "/discover", label: "Discover", icon: "🔥" },
   { href: "/mealdex", label: "Mealdex", icon: "📚" },
   { href: "/shopping-list", label: "Shopping", icon: "🛒" },
+  { href: "/scanner", label: "Scanner", icon: "📷" },
   { href: "/create", label: "Create card", icon: "➕" },
   { href: "/chat", label: "AI Chat", icon: "💬" },
   { href: "/profile", label: "Profile", icon: "👤" },
