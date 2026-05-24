@@ -1,34 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/components/AuthGuard";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/PageHeader";
 import { ShoppingListManager } from "@/components/ShoppingListManager";
 import { useAppState } from "@/lib/useAppState";
-import { getSavedMeals } from "@/lib/meal/mealHelpers";
-import { syncPantryState } from "@/lib/pantrySync";
 import type { AppState } from "@/lib/types";
 
 function ShoppingContent() {
   const { state, updateState } = useAppState();
 
-  useEffect(() => {
-    updateState((prev) => syncPantryState(prev));
-  }, [updateState]);
-
   if (!state) return null;
 
-  const savedMeals = getSavedMeals(state);
   const { shoppingList, profile } = state;
 
   const handlePantryUpdate = (updater: (prev: AppState) => AppState) => {
     updateState(updater);
-  };
-
-  const handleResync = () => {
-    updateState((prev) => syncPantryState(prev));
   };
 
   return (
@@ -40,7 +28,6 @@ function ShoppingContent() {
         />
 
         <div className="space-y-6">
-          {/* Primary: grocery shopping mode */}
           <section className="rounded-2xl border border-[#E8DDD0] bg-white/90 p-4 shadow-sm sm:p-5">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -51,23 +38,12 @@ function ShoppingContent() {
                   Grouped by store aisle — tap each item when you pick it up.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {savedMeals.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleResync}
-                    className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface)]"
-                  >
-                    Sync from Mealdeck
-                  </button>
-                )}
-                <Link
-                  href="/inventory"
-                  className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface)]"
-                >
-                  Open Pantry
-                </Link>
-              </div>
+              <Link
+                href="/inventory"
+                className="rounded-lg border border-[var(--card-border)] px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface)]"
+              >
+                Open Pantry
+              </Link>
             </div>
 
             <ShoppingListManager
@@ -80,12 +56,14 @@ function ShoppingContent() {
             />
           </section>
 
-          {savedMeals.length === 0 && (            <section className="rounded-2xl border border-dashed border-[#E8DDD0] bg-[#FAF6F0]/40 p-6 text-center">
+          {shoppingList.length === 0 && (
+            <section className="rounded-2xl border border-dashed border-[#E8DDD0] bg-[#FAF6F0]/40 p-6 text-center">
               <p className="text-sm text-[var(--text-muted)]">
-                Save meals in Mealdeck to auto-fill your grocery list.
+                Add items manually here, or ask Chef to suggest groceries for your
+                meal plan.
               </p>
-              <Link href="/mealdex" className="btn-primary mt-4 inline-flex">
-                Open Mealdeck
+              <Link href="/chat" className="btn-primary mt-4 inline-flex">
+                Open Chef
               </Link>
             </section>
           )}

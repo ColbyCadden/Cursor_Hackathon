@@ -109,7 +109,7 @@ export function ConfirmCookedRecipeModal({
         />
         <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--card-border)] bg-white p-5 shadow-xl">
           <h3 className="text-lg font-semibold text-[var(--text)]">
-            Confirm cooked: {title}
+            Create recipe: {title}
           </h3>
           <p className="mt-1 text-xs text-[var(--text-muted)]">
             Edit amounts and choose what to subtract from pantry.

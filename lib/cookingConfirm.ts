@@ -370,6 +370,10 @@ export function confirmCookedRecipe(
 
   if (options?.messageId != null && options.recipeIndex != null) {
     const key = recipeKey(options.messageId, options.recipeIndex, recipe);
+    const alreadyCooked = state.chatMessages
+      .find((msg) => msg.id === options.messageId)
+      ?.cookedRecipeKeys?.includes(key);
+
     next = {
       ...next,
       chatMessages: next.chatMessages.map((msg) =>
@@ -380,6 +384,15 @@ export function confirmCookedRecipe(
             }
           : msg
       ),
+      recipesCreated:
+        alreadyCooked ?
+          (state.recipesCreated ?? 0)
+        : (state.recipesCreated ?? 0) + 1,
+    };
+  } else {
+    next = {
+      ...next,
+      recipesCreated: (state.recipesCreated ?? 0) + 1,
     };
   }
 

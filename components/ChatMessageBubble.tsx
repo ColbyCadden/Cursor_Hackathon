@@ -4,17 +4,16 @@ import { ChatActionButtons } from "./ChatActionButtons";
 import { ChatRecipeCards } from "./ChatRecipeCards";
 import { SharedIngredientsStrategyCard } from "./SharedIngredientsStrategyCard";
 import { SuggestedShoppingItems } from "./SuggestedShoppingItems";
-import { parseAIResponse } from "@/lib/ai/chatHelpers";
+import { sanitizeChatDisplayText } from "@/lib/ai/chatHelpers";
+import {
+  mergeSuggestedShoppingItems,
+  suggestedItemsFromRecipes,
+} from "@/lib/suggestedItemsFromRecipes";
 import type { ChatAction, ChatMessage } from "@/lib/types";
 
 /** Show plain text even if an old message stored raw JSON. */
 function displayChatContent(content: string): string {
-  const trimmed = content.trim();
-  if (!trimmed.startsWith("{") || !trimmed.includes('"message"')) {
-    return content;
-  }
-  const parsed = parseAIResponse(trimmed);
-  return parsed.text || content;
+  return sanitizeChatDisplayText(content);
 }
 
 interface ChatMessageBubbleProps {
@@ -51,7 +50,7 @@ export function ChatMessageBubble({
       >
         {!isUser && (
           <p className="mb-1 text-xs font-semibold text-[var(--salmon-dark)]">
-            PrepDeck AI
+            Chef AI
           </p>
         )}
         <p className="whitespace-pre-wrap">{displayChatContent(message.content)}</p>
@@ -131,16 +130,25 @@ export function ChatMessageBubble({
           )}
 
         {!isUser &&
-          message.suggestedItems &&
-          message.suggestedItems.length > 0 &&
-          onAddSuggestedItems &&
-          !message.actions?.length && (
-            <SuggestedShoppingItems
-              items={message.suggestedItems}
-              added={message.suggestedItemsAdded}
-              onAdd={() => onAddSuggestedItems(message.id)}
-            />
-          )}
+          (() => {
+            const suggestedItems = mergeSuggestedShoppingItems(
+              message.suggestedItems,
+              suggestedItemsFromRecipes(message.recipes ?? [])
+            );
+            if (
+              !suggestedItems.length ||
+              !onAddSuggestedItems
+            ) {
+              return null;
+            }
+            return (
+              <SuggestedShoppingItems
+                items={suggestedItems}
+                added={message.suggestedItemsAdded}
+                onAdd={() => onAddSuggestedItems(message.id)}
+              />
+            );
+          })()}
       </div>
     </div>
   );

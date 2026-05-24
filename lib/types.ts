@@ -359,6 +359,8 @@ export interface AppState {
   chatMessages: ChatMessage[];
   /** AI-generated meal plan / adapted recipes */
   generatedMealPlan?: GeneratedMealPlan | null;
+  /** Recipes confirmed as cooked in Chef */
+  recipesCreated?: number;
 }
 
 /** @deprecated — migrated on load */

@@ -18,7 +18,10 @@ export function SuggestedShoppingItems({
   return (
     <div className="mt-3 rounded-xl border border-[var(--card-border)] bg-[var(--surface)] p-3">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-        Suggested items
+        Missing ingredients
+      </p>
+      <p className="mb-2 text-xs text-[var(--text-muted)]">
+        Review these items, then add them to your shopping list when you&apos;re ready.
       </p>
       <ul className="space-y-1 text-xs text-[var(--text)]">
         {items.map((item) => (
@@ -40,7 +43,7 @@ export function SuggestedShoppingItems({
           onClick={onAdd}
           className="btn-primary mt-3 min-h-[40px] px-4 py-2 text-xs"
         >
-          Add suggested items to shopping list
+          Add to shopping list
         </button>
       )}
     </div>

@@ -7,7 +7,7 @@ import { PrepDeckBrand } from "./PrepDeckLogo";
 import type { UserProfile } from "@/lib/types";
 
 const navItems: { href: string; label: string; icon: NavIconName }[] = [
-  { href: "/mealdex", label: "Mealdeck", icon: "mealdex" },
+  { href: "/mealdex", label: "MealDeck", icon: "mealdex" },
   { href: "/inventory", label: "Pantry", icon: "pantry" },
   { href: "/shopping-list", label: "Shopping list", icon: "shop" },
   { href: "/scanner", label: "Scanner", icon: "scan" },
@@ -25,7 +25,7 @@ export function Sidebar({ profile, onLogout, onClose }: SidebarProps) {
 
   return (
     <aside className="flex h-full flex-col border-r border-[var(--card-border)] bg-[var(--surface)]">
-      <div className="border-b border-[var(--card-border)] p-5">
+      <div className="border-b border-[var(--card-border)] py-5 pl-3 pr-4">
         <PrepDeckBrand
           href="/mealdex"
           onClick={onClose}

@@ -51,7 +51,7 @@ export function addSingleToShoppingList(
     return {
       list: [
         ...shoppingList,
-        createShoppingItemFromSuggested(item, { id: createId("shop") }),
+        createShoppingItemFromSuggested(item, { id: createId("shop"), source: "manual" }),
       ],
       added: true,
       updated: false,
@@ -87,7 +87,7 @@ export function addSingleToShoppingList(
         existing.usedInRecipes,
         item.usedInRecipes
       ),
-      source: existing.source === "manual" ? item.source ?? existing.source : existing.source,
+      source: "manual",
     });
     return { list, added: false, updated: true, skipped: false };
   }

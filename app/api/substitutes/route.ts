@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateWithGemini } from "@/lib/ai/geminiProvider";
 import { generateWithGroq } from "@/lib/ai/groqProvider";
-import { createInitialAppState } from "@/lib/demoData";
+import { createInitialAppState } from "@/lib/initialState";
 import { getLocalSubstituteSuggestions } from "@/lib/shoppingStateActions";
 import type { AppState } from "@/lib/types";
 

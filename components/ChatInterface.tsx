@@ -15,6 +15,10 @@ import { generateAIResponse } from "@/lib/mockAI";
 import { applyInventoryUpdates, syncPantryState } from "@/lib/pantrySync";
 import { mergeSuggestedIntoShoppingList } from "@/lib/shoppingListHelpers";
 import {
+  mergeSuggestedShoppingItems,
+  suggestedItemsFromRecipes,
+} from "@/lib/suggestedItemsFromRecipes";
+import {
   buildCookingConfirmRows,
   confirmCookedRecipe,
   enrichRecipeWithInventory,
@@ -41,12 +45,17 @@ function buildAssistantMessage(response: AIResponse, inventory: AppState["invent
   const recipes = response.recipes?.map((r) =>
     enrichRecipeWithInventory(r, inventory)
   );
+  const suggestedItems = mergeSuggestedShoppingItems(
+    response.suggestedItems,
+    response.shoppingListUpdates,
+    suggestedItemsFromRecipes(recipes ?? [])
+  );
   return {
     id: createId("chat"),
     role: "assistant",
     content: response.text?.trim() || "Sorry, I didn't get a useful reply. Try again.",
     createdAt: new Date().toISOString(),
-    suggestedItems: response.suggestedItems,
+    suggestedItems: suggestedItems.length ? suggestedItems : undefined,
     mealPrepSteps: response.mealPrepSteps,
     inventoryUpdates: response.inventoryUpdates,
     actions: response.actions,
@@ -243,11 +252,17 @@ export function ChatInterface({ appState, onUpdate }: ChatInterfaceProps) {
 
   const handleAddSuggestedItems = (messageId: string) => {
     const message = appState.chatMessages.find((m) => m.id === messageId);
-    if (!message?.suggestedItems?.length || message.suggestedItemsAdded) return;
+    if (!message || message.suggestedItemsAdded) return;
+
+    const suggestedItems = mergeSuggestedShoppingItems(
+      message.suggestedItems,
+      suggestedItemsFromRecipes(message.recipes ?? [])
+    );
+    if (!suggestedItems.length) return;
 
     const { list, added, updated, skipped } = mergeSuggestedIntoShoppingList(
       appState.shoppingList,
-      message.suggestedItems
+      suggestedItems
     );
 
     onUpdate((prev) => ({

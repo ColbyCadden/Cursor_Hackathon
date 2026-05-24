@@ -20,10 +20,10 @@ export function OverviewCard({
 }: OverviewCardProps) {
   return (
     <div
-      className={`rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5 ${accentStyles[accent]}`}
+      className={`rounded-2xl border p-4 text-center shadow-sm transition-shadow hover:shadow-md sm:p-5 ${accentStyles[accent]}`}
     >
       <p className="text-sm font-medium text-[var(--text-muted)]">{title}</p>
-      <p className="mt-1 text-2xl font-bold text-[var(--text)]">{value}</p>
+      <p className="mt-2 text-2xl font-bold text-[var(--text)]">{value}</p>
       {subtitle && (
         <p className="mt-1 text-xs text-[var(--text-muted)]">{subtitle}</p>
       )}

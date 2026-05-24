@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const links = [
   { href: "/discover", label: "Swipe meals", icon: "🔥", desc: "Discover new cards" },
-  { href: "/mealdex", label: "Mealdeck", icon: "📚", desc: "Your saved cards" },
+  { href: "/mealdex", label: "MealDeck", icon: "📚", desc: "Your saved cards" },
   { href: "/inventory", label: "Pantry", icon: "🧊", desc: "Fridge & pantry" },
   { href: "/shopping-list", label: "Shopping", icon: "🛒", desc: "Groceries & list" },
   { href: "/chat", label: "Chef", icon: "💬", desc: "Meal planner" },

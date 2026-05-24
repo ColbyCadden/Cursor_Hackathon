@@ -1,4 +1,4 @@
-import { createInitialAppState } from "./demoData";
+import { createInitialAppState } from "./initialState";
 import { registerUser, type RegisteredUser } from "./auth";
 import { normalizeIngredientPreference } from "./meal/mealPersonalization";
 import {
@@ -10,6 +10,7 @@ import {
 } from "./signupConstants";
 import type { PendingSignup } from "./signupSession";
 import { clearPendingSignup } from "./signupSession";
+import { markSessionLoggedIn } from "./sessionAuth";
 import type { AppState, UserProfile } from "./types";
 import { saveAppState } from "./storage";
 
@@ -154,6 +155,7 @@ export function completeSignup(pending: PendingSignup): AppState {
     profile,
   };
 
+  markSessionLoggedIn();
   saveAppState(state);
   clearPendingSignup();
   return state;

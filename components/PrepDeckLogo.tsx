@@ -1,18 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const SIZES = { sm: 64, md: 104, lg: 176 } as const;
+const SIZES = { sm: 64, md: 104, lg: 176, xl: 220 } as const;
 
 const BRAND_TEXT = {
   sm: "text-lg",
   md: "text-2xl",
   lg: "text-3xl",
+  xl: "text-4xl",
 } as const;
 
 const BRAND_TAGLINE = {
   sm: "text-xs",
   md: "text-sm",
   lg: "text-base",
+  xl: "text-lg",
 } as const;
 
 interface PrepDeckLogoProps {

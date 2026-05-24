@@ -41,7 +41,7 @@ export function ChatRecipeCards({
               </p>
               {cooked && (
                 <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800">
-                  Cooked
+                  Recipe created
                 </span>
               )}
             </div>
@@ -89,7 +89,7 @@ export function ChatRecipeCards({
                 className="mt-3 inline-flex min-h-[40px] items-center gap-2 rounded-lg bg-[var(--green-dark)]/90 px-3 py-2 text-xs font-semibold text-white hover:bg-[var(--green-dark)]"
               >
                 <ChefHat size={16} aria-hidden />
-                Confirm cooked
+                Recipe created
               </button>
             )}
           </div>

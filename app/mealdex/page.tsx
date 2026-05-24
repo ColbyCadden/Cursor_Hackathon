@@ -40,7 +40,7 @@ function MealdexContent() {
   const confirmReset = () => {
     if (
       window.confirm(
-        "Reset all swipes and clear Mealdeck? You can swipe the deck again.",
+        "Reset all swipes and clear MealDeck? You can swipe the deck again.",
       )
     ) {
       updateState((prev) => resetMealSwipes(prev));
@@ -166,7 +166,7 @@ function MealdexContent() {
                   }}
                   className="rounded-xl border border-[#E8A598] py-3 text-sm font-semibold text-[#D48476]"
                 >
-                  Remove from Mealdeck
+                  Remove from MealDeck
                 </button>
                 <button
                   type="button"

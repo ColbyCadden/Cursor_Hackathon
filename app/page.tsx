@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAppState, resetAllAppData } from "@/lib/storage";
 import { profileHasSignupData } from "@/lib/signupProfile";
-import { PrepDeckLogo } from "@/components/PrepDeckLogo";
+import { PrepDeckBrand } from "@/components/PrepDeckLogo";
 
 export default function HomePage() {
   const router = useRouter();
@@ -20,14 +20,13 @@ export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-[var(--background)] px-4 py-12">
       <div className="w-full max-w-2xl text-center">
-        <div className="mb-6 flex justify-center">
-          <PrepDeckLogo size="lg" className="drop-shadow-md" />
-        </div>
-        <p className="mb-4 inline-block rounded-full bg-[var(--salmon)]/30 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-          PrepDeck for students
-        </p>
+        <PrepDeckBrand
+          href=""
+          size="xl"
+          className="mx-auto mb-2 flex flex-col-reverse items-center gap-0 drop-shadow-md [&_div]:text-center [&_span]:leading-none [&>img]:-mt-4"
+        />
         <h1 className="text-3xl font-bold tracking-tight text-[var(--text)] sm:text-4xl">
-          Swipe meals. Save to Mealdeck. Shop smarter.
+          Swipe Meals. Update Pantry. Shop Smarter.
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-[var(--text-muted)] sm:text-base">
           Sign up once, personalize your kitchen, then discover meal cards and
@@ -39,7 +38,7 @@ export default function HomePage() {
             href="/signup/account"
             className="w-full min-h-[48px] rounded-xl bg-[var(--salmon)] px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--salmon-dark)] sm:w-auto"
           >
-            Get started free
+            Get started
           </Link>
           <Link
             href="/login"
@@ -48,19 +47,6 @@ export default function HomePage() {
             Log in
           </Link>
         </div>
-
-        <ul className="mt-10 flex flex-wrap justify-center gap-3 text-xs text-[var(--text-muted)]">
-          {["Mealdeck swipe", "Auto shop list", "Custom cards", "AI planner"].map(
-            (feature) => (
-              <li
-                key={feature}
-                className="rounded-full border border-[var(--card-border)] bg-[var(--surface)] px-3 py-1.5"
-              >
-                {feature}
-              </li>
-            )
-          )}
-        </ul>
 
         <button
           type="button"

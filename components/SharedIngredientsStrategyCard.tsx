@@ -66,9 +66,17 @@ export function SharedIngredientsStrategyCard({
       )}
 
       {strategy.coreChanges && strategy.coreChanges.length > 0 && (
-        <p className="mt-2 text-xs text-amber-800">
-          Core changes suggested — review action buttons before accepting.
-        </p>
+        <ul className="mt-2 space-y-1 text-xs text-amber-800">
+          {strategy.coreChanges.map((change, index) => (
+            <li key={`${change.mealTitle ?? change.mealId ?? index}-${index}`}>
+              · {change.mealTitle ?? "Meal"}
+              {change.originalCoreIngredient && change.newCoreIngredient
+                ? `: ${change.originalCoreIngredient} → ${change.newCoreIngredient}`
+                : ""}
+              {change.reason ? ` — ${change.reason}` : ""}
+            </li>
+          ))}
+        </ul>
       )}
 
       {beforeAfter && (beforeAfter.before?.length || beforeAfter.after?.length) && (

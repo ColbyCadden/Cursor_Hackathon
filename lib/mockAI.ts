@@ -1,7 +1,7 @@
 import { getDefaultForIngredient } from "./ingredientDefaults";
 import { findInventoryMatch, ingredientsMatch } from "./inventoryMatching";
 import { getSavedMeals } from "./meal/mealHelpers";
-import { buildMealdexShoppingList } from "./meal/shoppingList";
+import { buildShoppingPromptFromState, collectRecipesFromAppState } from "./suggestedItemsFromRecipes";
 import { mealToSummary } from "./ai/mealSummaries";
 import { tryLocalChatReply } from "./localChatReplies";
 import type { AIResponse } from "./ai/chatHelpers";
@@ -390,7 +390,7 @@ function respondMealdexPlan(message: string, state: AppState): AIResponse {
     return {
       text: `${profileIntro(state.profile)}
 
-You haven't saved any Mealdeck cards yet. Swipe right on Discover, then ask me to build a plan from your saved cards.`,
+You haven't saved any MealDeck cards yet. Swipe right on Discover, then ask me to build a plan from your saved cards.`,
       needsUserChoice: false,
     };
   }
@@ -409,7 +409,7 @@ You haven't saved any Mealdeck cards yet. Swipe right on Discover, then ask me t
 
   const text = `${profileIntro(state.profile)}
 
-I built a ${Math.min(recipes.length, count)}-meal plan from your Mealdeck that keeps meal variety but reuses secondary ingredients. I kept ${mealNames.slice(0, 4).join(", ")} as distinct meals — not all the same format — while sharing Greek yogurt, frozen broccoli, and rice where they fit.`;
+I built a ${Math.min(recipes.length, count)}-meal plan from your MealDeck that keeps meal variety but reuses secondary ingredients. I kept ${mealNames.slice(0, 4).join(", ")} as distinct meals — not all the same format — while sharing Greek yogurt, frozen broccoli, and rice where they fit.`;
 
   return {
     text,
@@ -418,6 +418,7 @@ I built a ${Math.min(recipes.length, count)}-meal plan from your Mealdeck that k
     sharedIngredientsStrategy,
     beforeAfterComparison,
     shoppingListUpdates,
+    suggestedItems: shoppingListUpdates,
     mealPrepSteps: defaultPrepSteps(state.profile).slice(0, 4),
     actions: [
       {
@@ -445,7 +446,7 @@ I built a ${Math.min(recipes.length, count)}-meal plan from your Mealdeck that k
         type: "request_another_simplification",
         payload: {
           instruction:
-            "Suggest a different ingredient consolidation for my Mealdeck plan that still preserves meal variety.",
+            "Suggest a different ingredient consolidation for my MealDeck plan that still preserves meal variety.",
         },
       },
     ],
@@ -522,16 +523,6 @@ You'll get about ${count} portions without extra spices or specialty items.`;
       };
     }),
     actions: [
-      {
-        label: "Add missing ingredients to shopping list",
-        type: "add_multiple_to_shopping_list",
-        payload: {
-          items: defaultSuggestedItems(state, count).map((item) => ({
-            ...item,
-            reason: "Needed for your meal prep plan",
-          })),
-        },
-      },
       {
         label: "Make this cheaper",
         type: "request_ai_revision",
@@ -698,29 +689,28 @@ For a beginner, I'd do chicken rice bowls one night and egg wraps another — sa
 }
 
 function respondShoppingList(state: AppState): AIResponse {
-  const saved = getSavedMeals(state);
-  const shopItems = buildMealdexShoppingList(saved);
-
-  if (!saved.length) {
+  const prompt = buildShoppingPromptFromState(state);
+  if (prompt) {
     return {
-      text: `Your **Shop** list comes from meals saved in **Mealdeck**.
-
-Head to **Discover**, swipe right on meals you like, then check **Shop** — ingredients merge automatically. No manual list needed.`,
+      text: prompt.text,
+      suggestedItems: prompt.suggestedItems,
+      recipes: collectRecipesFromAppState(state),
     };
   }
 
-  const preview = shopItems
-    .slice(0, 10)
-    .map((i) => `• ${i.name}${i.count > 1 ? ` ×${i.count}` : ""}`)
-    .join("\n");
+  const open = state.shoppingList.filter((i) => !i.bought);
+  if (open.length) {
+    const lines = open.map(
+      (i) => `• ${i.name} — ${i.amount} ${i.unit}${i.required ? "" : " (optional)"}`
+    );
+    return {
+      text: `Your shopping list has ${open.length} item(s) to buy:\n\n${lines.join("\n")}\n\nAsk me to build a meal plan if you want missing ingredients suggested.`,
+    };
+  }
 
-  const text = `Your **Mealdeck** has ${saved.length} saved meal(s), which gives you **${shopItems.length}** shopping item(s):
-
-${preview}${shopItems.length > 10 ? "\n…and more on the Shop tab." : ""}
-
-Save more meals on **Discover** to grow this list.`;
-
-  return { text };
+  return {
+    text: `Your shopping list is empty. Ask me to build a meal plan from your saved cards or pantry — I'll suggest missing ingredients for you to add when you're ready.`,
+  };
 }
 
 function respondPrepGuide(state: AppState): AIResponse {

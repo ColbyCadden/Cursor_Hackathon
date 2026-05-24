@@ -1,8 +1,8 @@
 import { getSavedMeals } from "@/lib/meal/mealHelpers";
 import { mealToTags } from "@/lib/ai/mealSummaries";
+import { buildShoppingPromptFromState } from "@/lib/suggestedItemsFromRecipes";
 import type { AIResponse } from "@/lib/ai/chatHelpers";
 import type { AppState } from "@/lib/types";
-
 /** Instant replies from app data — no API call, no duplicates, always accurate. */
 export function tryLocalChatReply(
   userMessage: string,
@@ -32,6 +32,21 @@ export function tryLocalChatReply(
     };
   }
 
+  if (/update.*shopping|add.*missing.*(to )?shopping|shopping.*missing|missing.*shopping/.test(m)) {
+    const prompt = buildShoppingPromptFromState(appState);
+    if (prompt) {
+      return {
+        text: prompt.text,
+        suggestedItems: prompt.suggestedItems,
+        source: "local",
+      };
+    }
+    return {
+      text: "I don't see missing ingredients from a recent recipe yet. Ask me to build a meal plan first, then I can suggest what to buy.",
+      source: "local",
+    };
+  }
+
   if (/shopping list|what.*(need to )?buy|on my list/.test(m)) {
     const open = appState.shoppingList.filter((i) => !i.bought);
     if (!open.length) {
@@ -54,7 +69,7 @@ export function tryLocalChatReply(
     const saved = getSavedMeals(appState);
     if (!saved.length) {
       return {
-        text: "You haven't saved any meals yet. Swipe right on Discover to build your Mealdeck.",
+        text: "You haven't saved any meals yet. Swipe right on Discover to build your MealDeck.",
         source: "local",
       };
     }
@@ -62,7 +77,7 @@ export function tryLocalChatReply(
       (meal) => `• ${meal.name} (${mealToTags(meal).join(", ") || "meal template"})`
     );
     return {
-      text: `Your saved Mealdeck cards (${saved.length}):\n\n${lines.join("\n")}\n\nThese are flexible templates — ask me to turn them into a meal plan.`,
+      text: `Your saved MealDeck cards (${saved.length}):\n\n${lines.join("\n")}\n\nThese are flexible templates — ask me to turn them into a meal plan.`,
       source: "local",
     };
   }

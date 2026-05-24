@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { InventoryItemCard } from "./InventoryItemCard";
+import { NavIcon } from "./NavIcon";
 import { createId } from "@/lib/id";
 import { DEFAULT_INVENTORY_PORTIONS } from "@/lib/inventoryPortions";
 import {
@@ -250,9 +251,12 @@ export function InventoryManager({ inventory, onChange }: InventoryManagerProps)
 
       {filtered.length === 0 ? (
         <div className="empty-state py-8">
-          <p className="empty-state-icon" aria-hidden>
-            🧊
-          </p>
+          <div
+            className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--salmon)]/25 text-[var(--green-dark)]"
+            aria-hidden
+          >
+            <NavIcon name="pantry" size={24} strokeWidth={2} />
+          </div>
           <p className="empty-state-title">
             {search ? "No matches" : "No pantry items yet"}
           </p>

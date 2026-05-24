@@ -9,11 +9,7 @@ import { ProfileSettings } from "@/components/ProfileSettings";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { useAppState } from "@/lib/useAppState";
-import { getDeckMeals, getSavedMeals } from "@/lib/meal/mealHelpers";
-import {
-  computePantryRequirements,
-  getPantrySummary,
-} from "@/lib/pantrySync";
+import { getSavedMeals } from "@/lib/meal/mealHelpers";
 
 function DashboardContent() {
   const { state, updateState } = useAppState();
@@ -23,9 +19,7 @@ function DashboardContent() {
 
   const { profile, shoppingList, inventory } = state;
   const savedMeals = getSavedMeals(state);
-  const deckLeft = getDeckMeals(state).length;
-  const pantryReqs = computePantryRequirements(inventory, savedMeals);
-  const pantry = getPantrySummary(pantryReqs);
+  const recipesCreated = state.recipesCreated ?? 0;
 
   return (
     <AppShell profile={profile}>
@@ -34,31 +28,27 @@ function DashboardContent() {
 
         <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           <OverviewCard
-            title="Mealdeck"
+            title="MealDeck"
             value={savedMeals.length}
-            subtitle={savedMeals.length ? "Saved cards" : "Swipe to save"}
+            subtitle="cards"
             accent="salmon"
           />
           <OverviewCard
             title="Pantry"
             value={inventory.length}
-            subtitle={
-              inventory.length
-                ? `${pantry.inStock} stocked · ${pantry.low + pantry.missing} low`
-                : "Scan groceries"
-            }
+            subtitle="items"
             accent="honey"
           />
           <OverviewCard
-            title="To swipe"
-            value={deckLeft}
-            subtitle={deckLeft ? "In deck" : "Deck complete"}
+            title="Recipes"
+            value={recipesCreated}
+            subtitle="created"
             accent="sky"
           />
           <OverviewCard
-            title="Shop list"
+            title="Shopping"
             value={shoppingList.filter((i) => !i.bought).length}
-            subtitle={`${shoppingList.filter((i) => i.source === "mealdex").length} auto · ${shoppingList.filter((i) => i.source !== "mealdex").length} manual`}
+            subtitle="items"
             accent="sage"
           />
         </div>

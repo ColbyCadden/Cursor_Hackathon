@@ -1,12 +1,16 @@
-import { createInitialAppState } from "./demoData";
+import { createInitialAppState } from "./initialState";
 import { deriveIngredientTags } from "./ingredientAliases";
 import { DEFAULT_INVENTORY_PORTIONS, portionsFromLegacyPercent } from "./inventoryPortions";
 import { enrichMeal, normalizeIngredientPreference } from "./meal/mealPersonalization";
-import { syncPantryState } from "./pantrySync";
 import { SEED_MEALS } from "./meal/seedMeals";
 import { authenticateUser } from "./auth";
 import { clearPendingSignup } from "./signupSession";
 import { registeredUserToProfile } from "./signupProfile";
+import {
+  clearSessionLogin,
+  isSessionLoggedIn,
+  markSessionLoggedIn,
+} from "./sessionAuth";
 import { migrateShoppingCategory } from "./shoppingCategories";
 import { normalizeShoppingItem } from "./shoppingItemUtils";
 import type {
@@ -24,6 +28,10 @@ export { STORAGE_KEY };
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
+}
+
+function withSessionLogin(state: AppState): AppState {
+  return { ...state, isLoggedIn: isSessionLoggedIn() };
 }
 
 function migrateProfile(profile: Partial<UserProfile>): UserProfile {
@@ -143,41 +151,51 @@ function migrateInventoryItem(
   };
 }
 
-function migrateParsedState(parsed: LegacyAppState): AppState {
-  const initial = createInitialAppState();
+function countRecipesCreatedFromHistory(parsed: LegacyAppState): number {
+  const keys = new Set<string>();
+  for (const msg of parsed.chatMessages ?? []) {
+    for (const key of msg.cookedRecipeKeys ?? []) {
+      keys.add(key);
+    }
+  }
+  return keys.size;
+}
 
+function migrateParsedState(parsed: LegacyAppState): AppState {
   const shoppingList = parsed.shoppingList?.length
     ? migrateShoppingList(parsed.shoppingList)
-    : initial.shoppingList;
+    : [];
 
-  return syncPantryState({
-    isLoggedIn: parsed.isLoggedIn ?? false,
-    profile: migrateProfile(parsed.profile ?? {}),
-    inventory: (parsed.inventory ?? []).map((item) => migrateInventoryItem(item)),
-    meals: migrateMeals(parsed),
-    swipedMealIds: migrateSwipedIds(parsed),
-    savedMealIds: migrateSavedIds(parsed),
-    shoppingList,
-    chatMessages: dedupeChatMessages(
-      (parsed.chatMessages ?? []).map((msg) => ({
-        ...msg,
-        suggestedItems: msg.suggestedItems ?? undefined,
-        mealPrepSteps: msg.mealPrepSteps ?? undefined,
-        inventoryUpdates: msg.inventoryUpdates ?? undefined,
-        suggestedItemsAdded: msg.suggestedItemsAdded ?? false,
-        inventoryUpdatesApplied: msg.inventoryUpdatesApplied ?? false,
-        actions: msg.actions ?? undefined,
-        actionsApplied: msg.actionsApplied ?? [],
-        recipes: msg.recipes ?? undefined,
-        cookedRecipeKeys: msg.cookedRecipeKeys ?? [],
-        sharedIngredientsStrategy: msg.sharedIngredientsStrategy ?? undefined,
-        beforeAfterComparison: msg.beforeAfterComparison ?? undefined,
-        warnings: msg.warnings ?? undefined,
-        needsUserChoice: msg.needsUserChoice ?? false,
-      }))
-    ),
-    generatedMealPlan: parsed.generatedMealPlan ?? null,
-  });
+  return withSessionLogin({
+      isLoggedIn: false,
+      profile: migrateProfile(parsed.profile ?? {}),
+      inventory: (parsed.inventory ?? []).map((item) => migrateInventoryItem(item)),
+      meals: migrateMeals(parsed),
+      swipedMealIds: migrateSwipedIds(parsed),
+      savedMealIds: migrateSavedIds(parsed),
+      shoppingList,
+      chatMessages: dedupeChatMessages(
+        (parsed.chatMessages ?? []).map((msg) => ({
+          ...msg,
+          suggestedItems: msg.suggestedItems ?? undefined,
+          mealPrepSteps: msg.mealPrepSteps ?? undefined,
+          inventoryUpdates: msg.inventoryUpdates ?? undefined,
+          suggestedItemsAdded: msg.suggestedItemsAdded ?? false,
+          inventoryUpdatesApplied: msg.inventoryUpdatesApplied ?? false,
+          actions: msg.actions ?? undefined,
+          actionsApplied: msg.actionsApplied ?? [],
+          recipes: msg.recipes ?? undefined,
+          cookedRecipeKeys: msg.cookedRecipeKeys ?? [],
+          sharedIngredientsStrategy: msg.sharedIngredientsStrategy ?? undefined,
+          beforeAfterComparison: msg.beforeAfterComparison ?? undefined,
+          warnings: msg.warnings ?? undefined,
+          needsUserChoice: msg.needsUserChoice ?? false,
+        }))
+      ),
+      generatedMealPlan: parsed.generatedMealPlan ?? null,
+      recipesCreated:
+        parsed.recipesCreated ?? countRecipesCreatedFromHistory(parsed),
+    });
 }
 export function getAppState(): AppState {
   if (!isBrowser()) {
@@ -189,20 +207,23 @@ export function getAppState(): AppState {
     if (!raw) {
       const initial = createInitialAppState();
       saveAppState(initial);
-      return initial;
+      return withSessionLogin(initial);
     }
     const parsed = JSON.parse(raw) as LegacyAppState;
     return migrateParsedState(parsed);
   } catch {
     const initial = createInitialAppState();
     saveAppState(initial);
-    return initial;
+    return withSessionLogin(initial);
   }
 }
 
 export function saveAppState(state: AppState): void {
   if (!isBrowser()) return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ ...state, isLoggedIn: false })
+  );
   window.dispatchEvent(new Event("prepdeck-state-changed"));
 }
 
@@ -217,6 +238,7 @@ export function loginWithCredentials(
 
   const current = getAppState();
   const profile = registeredUserToProfile(user);
+  markSessionLoggedIn();
   const state: AppState = {
     ...current,
     isLoggedIn: true,
@@ -228,14 +250,16 @@ export function loginWithCredentials(
 
 export function resetAllAppData(): void {
   if (!isBrowser()) return;
+  clearSessionLogin();
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem("prepdeck-registered-users");
   clearPendingSignup();
 }
 
 export function logoutUser(): AppState {
+  clearSessionLogin();
   const state = getAppState();
-  state.isLoggedIn = false;
-  saveAppState(state);
-  return state;
+  const loggedOut = { ...state, isLoggedIn: false };
+  saveAppState(loggedOut);
+  return loggedOut;
 }

@@ -1,15 +1,7 @@
 import { deriveIngredientTags } from "./ingredientAliases";
-import { categoryToGrocerySection } from "./grocerySections";
 import { getDefaultForIngredient } from "./ingredientDefaults";
-import { createId } from "./id";
-import {
-  findInventoryMatch,
-  ingredientsMatch,
-  normalizeIngredientName,
-} from "./inventoryMatching";
+import { findInventoryMatch } from "./inventoryMatching";
 import { buildMealdexShoppingList } from "./meal/shoppingList";
-import { suggestBuyAmounts } from "./grocerySections";
-import { normalizeShoppingItem } from "./shoppingItemUtils";
 import type {
   AppState,
   InventoryItem,
@@ -98,82 +90,12 @@ export function computePantryRequirements(
   });
 }
 
-/** Auto-add low/missing Mealdex ingredients to the shopping list. */
+/** @deprecated MealDeck no longer auto-syncs to the shopping list. */
 export function syncShoppingListForPantry(
   shoppingList: ShoppingListItem[],
-  requirements: PantryRequirement[]
+  _requirements: PantryRequirement[]
 ): ShoppingListItem[] {
-  const needsRestock = requirements.filter(
-    (r) => r.status === "missing" || r.status === "low"
-  );
-  const neededKeys = new Set(
-    needsRestock.map((r) => normalizeIngredientName(r.name))
-  );
-
-  const kept = shoppingList.filter((item) => {
-    if (item.source !== "mealdex") return true;
-    if (item.bought) return true;
-    return neededKeys.has(normalizeIngredientName(item.name));
-  });
-
-  const list = [...kept];
-
-  for (const req of needsRestock) {
-    const idx = list.findIndex(
-      (item) =>
-        !item.bought &&
-        ingredientsMatch(item.name, req.name)
-    );
-
-    if (idx === -1) {
-      const buy = suggestBuyAmounts(req.name, req.amountNeeded, req.unit);
-      list.push(
-        normalizeShoppingItem({
-          id: createId("shop"),
-          name: req.name,
-          amount: req.amountNeeded,
-          unit: req.unit,
-          amountNeeded: req.amountNeeded,
-          unitNeeded: req.unit,
-          buyAmount: buy.buyAmount,
-          buyUnit: buy.buyUnit,
-          equivalentAmount: buy.equivalentAmount,
-          equivalentUnit: buy.equivalentUnit,
-          category: req.category,
-          grocerySection: categoryToGrocerySection(req.category),
-          required: true,
-          bought: false,
-          addedToInventory: false,
-          inCart: false,
-          source: "mealdex",
-          usedInRecipes: req.mealNames,
-        })
-      );
-      continue;
-    }
-
-    const existing = list[idx];
-    if (existing.source === "mealdex" || existing.source === undefined) {
-      const buy = suggestBuyAmounts(req.name, req.amountNeeded, req.unit);
-      list[idx] = normalizeShoppingItem({
-        ...existing,
-        amount: req.amountNeeded,
-        unit: req.unit,
-        amountNeeded: req.amountNeeded,
-        unitNeeded: req.unit,
-        buyAmount: buy.buyAmount,
-        buyUnit: buy.buyUnit,
-        equivalentAmount: buy.equivalentAmount,
-        equivalentUnit: buy.equivalentUnit,
-        category: req.category,
-        grocerySection: categoryToGrocerySection(req.category),
-        source: existing.source ?? "mealdex",
-        usedInRecipes: req.mealNames,
-      });
-    }
-  }
-
-  return list;
+  return shoppingList;
 }
 
 export function deductIngredientFromInventory(
@@ -243,21 +165,9 @@ export function applyInventoryUpdates(
   return next;
 }
 
-/** Reconcile inventory, shopping list, and saved meals after any pantry change. */
-export function syncPantryState(state: AppState, savedMeals?: Meal[]): AppState {
-  const meals = savedMeals ?? state.meals.filter((m) =>
-    state.savedMealIds.includes(m.id)
-  );
-  const requirements = computePantryRequirements(state.inventory, meals);
-  const shoppingList = syncShoppingListForPantry(
-    state.shoppingList,
-    requirements
-  );
-
-  return {
-    ...state,
-    shoppingList,
-  };
+/** Legacy hook after pantry changes — shopping list is no longer auto-synced from MealDeck. */
+export function syncPantryState(state: AppState): AppState {
+  return state;
 }
 
 export function prepMeal(state: AppState, mealId: string): AppState {

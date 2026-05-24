@@ -57,22 +57,9 @@ function mapSuggestedItems(items: unknown[]): SuggestedShoppingItem[] {
         usedInRecipes: Array.isArray(row.usedInRecipes)
           ? row.usedInRecipes.map(String)
           : undefined,
-        source: "ai" as const,
+        source: "manual" as const,
       };
     });
-}
-
-function applyShoppingUpdatesFromPayload(
-  state: AppState,
-  payload: Record<string, unknown>
-): AppState {
-  const raw =
-    Array.isArray(payload.shoppingListUpdates) ? payload.shoppingListUpdates
-    : Array.isArray(payload.items) ? payload.items
-    : [];
-  if (!raw.length) return state;
-  const { list } = addMultipleToShoppingList(state.shoppingList, mapSuggestedItems(raw));
-  return { ...state, shoppingList: list };
 }
 
 function saveMealPlan(
@@ -173,7 +160,7 @@ export function applyAIAction(state: AppState, action: ChatAction): ActionResult
         usedInRecipes: Array.isArray(payload.usedInRecipes)
           ? payload.usedInRecipes.map(String)
           : undefined,
-        source: "ai",
+        source: "manual",
       });
       const name = String(payload.name ?? "item");
       return {
@@ -210,7 +197,7 @@ export function applyAIAction(state: AppState, action: ChatAction): ActionResult
             usedInRecipes: Array.isArray(row.usedInRecipes)
               ? row.usedInRecipes.map(String)
               : undefined,
-            source: "ai" as const,
+            source: "manual" as const,
           };
         })
       );
@@ -277,11 +264,10 @@ export function applyAIAction(state: AppState, action: ChatAction): ActionResult
       if (!mealPlan?.recipes?.length) {
         return { state, confirmation: "No meal plan to accept yet." };
       }
-      let next = saveMealPlan(state, mealPlan);
-      next = applyShoppingUpdatesFromPayload(next, payload);
+      const next = saveMealPlan(state, mealPlan);
       return {
         state: next,
-        confirmation: `Saved your meal plan with ${mealPlan.recipes.length} recipe${mealPlan.recipes.length === 1 ? "" : "s"}.`,
+        confirmation: `Saved your meal plan with ${mealPlan.recipes.length} recipe${mealPlan.recipes.length === 1 ? "" : "s"}. Use "Add to shopping list" when you're ready to shop.`,
       };
     }
 
@@ -291,15 +277,14 @@ export function applyAIAction(state: AppState, action: ChatAction): ActionResult
       if (!mealPlan?.recipes?.length) {
         return { state, confirmation: "No simplified plan to accept yet." };
       }
-      let next = saveMealPlan(state, mealPlan, strategy);
-      next = applyShoppingUpdatesFromPayload(next, payload);
+      const next = saveMealPlan(state, mealPlan, strategy);
       const reused = strategy?.reusedIngredients?.length ?? 0;
       return {
         state: next,
         confirmation:
           reused > 0
-            ? `Saved your simplified plan — ${reused} shared ingredient${reused === 1 ? "" : "s"} across meals. Shopping list updated.`
-            : `Saved your meal plan with ${mealPlan.recipes.length} recipes. Shopping list updated.`,
+            ? `Saved your simplified plan — ${reused} shared ingredient${reused === 1 ? "" : "s"} across meals. Tap "Add to shopping list" for missing items.`
+            : `Saved your meal plan with ${mealPlan.recipes.length} recipes. Tap "Add to shopping list" for missing items.`,
       };
     }
 
@@ -459,7 +444,7 @@ export function applyAIAction(state: AppState, action: ChatAction): ActionResult
     case "save_generated_recipe":
       return {
         state,
-        confirmation: "Saving generated recipes to Mealdeck will come in a future update.",
+        confirmation: "Saving generated recipes to MealDeck will come in a future update.",
       };
 
     default:

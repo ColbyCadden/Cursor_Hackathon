@@ -115,7 +115,7 @@ export function createShoppingItemFromSuggested(
     bought: false,
     addedToInventory: false,
     inCart: false,
-    source: item.source ?? "ai",
+    source: item.source ?? "manual",
     ...extras,
   });
 }

@@ -241,8 +241,8 @@ export function ShoppingListManager({
             </p>
             <p className="empty-state-title">Shopping list is empty</p>
             <p className="empty-state-text">
-              Save meals in Mealdeck and low-stock ingredients appear here
-              automatically. You can also add items manually or from AI chat.
+              Add items manually or ask Chef to suggest groceries for your meal
+              plan.
             </p>
           </div>
         ) : (

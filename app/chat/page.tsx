@@ -15,7 +15,7 @@ function ChatContent() {
       <div className="mx-auto w-full max-w-3xl">
         <PageHeader
           title="Chef"
-          subtitle="chef is your personalized AI meal planner and meal prep guide"
+          subtitle="Chef is your personalized AI meal planner and meal prep guide"
         />
 
         <ChatInterface appState={state} onUpdate={updateState} />

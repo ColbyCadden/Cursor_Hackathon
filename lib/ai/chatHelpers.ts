@@ -1,5 +1,9 @@
 import type { SavedMealSummary } from "@/lib/ai/mealSummaries";
 import {
+  mergeSuggestedShoppingItems,
+  suggestedItemsFromRecipes,
+} from "@/lib/suggestedItemsFromRecipes";
+import {
   normalizeIngredientAmountUnit,
   sanitizeRecipeSteps,
   sanitizeStepList,
@@ -110,7 +114,7 @@ export function buildChatContext(body: ChatRequestBody): string {
     "Shopping list:",
     shoppingLine,
     "",
-    "Saved Mealdeck cards (flexible templates — adapt but preserve core identity & tags):",
+    "Saved MealDeck cards (flexible templates — adapt but preserve core identity & tags):",
     mealdexLine,
     "",
     "Current generated meal plan:",
@@ -197,8 +201,18 @@ function parseSharedIngredientsStrategy(raw: unknown): SharedIngredientsStrategy
         .filter((item) => item && typeof item === "object")
         .map((item) => {
           const change = item as Record<string, unknown>;
+          const mealTitle = change.mealTitle
+            ? String(change.mealTitle)
+            : change.originalMealCard
+              ? String(change.originalMealCard)
+              : undefined;
+          const reason = change.reason
+            ? String(change.reason)
+            : change.change
+              ? String(change.change)
+              : undefined;
           return {
-            mealTitle: change.mealTitle ? String(change.mealTitle) : undefined,
+            mealTitle,
             mealId: change.mealId ? String(change.mealId) : undefined,
             originalCoreIngredient: change.originalCoreIngredient
               ? String(change.originalCoreIngredient)
@@ -206,7 +220,7 @@ function parseSharedIngredientsStrategy(raw: unknown): SharedIngredientsStrategy
             newCoreIngredient: change.newCoreIngredient
               ? String(change.newCoreIngredient)
               : undefined,
-            reason: change.reason ? String(change.reason) : undefined,
+            reason,
           };
         })
     : undefined;
@@ -384,30 +398,125 @@ function stripMarkdownFences(raw: string): string {
     .trim();
 }
 
+function unescapeJsonString(value: string): string {
+  return value
+    .replace(/\\n/g, "\n")
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, "\\")
+    .trim();
+}
+
 /** Pull message/text from broken or truncated JSON when JSON.parse fails. */
 function extractMessageFromBrokenJson(raw: string): string | null {
-  const unescaped = (value: string) =>
-    value.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\").trim();
-
   const fullMessage = raw.match(/"message"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  if (fullMessage?.[1]) return unescaped(fullMessage[1]);
+  if (fullMessage?.[1]) return unescapeJsonString(fullMessage[1]);
 
   const fullText = raw.match(/"text"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-  if (fullText?.[1]) return unescaped(fullText[1]);
+  if (fullText?.[1]) return unescapeJsonString(fullText[1]);
 
-  // Truncated mid-string (no closing quote)
   const truncated = raw.match(/"message"\s*:\s*"([\s\S]*)$/);
   if (truncated?.[1]) {
     const cleaned = truncated[1].replace(/\\n/g, "\n").replace(/["{}[\]]+$/, "").trim();
-    if (cleaned.length > 10) return cleaned;
+    if (cleaned.length > 10 && !looksLikeJsonPayload(cleaned)) return cleaned;
   }
 
   return null;
 }
 
-function looksLikeRawJson(text: string): boolean {
+const JSON_PAYLOAD_MARKERS =
+  /"message"\s*:|"text"\s*:|"recipes"\s*:|"sharedIngredientsStrategy"\s*:|"beforeAfterComparison"\s*:|"coreChanges"\s*:|"shoppingListUpdates"\s*:|"actions"\s*:/;
+
+function looksLikeJsonPayload(text: string): boolean {
   const t = text.trim();
-  return t.startsWith("{") && (t.includes('"message"') || t.includes('"text"'));
+  if (!t) return false;
+  if (t.startsWith("{") || t.startsWith("[") || /^[\],]/.test(t)) {
+    return JSON_PAYLOAD_MARKERS.test(t);
+  }
+  return false;
+}
+
+function isReadableChatText(text: string): boolean {
+  const t = text.trim();
+  if (!t || t.length < 2) return false;
+  return !looksLikeJsonPayload(t);
+}
+
+function hasStructuredPayload(parsed: Record<string, unknown>): boolean {
+  return Boolean(
+    parsed.recipes ||
+      parsed.sharedIngredientsStrategy ||
+      parsed.beforeAfterComparison ||
+      parsed.actions ||
+      parsed.shoppingListUpdates ||
+      parsed.suggestedItems ||
+      parsed.mealPlan
+  );
+}
+
+function fallbackTextFromParsed(
+  parsed: Record<string, unknown>,
+  recipes?: AdaptedRecipe[]
+): string {
+  const strategy = parsed.sharedIngredientsStrategy as { summary?: string } | undefined;
+  if (strategy?.summary?.trim()) {
+    return strategy.summary.trim();
+  }
+
+  if (recipes?.length) {
+    const titles = recipes
+      .slice(0, 3)
+      .map((r) => r.displayTitle ?? r.title)
+      .join(", ");
+    return `I put together ${recipes.length} recipe${recipes.length === 1 ? "" : "s"}${titles ? `: ${titles}` : ""}. Details are below.`;
+  }
+
+  if (hasStructuredPayload(parsed)) {
+    return "Here's my suggestion — see the cards and actions below.";
+  }
+
+  return "I hit a formatting glitch — please try again or ask a shorter question.";
+}
+
+function resolveDisplayText(
+  parsed: Record<string, unknown>,
+  raw: string,
+  recipes?: AdaptedRecipe[]
+): string {
+  const fromFields =
+    (typeof parsed.message === "string" ? parsed.message.trim() : "") ||
+    (typeof parsed.text === "string" ? parsed.text.trim() : "");
+
+  if (isReadableChatText(fromFields)) {
+    return fromFields;
+  }
+
+  const extracted = extractMessageFromBrokenJson(raw);
+  if (extracted && isReadableChatText(extracted)) {
+    return extracted;
+  }
+
+  if (looksLikeJsonPayload(raw) || looksLikeJsonPayload(fromFields)) {
+    return fallbackTextFromParsed(parsed, recipes);
+  }
+
+  return fromFields || raw.trim();
+}
+
+/** Clean stored assistant text for display (handles legacy raw JSON messages). */
+export function sanitizeChatDisplayText(content: string): string {
+  const trimmed = content.trim();
+  if (!trimmed) return content;
+
+  if (!looksLikeJsonPayload(trimmed)) {
+    return content;
+  }
+
+  const parsed = parseAIResponse(trimmed);
+  if (isReadableChatText(parsed.text)) {
+    return parsed.text;
+  }
+
+  return "Here's my suggestion — see the cards and actions below.";
 }
 
 function repairTruncatedJson(jsonSlice: string): string {
@@ -453,6 +562,11 @@ export function parseAIResponse(
 
   const jsonStart = trimmed.indexOf("{");
   if (jsonStart === -1) {
+    if (looksLikeJsonPayload(trimmed)) {
+      return {
+        text: "I hit a formatting glitch — please try again or ask a shorter question.",
+      };
+    }
     return { text: trimmed };
   }
 
@@ -481,17 +595,14 @@ export function parseAIResponse(
     }
   }
 
-  const text =
-    (typeof parsed.message === "string" ? parsed.message.trim() : "") ||
-    (typeof parsed.text === "string" ? parsed.text.trim() : "") ||
-    extractMessageFromBrokenJson(trimmed) ||
-    trimmed;
-
-  const suggestedItems =
-    parseSuggestedItems(parsed.suggestedItems) ??
-    parseSuggestedItems(parsed.shoppingListUpdates);
-
   const recipes = parseRecipes(parsed.recipes);
+  const suggestedItems = mergeSuggestedShoppingItems(
+    parseSuggestedItems(parsed.suggestedItems),
+    parseSuggestedItems(parsed.shoppingListUpdates),
+    suggestedItemsFromRecipes(recipes ?? [])
+  );
+  const text = resolveDisplayText(parsed, trimmed, recipes);
+
   const mealPrepStepsRaw = Array.isArray(parsed.mealPrepSteps)
     ? parsed.mealPrepSteps.map((s) => String(s).trim()).filter(Boolean)
     : undefined;
@@ -532,12 +643,12 @@ export function parseAIResponse(
 
   return {
     text: finalizeMessageText(
-      looksLikeRawJson(text)
-        ? extractMessageFromBrokenJson(text) ?? "Here's my suggestion — see the recipe cards below."
-        : text,
+      isReadableChatText(text)
+        ? text
+        : fallbackTextFromParsed(parsed, recipes),
       wasTruncated && !recipes?.length
     ),
-    suggestedItems,
+    suggestedItems: suggestedItems.length ? suggestedItems : undefined,
     mealPrepSteps: mealPrepSteps?.length ? mealPrepSteps : recipes?.[0]?.steps,
     inventoryUpdates: inventoryUpdates?.length ? inventoryUpdates : undefined,
     actions,
@@ -556,12 +667,12 @@ export function parseAIResponse(
 }
 
 export function buildSystemPrompt(): string {
-  return `You are PrepDeck, the planning brain for a student meal-prep app. You connect profile, pantry, saved Mealdeck cards, shopping list, and meal plans.
+  return `You are PrepDeck, the planning brain for a student meal-prep app. You connect profile, pantry, saved MealDeck cards, shopping list, and meal plans.
 
-Your job is NOT random chat — you plan meals, adapt saved Mealdeck cards into recipes, consolidate ingredients, find missing items, and guide simple meal prep.
+Your job is NOT random chat — you plan meals, adapt saved MealDeck cards into recipes, consolidate ingredients, find missing items, and guide simple meal prep.
 
-MEALDECK CARD RULES (critical):
-- Saved Mealdeck cards are flexible templates, NOT fixed recipes.
+MealDeck CARD RULES (critical):
+- Saved MealDeck cards are flexible templates, NOT fixed recipes.
 - Preserve: general meal identity/title, important tags (high protein, cheap, quick, vegetarian, beginner-friendly), intended difficulty/time feel, and variety across the plan.
 - You MAY adapt: vegetables, sauces, seasonings, toppings, optional sides, small dairy additions, flexible supporting ingredients, exact amounts, cooking method if it still fits.
 - Be careful changing: main protein, main carb/base, defining ingredient, dietary identity, important tags.
@@ -575,7 +686,7 @@ Secondary (reuse/simplify aggressively): vegetables, sauces, seasonings, topping
 
 CONSOLIDATION PRIORITY (in order):
 1. Respect allergies, avoided foods, dietary restrictions, appliances, skill level.
-2. Preserve main Mealdeck card identity and variety across the plan.
+2. Preserve main MealDeck card identity and variety across the plan.
 3. Use ingredients already in pantry first.
 4. Reuse common secondary ingredients across multiple recipes.
 5. Add flexible groceries only when needed.
@@ -593,7 +704,10 @@ Include beforeAfterComparison when you simplify secondary ingredients across mea
 
 SHOPPING LIST:
 - Do NOT silently add to shopping list or overwrite the user's list when suggesting a plan.
-- Put missing items in shoppingListUpdates and/or action payloads — apply only when user clicks accept_simplified_plan or add_to_shopping_list actions.
+- When recipes have missing ingredients, always populate shoppingListUpdates (or suggestedItems) with name, amount, unit, category, usedInRecipes.
+- The app shows a review panel with an "Add to shopping list" button — items are added ONLY when the user taps that button.
+- Do NOT use add_to_shopping_list or add_multiple_to_shopping_list actions for bulk missing ingredients — use shoppingListUpdates instead.
+- accept_simplified_plan and accept_meal_plan should save the plan only; do not assume shopping list was updated.
 - Include usedInRecipes on items reused across meals (e.g. "Used in 3 recipes").
 - Include reason and sourceMealId when suggesting shopping items.
 
@@ -602,11 +716,13 @@ DIRECT QUESTIONS:
 
 API USAGE:
 - Return compact JSON only (no markdown fences).
-- Put structured data FIRST, "message" LAST.
-- "message" must be 1-3 short sentences summarizing the plan and consolidation — under 60 words.
+- Put "message" FIRST — a 1-3 sentence summary under 60 words. This is required and shown in chat.
+- Put structured data after "message".
 - Do NOT put long ingredient lists in "message"; use recipes[].ingredients, sharedIngredientsStrategy, and beforeAfterComparison.
 - Limit to 4 recipes max for meal plans, 3 steps per recipe, 2-4 actions max.
 - Use actions for user decisions.
+- Keep sharedIngredientsStrategy.summary under 40 words.
+- Keep beforeAfterComparison arrays to 3 items max each.
 
 RECIPE STEPS (required — never use placeholders):
 - Every recipe MUST include 2-3 real cooking steps with actions, ingredients, and rough times.
@@ -620,6 +736,7 @@ RECIPE INGREDIENTS (for confirm-cooked pantry tracking):
 
 Respond with JSON only:
 {
+  "message": "Short summary of plan and ingredient reuse.",
   "recipes": [{
     "title": "Meal name",
     "basedOnMealCardId": "card_id",
@@ -655,8 +772,7 @@ Respond with JSON only:
     { "label": "Use simplified plan", "type": "accept_simplified_plan", "payload": { "mealPlan": {}, "sharedIngredientsStrategy": {}, "shoppingListUpdates": [] } },
     { "label": "Keep original ingredients", "type": "keep_original_plan", "payload": { "originalMealPlan": {} } }
   ],
-  "needsUserChoice": true,
-  "message": "Short summary of plan and ingredient reuse."
+  "needsUserChoice": true
 }
 
 Action types: add_to_shopping_list, add_multiple_to_shopping_list, use_substitute, remove_optional_ingredient, request_ai_revision, pick_alternative_meal, accept_meal_plan, save_generated_recipe, accept_simplified_plan, keep_original_plan, request_another_simplification, approve_core_change, reject_core_change, replace_meal_for_simpler_ingredients, keep_meal_despite_extra_ingredients.
